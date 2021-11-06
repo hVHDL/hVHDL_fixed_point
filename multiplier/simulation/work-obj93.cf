@@ -1,0 +1,7 @@
+v 4
+file . "tb_multiplier.vhd" "b3286bf94bb87e85b40932f964d34c3b1bb7a8c7" "20211102164305.484":
+  entity tb_multiplier at 1( 0) + 0 on 481;
+  architecture sim of tb_multiplier at 18( 370) + 0 on 482;
+file . "lrc_model.vhd" "e411c8021fc17692bccadef4928bd9c9bae3076a" "20210921193842.835":
+  entity lrc_model at 1( 0) + 0 on 471;
+  architecture sim of lrc_model at 15( 300) + 0 on 472;
