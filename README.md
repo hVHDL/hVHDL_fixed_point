@@ -9,4 +9,8 @@ division :
 
 https://hardwaredescriptions.com/conquer-the-divide/
 
+Sine and cosine :
+
+https://hardwaredescriptions.com/category/vhdl-integer-arithmetic/sine-and-cosine/
+
 I am currently changing the math_library to use vunit and ghdl.
