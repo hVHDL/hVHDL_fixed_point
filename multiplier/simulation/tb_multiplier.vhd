@@ -1,15 +1,16 @@
 LIBRARY ieee  ; 
-LIBRARY std  ; 
     USE ieee.NUMERIC_STD.all  ; 
     USE ieee.std_logic_1164.all  ; 
-    USE ieee.std_logic_textio.all  ; 
     use ieee.math_real.all;
-    USE std.textio.all  ; 
+
+library vunit_lib;
+    use vunit_lib.run_pkg.all;
 
 library math_library;
     use math_library.multiplier_pkg.all;
 
 entity tb_multiplier is
+  generic (runner_cfg : string);
 end;
 
 architecture sim of tb_multiplier is
@@ -34,9 +35,11 @@ begin
 ------------------------------------------------------------------------
     simtime : process
     begin
+        test_runner_setup(runner, runner_cfg);
         simulation_running <= true;
         wait for simtime_in_clocks*clock_per;
         simulation_running <= false;
+        test_runner_cleanup(runner); -- Simulation ends here
         wait;
     end process simtime;	
 
