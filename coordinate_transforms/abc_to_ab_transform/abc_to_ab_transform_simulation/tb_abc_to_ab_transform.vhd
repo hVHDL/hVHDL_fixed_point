@@ -75,6 +75,7 @@ begin
 ------------------------------------------------------------------------
 
     stimulus : process(simulator_clock)
+        -- variable my_checker : checker_t;
 
     begin
         if rising_edge(simulator_clock) then
@@ -94,9 +95,6 @@ begin
                 request_sincos(sincos(phase_b),angle_rad16 + 21845);
                 request_sincos(sincos(phase_c),angle_rad16 + 21845*2);
 
-                phase_a_difference <= get_sine(sincos(phase_a)) - get_phase_a(ab_to_abc_transform);
-                phase_b_difference <= get_sine(sincos(phase_b)) - get_phase_b(ab_to_abc_transform);
-                phase_c_difference <= get_sine(sincos(phase_c)) - get_phase_c(ab_to_abc_transform);
             end if; 
 
             if sincos_is_ready(sincos(phase_a)) then
@@ -105,6 +103,15 @@ begin
 
             if abc_to_ab_transform_is_ready(abc_to_ab_transform) then
                 request_alpha_beta_to_abc_transform(ab_to_abc_transform);
+            end if;
+
+            if ab_to_abc_transform_is_ready(ab_to_abc_transform) then
+                assert abs(get_sine(sincos(phase_a)) - get_phase_a(ab_to_abc_transform)) < 5 report"phase a error higher than 5" severity error;
+                assert abs(get_sine(sincos(phase_b)) - get_phase_b(ab_to_abc_transform)) < 5 report"phase b error higher than 5" severity error;
+                assert abs(get_sine(sincos(phase_c)) - get_phase_c(ab_to_abc_transform)) < 5 report"phase c error higher than 5" severity error;
+                phase_a_difference <= get_sine(sincos(phase_a)) - get_phase_a(ab_to_abc_transform);
+                phase_b_difference <= get_sine(sincos(phase_b)) - get_phase_b(ab_to_abc_transform);
+                phase_c_difference <= get_sine(sincos(phase_c)) - get_phase_c(ab_to_abc_transform);
             end if;
 
             create_multiplier(ab_transform_multiplier);
