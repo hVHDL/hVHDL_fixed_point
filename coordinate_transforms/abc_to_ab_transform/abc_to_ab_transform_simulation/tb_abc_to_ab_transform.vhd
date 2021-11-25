@@ -108,7 +108,7 @@ begin
             end if;
 
             create_multiplier(ab_transform_multiplier);
-            create_abc_to_ab_transformer(ab_transform_multiplier, abc_to_ab_transform, get_sine(sincos(phase_a)), get_sine(sincos(phase_c)), get_sine(sincos(phase_b)));
+            create_abc_to_ab_transformer(ab_transform_multiplier, abc_to_ab_transform, get_sine(sincos(phase_a)), get_sine(sincos(phase_b)), get_sine(sincos(phase_c)));
 
             create_alpha_beta_to_abc_transformer(
                 ab_transform_multiplier            ,
