@@ -8,6 +8,8 @@ library math_library;
 package abc_to_ab_transform_pkg is
 
     type abc_to_ab_transform_record is record
+        abc_to_ab_multiplier_process_counter : natural range 0 to 15;
+        abc_to_ab_calculation_process_counter : natural range 0 to 15;
         alpha : int18;
         beta  : int18;
         gamma : int18;
@@ -18,7 +20,7 @@ package abc_to_ab_transform_pkg is
     end record;
 
     constant init_abc_to_ab_transform : abc_to_ab_transform_record := 
-        (0, 0, 0,
+        (0, 0, 0, 0, 0,
         0, 0, 0);
 
 end package abc_to_ab_transform_pkg;

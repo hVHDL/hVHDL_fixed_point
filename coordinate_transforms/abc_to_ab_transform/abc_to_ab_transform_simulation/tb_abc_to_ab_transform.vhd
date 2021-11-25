@@ -44,21 +44,99 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
 
     signal abc_to_ab_transform : abc_to_ab_transform_record := init_abc_to_ab_transform;
 
-    alias alpha is abc_to_ab_transform.alpha;
-    alias beta  is abc_to_ab_transform.beta;
-    alias gamma is abc_to_ab_transform.gamma;
 
-    alias alpha_sum is abc_to_ab_transform.alpha_sum;
-    alias beta_sum  is abc_to_ab_transform.beta_sum;
-    alias gamma_sum is abc_to_ab_transform.gamma_sum;
-
-    procedure abc_to_ab_transformer
+    procedure create_abc_to_ab_transformer
     (
-        signal hw_multiplier : inout multiplier_record
+        signal hw_multiplier : inout multiplier_record;
+        signal abc_to_ab_object : inout abc_to_ab_transform_record;
+        phase_a : integer;
+        phase_b : integer;
+        phase_c : integer
     ) is
+        alias abc_multiplier_process_counter is abc_to_ab_object.abc_to_ab_multiplier_process_counter;
+        alias abc_transform_process_counter is abc_to_ab_object.abc_to_ab_calculation_process_counter;
+
+        alias alpha is abc_to_ab_object.alpha;
+        alias beta  is abc_to_ab_object.beta;
+        alias gamma is abc_to_ab_object.gamma;
+
+        alias alpha_sum is abc_to_ab_object.alpha_sum;
+        alias beta_sum  is abc_to_ab_object.beta_sum;
+        alias gamma_sum is abc_to_ab_object.gamma_sum;
     begin
+            CASE abc_multiplier_process_counter is
+                WHEN 0 =>
+                    multiply(hw_multiplier, phase_a, 43691 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 1 =>
+                    multiply(hw_multiplier, phase_b, -21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 2 =>
+                    multiply(hw_multiplier, phase_c, -21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+
+                WHEN 3 =>
+                    multiply(hw_multiplier, phase_a, 0 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 4 =>
+                    multiply(hw_multiplier, phase_b, 37837 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 5 =>
+                    multiply(hw_multiplier, phase_c, -37837 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+
+                WHEN 6 =>
+                    multiply(hw_multiplier, phase_a, 21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 7 =>
+                    multiply(hw_multiplier, phase_b, 21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 8 =>
+                    multiply(hw_multiplier, phase_c, 21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN others =>
+            end CASE;
+
+            CASE abc_transform_process_counter is
+                WHEN 0 =>
+                    if multiplier_is_ready(hw_multiplier) then
+                        alpha_sum <= get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                    end if;
+                WHEN 1 =>
+                        alpha_sum <= alpha_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 2 =>
+                        alpha <= alpha_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+
+                WHEN 3 =>
+                        beta_sum <= get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 4 =>
+                        beta_sum <= beta_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 5 =>
+                        beta <= beta_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+
+                WHEN 6 =>
+                        gamma_sum <= get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 7 =>
+                        gamma_sum <= gamma_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 8 =>
+                        gamma <= gamma_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+
+                WHEN others => -- wait for restart
+            end CASE;
+
+
+
         
-    end abc_to_ab_transformer;
+    end create_abc_to_ab_transformer;
 
 begin
 
@@ -108,80 +186,12 @@ begin
             end if; 
 
             if sincos_is_ready(sincos(phase_a)) then
-                abc_multiplier_process_counter <= 0;
-                abc_transform_process_counter <= 0;
+                abc_to_ab_transform.abc_to_ab_multiplier_process_counter  <= 0;
+                abc_to_ab_transform.abc_to_ab_calculation_process_counter <= 0;
             end if;
 
             create_multiplier(ab_transform_multiplier);
-            CASE abc_multiplier_process_counter is
-                WHEN 0 =>
-                    multiply(ab_transform_multiplier, get_sine(sincos(phase_a)), 43691 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                WHEN 1 =>
-                    multiply(ab_transform_multiplier, get_sine(sincos(phase_b)), -21845 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                WHEN 2 =>
-                    multiply(ab_transform_multiplier, get_sine(sincos(phase_c)), -21845 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-
-                WHEN 3 =>
-                    multiply(ab_transform_multiplier, get_sine(sincos(phase_a)), 0 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                WHEN 4 =>
-                    multiply(ab_transform_multiplier, get_sine(sincos(phase_b)), 37837 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                WHEN 5 =>
-                    multiply(ab_transform_multiplier, get_sine(sincos(phase_c)), -37837 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-
-                WHEN 6 =>
-                    multiply(ab_transform_multiplier, get_sine(sincos(phase_a)), 21845 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                WHEN 7 =>
-                    multiply(ab_transform_multiplier, get_sine(sincos(phase_b)), 21845 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                WHEN 8 =>
-                    multiply(ab_transform_multiplier, get_sine(sincos(phase_c)), 21845 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                WHEN others =>
-            end CASE;
-
-            CASE abc_transform_process_counter is
-                WHEN 0 =>
-                    if multiplier_is_ready(ab_transform_multiplier) then
-                        alpha_sum <= get_multiplier_result(ab_transform_multiplier,15);
-                        abc_transform_process_counter <= abc_transform_process_counter + 1;
-                    end if;
-                WHEN 1 =>
-                        alpha_sum <= alpha_sum + get_multiplier_result(ab_transform_multiplier,15);
-                        abc_transform_process_counter <= abc_transform_process_counter + 1;
-                WHEN 2 =>
-                        alpha <= alpha_sum + get_multiplier_result(ab_transform_multiplier,15);
-                        abc_transform_process_counter <= abc_transform_process_counter + 1;
-
-                WHEN 3 =>
-                        beta_sum <= get_multiplier_result(ab_transform_multiplier,15);
-                        abc_transform_process_counter <= abc_transform_process_counter + 1;
-                WHEN 4 =>
-                        beta_sum <= beta_sum + get_multiplier_result(ab_transform_multiplier,15);
-                        abc_transform_process_counter <= abc_transform_process_counter + 1;
-                WHEN 5 =>
-                        beta <= beta_sum + get_multiplier_result(ab_transform_multiplier,15);
-                        abc_transform_process_counter <= abc_transform_process_counter + 1;
-
-                WHEN 6 =>
-                        gamma_sum <= get_multiplier_result(ab_transform_multiplier,15);
-                        abc_transform_process_counter <= abc_transform_process_counter + 1;
-                WHEN 7 =>
-                        gamma_sum <= gamma_sum + get_multiplier_result(ab_transform_multiplier,15);
-                        abc_transform_process_counter <= abc_transform_process_counter + 1;
-                WHEN 8 =>
-                        gamma <= gamma_sum + get_multiplier_result(ab_transform_multiplier,15);
-                        abc_transform_process_counter <= abc_transform_process_counter + 1;
-
-                WHEN others => -- wait for restart
-            end CASE;
-
+            create_abc_to_ab_transformer(ab_transform_multiplier, abc_to_ab_transform, get_sine(sincos(phase_a)), get_sine(sincos(phase_b)), get_sine(sincos(phase_c)));
 
 
         end if; -- rising_edge
