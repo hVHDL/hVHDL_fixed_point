@@ -28,6 +28,29 @@ package ab_to_abc_transform_pkg is
         0, 0, 0, false);
 
 ------------------------------------------------------------------------
+    function get_phase_a ( alpha_beta_to_abc_object : alpha_beta_to_abc_transform_record)
+        return integer;
+------------------------------------------------------------------------
+    function get_phase_b ( alpha_beta_to_abc_object : alpha_beta_to_abc_transform_record)
+        return integer;
+------------------------------------------------------------------------
+    function get_phase_c ( alpha_beta_to_abc_object : alpha_beta_to_abc_transform_record)
+        return integer;
+------------------------------------------------------------------------
+    function ab_to_abc_transform_is_ready ( alpha_beta_to_abc_object : alpha_beta_to_abc_transform_record)
+        return boolean;
+------------------------------------------------------------------------
+    procedure request_alpha_beta_to_abc_transform (
+        signal alpha_beta_to_abc_object : inout alpha_beta_to_abc_transform_record);
+------------------------------------------------------------------------
+    procedure create_alpha_beta_to_abc_transformer (
+        signal hw_multiplier : inout multiplier_record;
+        signal alpha_beta_to_abc_object : inout alpha_beta_to_abc_transform_record;
+        alpha : integer;
+        beta : integer;
+        gamma : integer);
+
+------------------------------------------------------------------------
 end package ab_to_abc_transform_pkg;
 
 package body ab_to_abc_transform_pkg is
@@ -107,27 +130,19 @@ package body ab_to_abc_transform_pkg is
 
         ------------------------------------------------------------------------
             alpha_beta_to_abc_transform_is_ready <= false;
+        ------------------------------------------------------------------------
             CASE abc_multiplier_process_counter is
-                WHEN 0 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, alpha, 65536 );
-                WHEN 1 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, beta, 0 );
-                WHEN 2 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, gamma, 65536 );
+                WHEN 0 => multiply_and_increment_counter(hw_multiplier , abc_multiplier_process_counter , alpha , 65536 );
+                WHEN 1 => multiply_and_increment_counter(hw_multiplier , abc_multiplier_process_counter , beta  , 0 );
+                WHEN 2 => multiply_and_increment_counter(hw_multiplier , abc_multiplier_process_counter , gamma , 65536 );
 
-                WHEN 3 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, alpha, -32768 );
-                WHEN 4 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, beta, 56756 );
-                WHEN 5 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, gamma, 65536 );
+                WHEN 3 => multiply_and_increment_counter(hw_multiplier , abc_multiplier_process_counter , alpha , -32768 );
+                WHEN 4 => multiply_and_increment_counter(hw_multiplier , abc_multiplier_process_counter , beta  , 56756 );
+                WHEN 5 => multiply_and_increment_counter(hw_multiplier , abc_multiplier_process_counter , gamma , 65536 );
 
-                WHEN 6 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, alpha, -32768 );
-                WHEN 7 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, beta, -56756 );
-                WHEN 8 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, gamma, 65536 );
+                WHEN 6 => multiply_and_increment_counter(hw_multiplier , abc_multiplier_process_counter , alpha , -32768 );
+                WHEN 7 => multiply_and_increment_counter(hw_multiplier , abc_multiplier_process_counter , beta  , -56756 );
+                WHEN 8 => multiply_and_increment_counter(hw_multiplier , abc_multiplier_process_counter , gamma , 65536 );
                 WHEN others => -- wait for restart
             end CASE;
 

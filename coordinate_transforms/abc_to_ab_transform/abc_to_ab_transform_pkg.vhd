@@ -21,7 +21,7 @@ package abc_to_ab_transform_pkg is
         beta_sum  : int18;
         gamma_sum : int18;
 
-        abc_to_ab_transform_is_ready : boolean;
+        abc_to_ab_is_ready : boolean;
     end record;
 
     constant init_abc_to_ab_transform : abc_to_ab_transform_record := 
@@ -38,7 +38,7 @@ package abc_to_ab_transform_pkg is
     function get_gamma ( abc_to_ab_object : abc_to_ab_transform_record)
         return integer;
 ------------------------------------------------------------------------
-    function ab_to_abc_transform_is_ready ( abc_to_ab_object : abc_to_ab_transform_record)
+    function abc_to_ab_transform_is_ready ( abc_to_ab_object : abc_to_ab_transform_record)
         return boolean;
 ------------------------------------------------------------------------
     procedure request_abc_to_ab_transform (
@@ -86,15 +86,15 @@ package body abc_to_ab_transform_pkg is
         return abc_to_ab_object.gamma;
     end get_gamma;
 ------------------------------------------------------------------------
-    function ab_to_abc_transform_is_ready
+    function abc_to_ab_transform_is_ready
     (
         abc_to_ab_object : abc_to_ab_transform_record
     )
     return boolean
     is
     begin
-        return abc_to_ab_object.abc_to_ab_transform_is_ready;
-    end ab_to_abc_transform_is_ready;
+        return abc_to_ab_object.abc_to_ab_is_ready;
+    end abc_to_ab_transform_is_ready;
 ------------------------------------------------------------------------
     procedure request_abc_to_ab_transform
     (
@@ -126,31 +126,23 @@ package body abc_to_ab_transform_pkg is
         alias beta_sum  is abc_to_ab_object.beta_sum;
         alias gamma_sum is abc_to_ab_object.gamma_sum;
 
-        alias abc_to_ab_transform_is_ready is abc_to_ab_object.abc_to_ab_transform_is_ready;
+        alias abc_to_ab_is_ready is abc_to_ab_object.abc_to_ab_is_ready;
+
     begin
 
-            abc_to_ab_transform_is_ready <= false;
+            abc_to_ab_is_ready <= false;
             CASE abc_multiplier_process_counter is
-                WHEN 0 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_a, 43691 );
-                WHEN 1 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_b, -21845 );
-                WHEN 2 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_c, -21845 );
+                WHEN 0 => multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_a, 43691 );
+                WHEN 1 => multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_b, -21845 );
+                WHEN 2 => multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_c, -21845 );
 
-                WHEN 3 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_a, 0 );
-                WHEN 4 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_b, 37837 );
-                WHEN 5 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_c, -37837 );
+                WHEN 3 => multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_a, 0 );
+                WHEN 4 => multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_b, 37837 );
+                WHEN 5 => multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_c, -37837 );
 
-                WHEN 6 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_a, 21845 );
-                WHEN 7 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_b, 21845 );
-                WHEN 8 =>
-                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_c, 21845 );
+                WHEN 6 => multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_a, 21845 );
+                WHEN 7 => multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_b, 21845 );
+                WHEN 8 => multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_c, 21845 );
                 WHEN others =>
             end CASE;
 
@@ -186,7 +178,7 @@ package body abc_to_ab_transform_pkg is
                 WHEN 8 =>
                         gamma <= gamma_sum + get_multiplier_result(hw_multiplier,15);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
-                        abc_to_ab_transform_is_ready <= true;
+                        abc_to_ab_is_ready <= true;
 
                 WHEN others => -- wait for restart
             end CASE;

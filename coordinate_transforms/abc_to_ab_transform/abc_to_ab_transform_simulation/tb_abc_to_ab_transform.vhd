@@ -10,6 +10,7 @@ library math_library;
     use math_library.multiplier_pkg.all;
     use math_library.sincos_pkg.all;
     use math_library.abc_to_ab_transform_pkg.all;
+    use math_library.ab_to_abc_transform_pkg.all;
 
 entity tb_abc_to_ab_transform is
   generic (runner_cfg : string);
@@ -40,7 +41,11 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
 
     signal ab_transform_multiplier : multiplier_record := init_multiplier;
     signal abc_to_ab_transform : abc_to_ab_transform_record := init_abc_to_ab_transform;
+    signal ab_to_abc_transform : alpha_beta_to_abc_transform_record := init_alpha_beta_to_abc_transform;
 ------------------------------------------------------------------------
+    signal phase_a_difference : integer := 0;
+    signal phase_b_difference : integer := 0;
+    signal phase_c_difference : integer := 0;
 
 ------------------------------------------------------------------------
 begin
@@ -83,19 +88,34 @@ begin
             create_sincos(multiplier(phase_b) , sincos(phase_b));
             create_sincos(multiplier(phase_c) , sincos(phase_c));
 
-            if simulation_counter = 10 or sincos_is_ready(sincos(phase_a)) then
+            if simulation_counter = 10 or ab_to_abc_transform_is_ready(ab_to_abc_transform) then
                 angle_rad16 <= angle_rad16 + 511;
                 request_sincos(sincos(phase_a),angle_rad16);
                 request_sincos(sincos(phase_b),angle_rad16 + 21845);
                 request_sincos(sincos(phase_c),angle_rad16 + 21845*2);
+
+                phase_a_difference <= get_sine(sincos(phase_a)) - get_phase_a(ab_to_abc_transform);
+                phase_b_difference <= get_sine(sincos(phase_b)) - get_phase_b(ab_to_abc_transform);
+                phase_c_difference <= get_sine(sincos(phase_c)) - get_phase_c(ab_to_abc_transform);
             end if; 
 
             if sincos_is_ready(sincos(phase_a)) then
                 request_abc_to_ab_transform(abc_to_ab_transform);
             end if;
 
+            if abc_to_ab_transform_is_ready(abc_to_ab_transform) then
+                request_alpha_beta_to_abc_transform(ab_to_abc_transform);
+            end if;
+
             create_multiplier(ab_transform_multiplier);
             create_abc_to_ab_transformer(ab_transform_multiplier, abc_to_ab_transform, get_sine(sincos(phase_a)), get_sine(sincos(phase_c)), get_sine(sincos(phase_b)));
+
+            create_alpha_beta_to_abc_transformer(
+                ab_transform_multiplier            ,
+                ab_to_abc_transform                ,
+                get_alpha(abc_to_ab_transform) / 4 ,
+                get_beta(abc_to_ab_transform)  / 4 ,
+                get_gamma(abc_to_ab_transform) / 4);
 
         end if; -- rising_edge
     end process stimulus;	
