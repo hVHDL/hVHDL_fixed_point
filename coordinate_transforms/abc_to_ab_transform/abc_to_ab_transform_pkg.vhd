@@ -7,9 +7,12 @@ library math_library;
 
 package abc_to_ab_transform_pkg is
 
+------------------------------------------------------------------------
     type abc_to_ab_transform_record is record
+
         abc_to_ab_multiplier_process_counter : natural range 0 to 15;
         abc_to_ab_calculation_process_counter : natural range 0 to 15;
+
         alpha : int18;
         beta  : int18;
         gamma : int18;
@@ -17,12 +20,26 @@ package abc_to_ab_transform_pkg is
         alpha_sum : int18;
         beta_sum : int18;
         gamma_sum: int18;
+
+        abc_to_ab_transform_is_ready : boolean;
     end record;
 
     constant init_abc_to_ab_transform : abc_to_ab_transform_record := 
         (0, 0, 0, 0, 0,
-        0, 0, 0);
+        0, 0, 0, false);
 
+------------------------------------------------------------------------
+    function get_alpha ( abc_to_ab_object : abc_to_ab_transform_record)
+        return integer;
+------------------------------------------------------------------------
+    function get_beta ( abc_to_ab_object : abc_to_ab_transform_record)
+        return integer;
+------------------------------------------------------------------------
+    function get_gamma ( abc_to_ab_object : abc_to_ab_transform_record)
+        return integer;
+------------------------------------------------------------------------
+    function ab_to_abc_transform_is_ready ( abc_to_ab_object : abc_to_ab_transform_record)
+        return boolean;
 ------------------------------------------------------------------------
     procedure request_abc_to_ab_transform (
         signal abc_to_ab_object : inout abc_to_ab_transform_record);
@@ -38,6 +55,46 @@ package abc_to_ab_transform_pkg is
 end package abc_to_ab_transform_pkg;
 
 package body abc_to_ab_transform_pkg is
+------------------------------------------------------------------------
+    function get_alpha
+    (
+        abc_to_ab_object : abc_to_ab_transform_record
+    )
+    return integer
+    is
+    begin
+        return abc_to_ab_object.alpha;
+    end get_alpha;
+------------------------------------------------------------------------
+    function get_beta
+    (
+        abc_to_ab_object : abc_to_ab_transform_record
+    )
+    return integer
+    is
+    begin
+        return abc_to_ab_object.beta;
+    end get_beta;
+------------------------------------------------------------------------
+    function get_gamma
+    (
+        abc_to_ab_object : abc_to_ab_transform_record
+    )
+    return integer
+    is
+    begin
+        return abc_to_ab_object.gamma;
+    end get_gamma;
+------------------------------------------------------------------------
+    function ab_to_abc_transform_is_ready
+    (
+        abc_to_ab_object : abc_to_ab_transform_record
+    )
+    return boolean
+    is
+    begin
+        return abc_to_ab_object.abc_to_ab_transform_is_ready;
+    end ab_to_abc_transform_is_ready;
 ------------------------------------------------------------------------
     procedure request_abc_to_ab_transform
     (
@@ -68,7 +125,11 @@ package body abc_to_ab_transform_pkg is
         alias alpha_sum is abc_to_ab_object.alpha_sum;
         alias beta_sum  is abc_to_ab_object.beta_sum;
         alias gamma_sum is abc_to_ab_object.gamma_sum;
+
+        alias abc_to_ab_transform_is_ready is abc_to_ab_object.abc_to_ab_transform_is_ready;
     begin
+
+            abc_to_ab_transform_is_ready <= false;
             CASE abc_multiplier_process_counter is
                 WHEN 0 =>
                     multiply(hw_multiplier, phase_a, 43691 );
@@ -134,6 +195,7 @@ package body abc_to_ab_transform_pkg is
                 WHEN 8 =>
                         gamma <= gamma_sum + get_multiplier_result(hw_multiplier,15);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
+                        abc_to_ab_transform_is_ready <= true;
 
                 WHEN others => -- wait for restart
             end CASE;

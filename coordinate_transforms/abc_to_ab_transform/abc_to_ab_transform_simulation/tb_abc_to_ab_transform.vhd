@@ -37,14 +37,8 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
     type multiplier_array is array (abc range abc'left to abc'right) of multiplier_record;
     signal multiplier : multiplier_array := (init_multiplier, init_multiplier, init_multiplier);
 
-    signal abc_multiplier_process_counter : natural range 0 to 15 := 15;
-    signal abc_transform_process_counter : natural range 0 to 15 := 15;
-
     signal ab_transform_multiplier : multiplier_record := init_multiplier;
-
     signal abc_to_ab_transform : abc_to_ab_transform_record := init_abc_to_ab_transform;
-
-
 
 begin
 
@@ -99,7 +93,6 @@ begin
 
             create_multiplier(ab_transform_multiplier);
             create_abc_to_ab_transformer(ab_transform_multiplier, abc_to_ab_transform, get_sine(sincos(phase_a)), get_sine(sincos(phase_c)), get_sine(sincos(phase_b)));
-
 
         end if; -- rising_edge
     end process stimulus;	
