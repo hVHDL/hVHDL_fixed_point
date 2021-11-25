@@ -23,4 +23,121 @@ package abc_to_ab_transform_pkg is
         (0, 0, 0, 0, 0,
         0, 0, 0);
 
+------------------------------------------------------------------------
+    procedure request_abc_to_ab_transform (
+        signal abc_to_ab_object : inout abc_to_ab_transform_record);
+------------------------------------------------------------------------
+    procedure create_abc_to_ab_transformer (
+        signal hw_multiplier : inout multiplier_record;
+        signal abc_to_ab_object : inout abc_to_ab_transform_record;
+        phase_a : integer;
+        phase_b : integer;
+        phase_c : integer);
+------------------------------------------------------------------------
+
 end package abc_to_ab_transform_pkg;
+
+package body abc_to_ab_transform_pkg is
+------------------------------------------------------------------------
+    procedure request_abc_to_ab_transform
+    (
+        signal abc_to_ab_object : inout abc_to_ab_transform_record
+    ) is
+    begin
+        abc_to_ab_object.abc_to_ab_multiplier_process_counter  <= 0;
+        abc_to_ab_object.abc_to_ab_calculation_process_counter <= 0;
+        
+    end request_abc_to_ab_transform;
+
+------------------------------------------------------------------------
+    procedure create_abc_to_ab_transformer
+    (
+        signal hw_multiplier : inout multiplier_record;
+        signal abc_to_ab_object : inout abc_to_ab_transform_record;
+        phase_a : integer;
+        phase_b : integer;
+        phase_c : integer
+    ) is
+        alias abc_multiplier_process_counter is abc_to_ab_object.abc_to_ab_multiplier_process_counter;
+        alias abc_transform_process_counter is abc_to_ab_object.abc_to_ab_calculation_process_counter;
+
+        alias alpha is abc_to_ab_object.alpha;
+        alias beta  is abc_to_ab_object.beta;
+        alias gamma is abc_to_ab_object.gamma;
+
+        alias alpha_sum is abc_to_ab_object.alpha_sum;
+        alias beta_sum  is abc_to_ab_object.beta_sum;
+        alias gamma_sum is abc_to_ab_object.gamma_sum;
+    begin
+            CASE abc_multiplier_process_counter is
+                WHEN 0 =>
+                    multiply(hw_multiplier, phase_a, 43691 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 1 =>
+                    multiply(hw_multiplier, phase_b, -21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 2 =>
+                    multiply(hw_multiplier, phase_c, -21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+
+                WHEN 3 =>
+                    multiply(hw_multiplier, phase_a, 0 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 4 =>
+                    multiply(hw_multiplier, phase_b, 37837 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 5 =>
+                    multiply(hw_multiplier, phase_c, -37837 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+
+                WHEN 6 =>
+                    multiply(hw_multiplier, phase_a, 21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 7 =>
+                    multiply(hw_multiplier, phase_b, 21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 8 =>
+                    multiply(hw_multiplier, phase_c, 21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN others =>
+            end CASE;
+
+            CASE abc_transform_process_counter is
+                WHEN 0 =>
+                    if multiplier_is_ready(hw_multiplier) then
+                        alpha_sum <= get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                    end if;
+                WHEN 1 =>
+                        alpha_sum <= alpha_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 2 =>
+                        alpha <= alpha_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+
+                WHEN 3 =>
+                        beta_sum <= get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 4 =>
+                        beta_sum <= beta_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 5 =>
+                        beta <= beta_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+
+                WHEN 6 =>
+                        gamma_sum <= get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 7 =>
+                        gamma_sum <= gamma_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 8 =>
+                        gamma <= gamma_sum + get_multiplier_result(hw_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+
+                WHEN others => -- wait for restart
+            end CASE;
+    end create_abc_to_ab_transformer;
+
+------------------------------------------------------------------------
+end package body abc_to_ab_transform_pkg;
