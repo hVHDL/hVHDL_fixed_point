@@ -150,34 +150,34 @@ package body ab_to_abc_transform_pkg is
             CASE abc_transform_process_counter is
                 WHEN 0 =>
                     if multiplier_is_ready(hw_multiplier) then
-                        phase_a_sum <= get_multiplier_result(hw_multiplier,15);
+                        phase_a_sum <= get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                     end if;
                 WHEN 1 =>
-                        phase_a_sum <= phase_a_sum + get_multiplier_result(hw_multiplier,15);
+                        phase_a_sum <= phase_a_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 2 =>
-                        phase_a <= phase_a_sum + get_multiplier_result(hw_multiplier,15);
+                        phase_a <= phase_a_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
 
                 WHEN 3 =>
-                        phase_b_sum <= get_multiplier_result(hw_multiplier,15);
+                        phase_b_sum <= get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 4 =>
-                        phase_b_sum <= phase_b_sum + get_multiplier_result(hw_multiplier,15);
+                        phase_b_sum <= phase_b_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 5 =>
-                        phase_b <= phase_b_sum + get_multiplier_result(hw_multiplier,15);
+                        phase_b <= phase_b_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
 
                 WHEN 6 =>
-                        phase_c_sum <= get_multiplier_result(hw_multiplier,15);
+                        phase_c_sum <= get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 7 =>
-                        phase_c_sum <= phase_c_sum + get_multiplier_result(hw_multiplier,15);
+                        phase_c_sum <= phase_c_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 8 =>
-                        phase_c <= phase_c_sum + get_multiplier_result(hw_multiplier,15);
+                        phase_c <= phase_c_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                         alpha_beta_to_abc_transform_is_ready <= true;
 

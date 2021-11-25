@@ -149,34 +149,34 @@ package body abc_to_ab_transform_pkg is
             CASE abc_transform_process_counter is
                 WHEN 0 =>
                     if multiplier_is_ready(hw_multiplier) then
-                        alpha_sum <= get_multiplier_result(hw_multiplier,15);
+                        alpha_sum <= get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                     end if;
                 WHEN 1 =>
-                        alpha_sum <= alpha_sum + get_multiplier_result(hw_multiplier,15);
+                        alpha_sum <= alpha_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 2 =>
-                        alpha <= alpha_sum + get_multiplier_result(hw_multiplier,15);
+                        alpha <= alpha_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
 
                 WHEN 3 =>
-                        beta_sum <= get_multiplier_result(hw_multiplier,15);
+                        beta_sum <= get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 4 =>
-                        beta_sum <= beta_sum + get_multiplier_result(hw_multiplier,15);
+                        beta_sum <= beta_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 5 =>
-                        beta <= beta_sum + get_multiplier_result(hw_multiplier,15);
+                        beta <= beta_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
 
                 WHEN 6 =>
-                        gamma_sum <= get_multiplier_result(hw_multiplier,15);
+                        gamma_sum <= get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 7 =>
-                        gamma_sum <= gamma_sum + get_multiplier_result(hw_multiplier,15);
+                        gamma_sum <= gamma_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 8 =>
-                        gamma <= gamma_sum + get_multiplier_result(hw_multiplier,15);
+                        gamma <= gamma_sum + get_multiplier_result(hw_multiplier,16);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                         abc_to_ab_is_ready <= true;
 

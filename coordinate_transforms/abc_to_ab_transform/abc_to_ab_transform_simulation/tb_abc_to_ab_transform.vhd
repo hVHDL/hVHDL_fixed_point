@@ -111,11 +111,11 @@ begin
             create_abc_to_ab_transformer(ab_transform_multiplier, abc_to_ab_transform, get_sine(sincos(phase_a)), get_sine(sincos(phase_b)), get_sine(sincos(phase_c)));
 
             create_alpha_beta_to_abc_transformer(
-                ab_transform_multiplier            ,
-                ab_to_abc_transform                ,
-                get_alpha(abc_to_ab_transform) / 4 ,
-                get_beta(abc_to_ab_transform)  / 4 ,
-                get_gamma(abc_to_ab_transform) / 4);
+                ab_transform_multiplier        ,
+                ab_to_abc_transform            ,
+                get_alpha(abc_to_ab_transform) ,
+                get_beta(abc_to_ab_transform)  ,
+                get_gamma(abc_to_ab_transform) );
 
         end if; -- rising_edge
     end process stimulus;	
