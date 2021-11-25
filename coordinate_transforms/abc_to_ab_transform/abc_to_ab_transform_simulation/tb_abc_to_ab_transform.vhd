@@ -9,6 +9,7 @@ library vunit_lib;
 library math_library;
     use math_library.multiplier_pkg.all;
     use math_library.sincos_pkg.all;
+    use math_library.abc_to_ab_transform_pkg.all;
 
 entity tb_abc_to_ab_transform is
   generic (runner_cfg : string);
@@ -33,15 +34,6 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
     signal sincos : sincos_array := (init_sincos, init_sincos, init_sincos);
     signal angle_rad16 : unsigned(15 downto 0) := (others => '0');
 
-    type int_array is array (abc range abc'left to abc'right) of integer;
-    type int2d_array is array (integer range 0 to 2) of int_array;
-    constant alpha_beta_to_abc_gains : int2d_array := 
-    (
-        (43691 , -21845 , -21845) ,
-        (0     , 37837  , -37837) ,
-        (21845 , 21845  , 21845)
-    );
-        
     type multiplier_array is array (abc range abc'left to abc'right) of multiplier_record;
     signal multiplier : multiplier_array := (init_multiplier, init_multiplier, init_multiplier);
 
@@ -50,9 +42,11 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
 
     signal ab_transform_multiplier : multiplier_record := init_multiplier;
 
-    signal alpha : int18 := 0;
-    signal beta  : int18 := 0;
-    signal gamma : int18 := 0;
+    signal abc_to_ab_transform : abc_to_ab_transform_record := init_abc_to_ab_transform;
+
+    alias alpha is abc_to_ab_transform.alpha;
+    alias beta  is abc_to_ab_transform.beta;
+    alias gamma is abc_to_ab_transform.gamma;
 
     signal alpha_jee : int18 :=0;
     signal beta_jee : int18 :=0;
@@ -60,6 +54,7 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
 
     signal testi : integer :=0;
     signal nolla : integer := 0;
+
 
 begin
 
