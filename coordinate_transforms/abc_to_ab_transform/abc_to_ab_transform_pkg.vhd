@@ -18,8 +18,8 @@ package abc_to_ab_transform_pkg is
         gamma : int18;
 
         alpha_sum : int18;
-        beta_sum : int18;
-        gamma_sum: int18;
+        beta_sum  : int18;
+        gamma_sum : int18;
 
         abc_to_ab_transform_is_ready : boolean;
     end record;

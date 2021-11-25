@@ -25,8 +25,9 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
 
     signal simulation_counter : natural := 0;
 
-    -----------------------------------
+------------------------------------------------------------------------
     -- simulation specific signals ----
+------------------------------------------------------------------------
 
     type abc is (phase_a, phase_b, phase_c);
 
@@ -39,7 +40,9 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
 
     signal ab_transform_multiplier : multiplier_record := init_multiplier;
     signal abc_to_ab_transform : abc_to_ab_transform_record := init_abc_to_ab_transform;
+------------------------------------------------------------------------
 
+------------------------------------------------------------------------
 begin
 
 ------------------------------------------------------------------------
