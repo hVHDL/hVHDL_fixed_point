@@ -48,13 +48,17 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
     alias beta  is abc_to_ab_transform.beta;
     alias gamma is abc_to_ab_transform.gamma;
 
-    signal alpha_jee : int18 :=0;
-    signal beta_jee : int18 :=0;
-    signal gamma_jee : int18 :=0;
+    alias alpha_sum is abc_to_ab_transform.alpha_sum;
+    alias beta_sum  is abc_to_ab_transform.beta_sum;
+    alias gamma_sum is abc_to_ab_transform.gamma_sum;
 
-    signal testi : integer :=0;
-    signal nolla : integer := 0;
-
+    procedure abc_to_ab_transformer
+    (
+        signal hw_multiplier : inout multiplier_record
+    ) is
+    begin
+        
+    end abc_to_ab_transformer;
 
 begin
 
@@ -133,49 +137,46 @@ begin
                 WHEN 6 =>
                     multiply(ab_transform_multiplier, get_sine(sincos(phase_a)), 21845 );
                     abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                    testi <= get_sine(sincos(phase_a));
                 WHEN 7 =>
                     multiply(ab_transform_multiplier, get_sine(sincos(phase_b)), 21845 );
                     abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                    testi <= testi + get_sine(sincos(phase_b));
                 WHEN 8 =>
                     multiply(ab_transform_multiplier, get_sine(sincos(phase_c)), 21845 );
                     abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                    nolla <= testi + get_sine(sincos(phase_c));
                 WHEN others =>
             end CASE;
 
             CASE abc_transform_process_counter is
                 WHEN 0 =>
                     if multiplier_is_ready(ab_transform_multiplier) then
-                        alpha_jee <= get_multiplier_result(ab_transform_multiplier,15);
+                        alpha_sum <= get_multiplier_result(ab_transform_multiplier,15);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                     end if;
                 WHEN 1 =>
-                        alpha_jee <= alpha_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        alpha_sum <= alpha_sum + get_multiplier_result(ab_transform_multiplier,15);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 2 =>
-                        alpha <= alpha_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        alpha <= alpha_sum + get_multiplier_result(ab_transform_multiplier,15);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
 
                 WHEN 3 =>
-                        beta_jee <= get_multiplier_result(ab_transform_multiplier,15);
+                        beta_sum <= get_multiplier_result(ab_transform_multiplier,15);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 4 =>
-                        beta_jee <= beta_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        beta_sum <= beta_sum + get_multiplier_result(ab_transform_multiplier,15);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 5 =>
-                        beta <= beta_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        beta <= beta_sum + get_multiplier_result(ab_transform_multiplier,15);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
 
                 WHEN 6 =>
-                        gamma_jee <= get_multiplier_result(ab_transform_multiplier,15);
+                        gamma_sum <= get_multiplier_result(ab_transform_multiplier,15);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 7 =>
-                        gamma_jee <= gamma_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        gamma_sum <= gamma_sum + get_multiplier_result(ab_transform_multiplier,15);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
                 WHEN 8 =>
-                        gamma <= gamma_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        gamma <= gamma_sum + get_multiplier_result(ab_transform_multiplier,15);
                         abc_transform_process_counter <= abc_transform_process_counter + 1;
 
                 WHEN others => -- wait for restart

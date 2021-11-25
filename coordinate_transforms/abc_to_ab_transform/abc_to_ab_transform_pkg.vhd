@@ -11,9 +11,14 @@ package abc_to_ab_transform_pkg is
         alpha : int18;
         beta  : int18;
         gamma : int18;
+
+        alpha_sum : int18;
+        beta_sum : int18;
+        gamma_sum: int18;
     end record;
 
     constant init_abc_to_ab_transform : abc_to_ab_transform_record := 
-        (0, 0, 0);
+        (0, 0, 0,
+        0, 0, 0);
 
 end package abc_to_ab_transform_pkg;
