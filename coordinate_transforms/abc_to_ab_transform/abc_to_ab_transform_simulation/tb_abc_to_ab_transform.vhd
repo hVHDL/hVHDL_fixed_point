@@ -28,14 +28,12 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
     -- simulation specific signals ----
 
     type abc is (phase_a, phase_b, phase_c);
-    type multiplier_array is array (abc range abc'left to abc'right) of multiplier_record;
-    constant init_abc_multiplier : multiplier_array := (init_multiplier, init_multiplier, init_multiplier);
-    signal multiplier : multiplier_array := init_abc_multiplier;
 
-    signal abc_multiplier_process_counter : natural range 0 to 15 := 15;
-    signal abc_transform_process_counter : natural range 0 to 15 := 15;
+    type sincos_array is array (abc range abc'left to abc'right) of sincos_record;
+    signal sincos : sincos_array := (init_sincos, init_sincos, init_sincos);
+    signal angle_rad16 : unsigned(15 downto 0) := (others => '0');
 
-    type int_array is array (integer range 0 to 2) of integer;
+    type int_array is array (abc range abc'left to abc'right) of integer;
     type int2d_array is array (integer range 0 to 2) of int_array;
     constant alpha_beta_to_abc_gains : int2d_array := 
     (
@@ -44,14 +42,24 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
         (21845 , 21845  , 21845)
     );
         
+    type multiplier_array is array (abc range abc'left to abc'right) of multiplier_record;
+    signal multiplier : multiplier_array := (init_multiplier, init_multiplier, init_multiplier);
 
-    signal sincos_multiplier : multiplier_record := init_multiplier;
+    signal abc_multiplier_process_counter : natural range 0 to 15 := 15;
+    signal abc_transform_process_counter : natural range 0 to 15 := 15;
 
-    type sincos_array is array (abc range abc'left to abc'right) of sincos_record;
-    signal sincos : sincos_array := (init_sincos, init_sincos, init_sincos);
-    signal angle_rad16 : unsigned(15 downto 0) := (others => '0');
+    signal ab_transform_multiplier : multiplier_record := init_multiplier;
 
-    signal test : integer := 0;
+    signal alpha : int18 := 0;
+    signal beta  : int18 := 0;
+    signal gamma : int18 := 0;
+
+    signal alpha_jee : int18 :=0;
+    signal beta_jee : int18 :=0;
+    signal gamma_jee : int18 :=0;
+
+    signal testi : integer :=0;
+    signal nolla : integer := 0;
 
 begin
 
@@ -89,61 +97,94 @@ begin
             create_multiplier(multiplier(phase_b));
             create_multiplier(multiplier(phase_c));
 
-            create_multiplier(sincos_multiplier);
             create_sincos(multiplier(phase_a) , sincos(phase_a));
             create_sincos(multiplier(phase_b) , sincos(phase_b));
             create_sincos(multiplier(phase_c) , sincos(phase_c));
 
-            test <= get_sine(sincos(phase_a)) + get_sine(sincos(phase_b)) + get_sine(sincos(phase_c));
-
             if simulation_counter = 10 or sincos_is_ready(sincos(phase_a)) then
                 angle_rad16 <= angle_rad16 + 511;
-                request_sincos(sincos(phase_a), angle_rad16);
-                request_sincos(sincos(phase_b), angle_rad16 + 21845);
-                request_sincos(sincos(phase_c), angle_rad16 + 21845*2);
+                request_sincos(sincos(phase_a),angle_rad16);
+                request_sincos(sincos(phase_b),angle_rad16 + 21845);
+                request_sincos(sincos(phase_c),angle_rad16 + 21845*2);
             end if; 
 
             if sincos_is_ready(sincos(phase_a)) then
-                CASE abc_multiplier_process_counter is
-                    WHEN 0 =>
-                        multiply(multiplier(phase_a), get_sine(sincos(phase_a)), 32768);
-                        abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                    WHEN 1 =>
-                        multiply(multiplier(phase_a), get_sine(sincos(phase_a)), 32768);
-                        abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                    WHEN 2 =>
-                        multiply(multiplier(phase_a), get_sine(sincos(phase_a)), 32768);
-                        abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                    WHEN 3 =>
-                        multiply(multiplier(phase_a), get_sine(sincos(phase_a)), 32768);
-                        abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                    WHEN 4 =>
-                        multiply(multiplier(phase_a), get_sine(sincos(phase_a)), 32768);
-                        abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                    WHEN 5 =>
-                        multiply(multiplier(phase_a), get_sine(sincos(phase_a)), 32768);
-                        abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                    WHEN 6 =>
-                        multiply(multiplier(phase_a), get_sine(sincos(phase_a)), 32768);
-                        abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
-                    WHEN others =>
-                end CASE;
+                abc_multiplier_process_counter <= 0;
+                abc_transform_process_counter <= 0;
+            end if;
 
-                CASE abc_transform_process_counter is
-                    WHEN 0 =>
-                        if multiplier_is_ready(multiplier(phase_a)) then
-                            -- get_multiplier_result(multiplier(phase_a));
-                            abc_transform_process_counter <= abc_transform_process_counter + 1;
-                        end if;
-                    WHEN 1 =>
-                    WHEN 2 =>
-                    WHEN 3 =>
-                    WHEN 4 =>
-                    WHEN 5 =>
-                    WHEN 6 =>
-                    WHEN others => -- wait for restart
-                end CASE;
-            end if; -- sincos(phase_a)_is_ready(sincos(phase_a))
+            create_multiplier(ab_transform_multiplier);
+            CASE abc_multiplier_process_counter is
+                WHEN 0 =>
+                    multiply(ab_transform_multiplier, get_sine(sincos(phase_a)), 43691 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 1 =>
+                    multiply(ab_transform_multiplier, get_sine(sincos(phase_b)), -21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 2 =>
+                    multiply(ab_transform_multiplier, get_sine(sincos(phase_c)), -21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+
+                WHEN 3 =>
+                    multiply(ab_transform_multiplier, get_sine(sincos(phase_a)), 0 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 4 =>
+                    multiply(ab_transform_multiplier, get_sine(sincos(phase_b)), 37837 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                WHEN 5 =>
+                    multiply(ab_transform_multiplier, get_sine(sincos(phase_c)), -37837 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+
+                WHEN 6 =>
+                    multiply(ab_transform_multiplier, get_sine(sincos(phase_a)), 21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    testi <= get_sine(sincos(phase_a));
+                WHEN 7 =>
+                    multiply(ab_transform_multiplier, get_sine(sincos(phase_b)), 21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    testi <= testi + get_sine(sincos(phase_b));
+                WHEN 8 =>
+                    multiply(ab_transform_multiplier, get_sine(sincos(phase_c)), 21845 );
+                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    nolla <= testi + get_sine(sincos(phase_c));
+                WHEN others =>
+            end CASE;
+
+            CASE abc_transform_process_counter is
+                WHEN 0 =>
+                    if multiplier_is_ready(ab_transform_multiplier) then
+                        alpha_jee <= get_multiplier_result(ab_transform_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                    end if;
+                WHEN 1 =>
+                        alpha_jee <= alpha_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 2 =>
+                        alpha <= alpha_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+
+                WHEN 3 =>
+                        beta_jee <= get_multiplier_result(ab_transform_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 4 =>
+                        beta_jee <= beta_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 5 =>
+                        beta <= beta_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+
+                WHEN 6 =>
+                        gamma_jee <= get_multiplier_result(ab_transform_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 7 =>
+                        gamma_jee <= gamma_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+                WHEN 8 =>
+                        gamma <= gamma_jee + get_multiplier_result(ab_transform_multiplier,15);
+                        abc_transform_process_counter <= abc_transform_process_counter + 1;
+
+                WHEN others => -- wait for restart
+            end CASE;
 
 
 
