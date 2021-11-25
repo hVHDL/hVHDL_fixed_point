@@ -75,8 +75,6 @@ begin
 ------------------------------------------------------------------------
 
     stimulus : process(simulator_clock)
-        -- variable my_checker : checker_t;
-
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
@@ -94,8 +92,16 @@ begin
                 request_sincos(sincos(phase_a),angle_rad16);
                 request_sincos(sincos(phase_b),angle_rad16 + 21845);
                 request_sincos(sincos(phase_c),angle_rad16 + 21845*2);
-
             end if; 
+        ------------------------------------------------------------------------
+            create_multiplier(ab_transform_multiplier);
+            create_abc_to_ab_transformer(ab_transform_multiplier, abc_to_ab_transform, get_sine(sincos(phase_a)), get_sine(sincos(phase_b)), get_sine(sincos(phase_c)));
+
+            create_alpha_beta_to_abc_transformer( ab_transform_multiplier, ab_to_abc_transform,
+                get_alpha(abc_to_ab_transform) ,
+                get_beta(abc_to_ab_transform)  ,
+                get_gamma(abc_to_ab_transform) );
+        ------------------------------------------------------------------------
 
             if sincos_is_ready(sincos(phase_a)) then
                 request_abc_to_ab_transform(abc_to_ab_transform);
@@ -113,16 +119,6 @@ begin
                 phase_b_difference <= get_sine(sincos(phase_b)) - get_phase_b(ab_to_abc_transform);
                 phase_c_difference <= get_sine(sincos(phase_c)) - get_phase_c(ab_to_abc_transform);
             end if;
-
-            create_multiplier(ab_transform_multiplier);
-            create_abc_to_ab_transformer(ab_transform_multiplier, abc_to_ab_transform, get_sine(sincos(phase_a)), get_sine(sincos(phase_b)), get_sine(sincos(phase_c)));
-
-            create_alpha_beta_to_abc_transformer(
-                ab_transform_multiplier        ,
-                ab_to_abc_transform            ,
-                get_alpha(abc_to_ab_transform) ,
-                get_beta(abc_to_ab_transform)  ,
-                get_gamma(abc_to_ab_transform) );
 
         end if; -- rising_edge
     end process stimulus;	
