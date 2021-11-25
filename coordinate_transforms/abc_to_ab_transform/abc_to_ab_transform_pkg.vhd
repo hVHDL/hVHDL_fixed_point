@@ -132,34 +132,25 @@ package body abc_to_ab_transform_pkg is
             abc_to_ab_transform_is_ready <= false;
             CASE abc_multiplier_process_counter is
                 WHEN 0 =>
-                    multiply(hw_multiplier, phase_a, 43691 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_a, 43691 );
                 WHEN 1 =>
-                    multiply(hw_multiplier, phase_b, -21845 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_b, -21845 );
                 WHEN 2 =>
-                    multiply(hw_multiplier, phase_c, -21845 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_c, -21845 );
 
                 WHEN 3 =>
-                    multiply(hw_multiplier, phase_a, 0 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_a, 0 );
                 WHEN 4 =>
-                    multiply(hw_multiplier, phase_b, 37837 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_b, 37837 );
                 WHEN 5 =>
-                    multiply(hw_multiplier, phase_c, -37837 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_c, -37837 );
 
                 WHEN 6 =>
-                    multiply(hw_multiplier, phase_a, 21845 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_a, 21845 );
                 WHEN 7 =>
-                    multiply(hw_multiplier, phase_b, 21845 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_b, 21845 );
                 WHEN 8 =>
-                    multiply(hw_multiplier, phase_c, 21845 );
-                    abc_multiplier_process_counter <= abc_multiplier_process_counter + 1;
+                    multiply_and_increment_counter(hw_multiplier, abc_multiplier_process_counter, phase_c, 21845 );
                 WHEN others =>
             end CASE;
 

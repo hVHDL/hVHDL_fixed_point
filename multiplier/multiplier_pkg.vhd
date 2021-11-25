@@ -58,6 +58,11 @@ package multiplier_pkg is
     procedure increment_counter_when_ready (
         multiplier : multiplier_record;
         signal counter : inout natural);
+------------------------------------------------------------------------
+    procedure multiply_and_increment_counter (
+        signal multiplier : inout multiplier_record;
+        signal counter : inout integer;
+        left, right : int18);
 
 ------------------------------------------------------------------------
 end package multiplier_pkg;
@@ -232,6 +237,21 @@ package body multiplier_pkg is
         end if; 
         
     end multiply_and_get_result;
+
+------------------------------------------------------------------------
+    procedure multiply_and_increment_counter
+    (
+        signal multiplier : inout multiplier_record;
+        signal counter : inout integer;
+        left, right : int18
+    ) 
+    is
+    begin
+
+        multiply(multiplier, left, right);
+        counter <= counter + 1;
+        
+    end multiply_and_increment_counter;
 
 ------------------------------------------------------------------------
 end package body multiplier_pkg; 
