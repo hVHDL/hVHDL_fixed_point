@@ -37,9 +37,6 @@ architecture vunit_simulation of tb_ab_to_dq_transforms is
 
     signal angle_rad16 : unsigned(15 downto 0) := (others => '0');
 
-    signal d : int18 := -10e3;
-    signal q : int18 := -500;
-
     signal dq_to_ab_transform : dq_to_ab_record := init_dq_to_ab_transform;
     signal ab_to_dq_transform : ab_to_dq_record := init_ab_to_dq_transform;
 
