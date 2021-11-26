@@ -91,14 +91,10 @@ package body dq_to_ab_transform_pkg is
         dq_to_ab_calculation_is_ready <= false;
     --------------------------------------------------
         CASE dq_to_ab_multiplier_counter is
-            WHEN 0 =>
-                multiply_and_increment_counter(hw_multiplier, dq_to_ab_multiplier_counter, cosine, d);
-            WHEN 1 =>
-                multiply_and_increment_counter(hw_multiplier, dq_to_ab_multiplier_counter, sine, q);
-            WHEN 2 =>
-                multiply_and_increment_counter(hw_multiplier, dq_to_ab_multiplier_counter, -sine, d);
-            WHEN 3 =>
-                multiply_and_increment_counter(hw_multiplier, dq_to_ab_multiplier_counter, cosine, q);
+            WHEN 0 => multiply_and_increment_counter(hw_multiplier , dq_to_ab_multiplier_counter , cosine , d);
+            WHEN 1 => multiply_and_increment_counter(hw_multiplier , dq_to_ab_multiplier_counter , -sine  , q);
+            WHEN 2 => multiply_and_increment_counter(hw_multiplier , dq_to_ab_multiplier_counter , sine   , d);
+            WHEN 3 => multiply_and_increment_counter(hw_multiplier , dq_to_ab_multiplier_counter , cosine , q);
             WHEN others =>
         end CASE;
 
@@ -110,10 +106,10 @@ package body dq_to_ab_transform_pkg is
                     increment(dq_to_ab_calculation_counter);
                 end if;
             WHEN 1 =>
-                alpha <= get_multiplier_result(hw_multiplier,15);
+                alpha <= alpha_sum + get_multiplier_result(hw_multiplier,15);
                 increment(dq_to_ab_calculation_counter);
             WHEN 2 =>
-                beta_sum <= alpha_sum + get_multiplier_result(hw_multiplier,15);
+                beta_sum <= get_multiplier_result(hw_multiplier,15);
                 increment(dq_to_ab_calculation_counter);
             WHEN 3 =>
                 dq_to_ab_calculation_is_ready <= true;

@@ -100,6 +100,12 @@ begin
                     get_sine(sincos(phase_a))   ,
                     get_cosine(sincos(phase_a)) ,
                     -10e3                       , -500);
+
+                request_ab_to_dq_transform(
+                    ab_to_dq_transform          ,
+                    get_sine(sincos(phase_a))   ,
+                    get_cosine(sincos(phase_a)) ,
+                    dq_to_ab_transform.alpha    , dq_to_ab_transform.beta);
             end if;
 
 
