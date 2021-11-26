@@ -35,7 +35,7 @@ architecture vunit_simulation of tb_ab_to_dq_transforms is
     type sincos_array is array (abc range abc'left to abc'right) of sincos_record;
     signal sincos : sincos_array := (init_sincos, init_sincos, init_sincos);
 
-    signal angle_rad16 : unsigned(15 downto 0) := (others => '0');
+    signal angle_rad16 : unsigned(15 downto 0) := to_unsigned(10e3, 16);
 
     signal dq_to_ab_transform : dq_to_ab_record := init_dq_to_ab_transform;
     signal ab_to_dq_transform : ab_to_dq_record := init_ab_to_dq_transform;
