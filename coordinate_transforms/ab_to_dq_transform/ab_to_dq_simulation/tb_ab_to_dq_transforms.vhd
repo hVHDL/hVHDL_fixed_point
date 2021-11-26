@@ -9,6 +9,7 @@ library vunit_lib;
 library math_library;
     use math_library.multiplier_pkg.all;
     use math_library.sincos_pkg.all;
+    use math_library.dq_to_ab_transform_pkg.all;
 
 entity tb_ab_to_dq_transforms is
   generic (runner_cfg : string);
@@ -35,16 +36,11 @@ architecture vunit_simulation of tb_ab_to_dq_transforms is
 
     signal angle_rad16 : unsigned(15 downto 0) := (others => '0');
 
-    signal alpha : int18 := 0;
-    signal alpha_sum : int18 := 0;
-    signal beta : int18 := 0;
-    signal beta_sum : int18 := 0;
-
     signal d : int18 := -10e3;
     signal q : int18 := -500;
 
-    signal dq_to_ab_multiplier_counter : natural range 0 to 15 := 15;
-    signal dq_to_ab_calculation_counter : natural range 0 to 15 := 15;
+    signal dq_to_ab_transform : dq_to_ab_record := init_dq_to_ab_transform;
+
 
 begin
 
@@ -92,40 +88,13 @@ begin
             if sincos_is_ready(sincos(phase_a)) then
                 angle_rad16 <= angle_rad16 + 511;
                 request_sincos(sincos(phase_a), angle_rad16);
-                dq_to_ab_calculation_counter <= 0;
-                dq_to_ab_multiplier_counter <= 0;
+                request_dq_to_ab_transform(dq_to_ab_transform);
             end if;
 
-            CASE dq_to_ab_multiplier_counter is
-                WHEN 0 =>
-                    multiply_and_increment_counter(multiplier(phase_b), dq_to_ab_multiplier_counter, get_cosine(sincos(phase_a)), d);
-                WHEN 1 =>
-                    multiply_and_increment_counter(multiplier(phase_b), dq_to_ab_multiplier_counter, get_sine(sincos(phase_a)), q);
-                WHEN 2 =>
-                    multiply_and_increment_counter(multiplier(phase_b), dq_to_ab_multiplier_counter, -get_sine(sincos(phase_a)), d);
-                WHEN 3 =>
-                    multiply_and_increment_counter(multiplier(phase_b), dq_to_ab_multiplier_counter, get_cosine(sincos(phase_a)), q);
-                WHEN others =>
-            end CASE;
-
-            CASE dq_to_ab_calculation_counter is
-                WHEN 0 =>
-                    if multiplier_is_ready(multiplier(phase_b)) then
-                        alpha_sum <= get_multiplier_result(multiplier(phase_b),15);
-                        increment(dq_to_ab_calculation_counter);
-                    end if;
-                WHEN 1 =>
-                    alpha <= get_multiplier_result(multiplier(phase_b),15);
-                    increment(dq_to_ab_calculation_counter);
-                WHEN 2 =>
-                    beta_sum <= alpha_sum + get_multiplier_result(multiplier(phase_b),15);
-                    increment(dq_to_ab_calculation_counter);
-                WHEN 3 =>
-                    beta <= beta_sum + get_multiplier_result(multiplier(phase_b),15);
-                    increment(dq_to_ab_calculation_counter);
-                WHEN others => -- hang and wait for start
-            end CASE;
-
+            create_dq_to_ab_transform(multiplier(phase_b), dq_to_ab_transform,
+                get_sine(sincos(phase_a)),
+                get_cosine(sincos(phase_a)),
+                10e3, 500);
 
 
         end if; -- rising_edge
