@@ -10,6 +10,7 @@ library math_library;
     use math_library.multiplier_pkg.all;
     use math_library.sincos_pkg.all;
     use math_library.dq_to_ab_transform_pkg.all;
+    use math_library.ab_to_dq_transform_pkg.all;
 
 entity tb_ab_to_dq_transforms is
   generic (runner_cfg : string);
@@ -40,6 +41,7 @@ architecture vunit_simulation of tb_ab_to_dq_transforms is
     signal q : int18 := -500;
 
     signal dq_to_ab_transform : dq_to_ab_record := init_dq_to_ab_transform;
+    signal ab_to_dq_transform : ab_to_dq_record := init_ab_to_dq_transform;
 
 
 begin
@@ -85,17 +87,20 @@ begin
                 request_sincos(sincos(phase_a), angle_rad16);
             end if;
 
+            --------------------------------------------------
+            create_dq_to_ab_transform(multiplier(phase_b), dq_to_ab_transform);
+            create_ab_to_dq_transform(multiplier(phase_c), ab_to_dq_transform);
+            --------------------------------------------------
             if sincos_is_ready(sincos(phase_a)) then
                 angle_rad16 <= angle_rad16 + 511;
                 request_sincos(sincos(phase_a), angle_rad16);
-                request_dq_to_ab_transform(
-                    dq_to_ab_transform,
-                    get_sine(sincos(phase_a)),
-                    get_cosine(sincos(phase_a)),
-                    -10e3, -500);
-            end if;
 
-            create_dq_to_ab_transform(multiplier(phase_b), dq_to_ab_transform);
+                request_dq_to_ab_transform(
+                    dq_to_ab_transform          ,
+                    get_sine(sincos(phase_a))   ,
+                    get_cosine(sincos(phase_a)) ,
+                    -10e3                       , -500);
+            end if;
 
 
         end if; -- rising_edge

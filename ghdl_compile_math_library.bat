@@ -16,4 +16,5 @@ ghdl -a --ieee=synopsys --work=math_library %source%/math_library/pi_controller/
 ghdl -a --ieee=synopsys --work=math_library %source%/math_library/coordinate_transforms/abc_to_ab_transform/abc_to_ab_transform_pkg.vhd
 ghdl -a --ieee=synopsys --work=math_library %source%/math_library/coordinate_transforms/abc_to_ab_transform/ab_to_abc_transform_pkg.vhd
 ghdl -a --ieee=synopsys --work=math_library %source%/math_library/coordinate_transforms/ab_to_dq_transform/dq_to_ab_transform_pkg.vhd
+ghdl -a --ieee=synopsys --work=math_library %source%/math_library/coordinate_transforms/ab_to_dq_transform/ab_to_dq_transform_pkg.vhd
 
