@@ -88,13 +88,14 @@ begin
             if sincos_is_ready(sincos(phase_a)) then
                 angle_rad16 <= angle_rad16 + 511;
                 request_sincos(sincos(phase_a), angle_rad16);
-                request_dq_to_ab_transform(dq_to_ab_transform);
+                request_dq_to_ab_transform(
+                    dq_to_ab_transform,
+                    get_sine(sincos(phase_a)),
+                    get_cosine(sincos(phase_a)),
+                    -10e3, -500);
             end if;
 
-            create_dq_to_ab_transform(multiplier(phase_b), dq_to_ab_transform,
-                get_sine(sincos(phase_a)),
-                get_cosine(sincos(phase_a)),
-                10e3, 500);
+            create_dq_to_ab_transform(multiplier(phase_b), dq_to_ab_transform);
 
 
         end if; -- rising_edge
