@@ -22,6 +22,9 @@ package multiplier_pkg is
 
     constant multiplier_init_values : multiplier_record := ( (others => '0'),(others => '0'),(others => '0'), (others => '0'), (others => '0'), (others => '0'), (others => '0'), false, '0');
     constant init_multiplier : multiplier_record := multiplier_init_values;
+
+------------------------------------------------------------------------
+    procedure increment ( signal counter_to_be_incremented : inout integer);
 ------------------------------------------------------------------------
     procedure create_multiplier (
         signal multiplier : inout multiplier_record);
@@ -79,6 +82,14 @@ end package multiplier_pkg;
 
 package body multiplier_pkg is
 
+------------------------------------------------------------------------
+    procedure increment
+    (
+        signal counter_to_be_incremented : inout integer
+    ) is
+    begin
+        counter_to_be_incremented <= counter_to_be_incremented + 1;
+    end increment;
 ------------------------------------------------------------------------
     procedure create_multiplier
     (
