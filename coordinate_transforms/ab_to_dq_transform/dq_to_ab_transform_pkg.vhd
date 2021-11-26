@@ -21,10 +21,12 @@ package dq_to_ab_transform_pkg is
         cosine : int18;
         d      : int18;
         q      : int18;
+
+        dq_to_ab_calculation_is_ready : boolean;
     end record;
 ------------------------------------------------------------------------
 
-    constant init_dq_to_ab_transform : dq_to_ab_record := (15, 15, 0, 0, 0, 0, 0, 0, 0,0);
+    constant init_dq_to_ab_transform : dq_to_ab_record := (15, 15, 0, 0, 0, 0, 0, 0, 0,0,false);
 
 ------------------------------------------------------------------------
     procedure request_dq_to_ab_transform (
@@ -81,9 +83,13 @@ package body dq_to_ab_transform_pkg is
         alias cosine is dq_ab_transform_object.cosine;
         alias d      is dq_ab_transform_object.d     ;
         alias q      is dq_ab_transform_object.q     ;
+        alias dq_to_ab_calculation_is_ready is dq_ab_transform_object.dq_to_ab_calculation_is_ready;
 
     begin
+    --------------------------------------------------
 
+        dq_to_ab_calculation_is_ready <= false;
+    --------------------------------------------------
         CASE dq_to_ab_multiplier_counter is
             WHEN 0 =>
                 multiply_and_increment_counter(hw_multiplier, dq_to_ab_multiplier_counter, cosine, d);
@@ -96,6 +102,7 @@ package body dq_to_ab_transform_pkg is
             WHEN others =>
         end CASE;
 
+    --------------------------------------------------
         CASE dq_to_ab_calculation_counter is
             WHEN 0 =>
                 if multiplier_is_ready(hw_multiplier) then
@@ -109,10 +116,12 @@ package body dq_to_ab_transform_pkg is
                 beta_sum <= alpha_sum + get_multiplier_result(hw_multiplier,15);
                 increment(dq_to_ab_calculation_counter);
             WHEN 3 =>
+                dq_to_ab_calculation_is_ready <= true;
                 beta <= beta_sum + get_multiplier_result(hw_multiplier,15);
                 increment(dq_to_ab_calculation_counter);
             WHEN others => -- hang and wait for start
         end CASE;
+    --------------------------------------------------
     end create_dq_to_ab_transform;
 
 ------------------------------------------------------------------------
