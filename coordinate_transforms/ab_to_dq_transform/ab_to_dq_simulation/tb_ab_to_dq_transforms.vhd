@@ -92,14 +92,14 @@ begin
             create_ab_to_dq_transform(multiplier(phase_c), ab_to_dq_transform);
             --------------------------------------------------
             if sincos_is_ready(sincos(phase_a)) then
-                angle_rad16 <= angle_rad16 + 511;
+                angle_rad16 <= angle_rad16 + 1;
                 request_sincos(sincos(phase_a), angle_rad16);
 
                 request_dq_to_ab_transform(
                     dq_to_ab_transform          ,
                     get_sine(sincos(phase_a))   ,
                     get_cosine(sincos(phase_a)) ,
-                    -10e3                       , -500);
+                    -10e3                       , 500);
 
                 request_ab_to_dq_transform(
                     ab_to_dq_transform          ,
