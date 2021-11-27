@@ -40,8 +40,9 @@ architecture vunit_simulation of tb_ab_to_dq_transforms is
     signal dq_to_ab_transform : dq_to_ab_record := init_dq_to_ab_transform;
     signal ab_to_dq_transform : ab_to_dq_record := init_ab_to_dq_transform;
 
-    signal input_d : integer := 50;
-    signal input_q : integer := 50;
+
+    signal prbs16 : std_logic_vector(15 downto 0) := (others => '1');
+    signal prbs17 : std_logic_vector(16 downto 0) := (others => '1');
 
 
 begin
@@ -71,6 +72,8 @@ begin
 ------------------------------------------------------------------------
 
     stimulus : process(simulator_clock)
+        variable input_d : integer := 50;
+        variable input_q : integer := 50;
 
     begin
         if rising_edge(simulator_clock) then
@@ -116,9 +119,18 @@ begin
             end if;
 
             if ab_to_dq_transform_is_ready(ab_to_dq_transform) then
-                assert abs(input_d-get_d_component(ab_to_dq_transform)) < 4 report "d component error out of range" severity error;
-                assert abs(input_q-get_q_component(ab_to_dq_transform)) < 4 report "q component error out of range" severity error;
+                assert abs(dq_to_ab_transform.d-get_d_component(ab_to_dq_transform)) < 25 report "d component error out of range" severity error;
+                assert abs(dq_to_ab_transform.q-get_q_component(ab_to_dq_transform)) < 25 report "q component error out of range" severity error;
+                prbs16     <= prbs16(14 downto 0) & prbs16(15);
+                prbs16(15) <= prbs16(15) xor prbs16(14) xor prbs16(12) xor prbs16(3);
+
+                prbs17     <= prbs17(15 downto 0) & prbs17(16);
+                prbs17(16) <= prbs17(16) xor prbs17(13);
+
+                input_d := to_integer(unsigned(prbs16));
+                input_q := to_integer(unsigned(prbs17(15 downto 0)));
             end if;
+
 
 
         end if; -- rising_edge
