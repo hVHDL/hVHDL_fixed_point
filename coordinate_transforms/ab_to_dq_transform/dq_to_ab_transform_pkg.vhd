@@ -24,10 +24,19 @@ package dq_to_ab_transform_pkg is
 
         dq_to_ab_calculation_is_ready : boolean;
     end record;
-------------------------------------------------------------------------
 
+    ------------------------------
     constant init_dq_to_ab_transform : dq_to_ab_record := (15, 15, 0, 0, 0, 0, 0, 0, 0,0,false);
 
+------------------------------------------------------------------------
+    function dq_to_ab_transform_is_ready ( dq_ab_transform_object : dq_to_ab_record)
+        return boolean;
+------------------------------------------------------------------------
+    function get_alpha ( dq_ab_transform_object : dq_to_ab_record)
+        return int18;
+------------------------------------------------------------------------
+    function get_beta ( dq_ab_transform_object : dq_to_ab_record)
+        return int18;
 ------------------------------------------------------------------------
     procedure request_dq_to_ab_transform (
         signal dq_ab_transform_object : out dq_to_ab_record;
@@ -46,6 +55,38 @@ end package dq_to_ab_transform_pkg;
 
 package body dq_to_ab_transform_pkg is
 
+------------------------------------------------------------------------
+    function dq_to_ab_transform_is_ready
+    (
+        dq_ab_transform_object : dq_to_ab_record
+    )
+    return boolean
+    is
+    begin
+        return dq_ab_transform_object.dq_to_ab_calculation_is_ready;
+    end dq_to_ab_transform_is_ready;
+------------------------------------------------------------------------
+    function get_alpha
+    (
+        dq_ab_transform_object : dq_to_ab_record
+    )
+    return int18
+    is
+    begin
+        return dq_ab_transform_object.alpha;
+        
+    end get_alpha;
+------------------------------------------------------------------------
+    function get_beta
+    (
+        dq_ab_transform_object : dq_to_ab_record
+    )
+    return int18
+    is
+    begin
+        return dq_ab_transform_object.beta;
+        
+    end get_beta;
 ------------------------------------------------------------------------
     procedure request_dq_to_ab_transform
     (

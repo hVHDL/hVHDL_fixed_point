@@ -40,6 +40,9 @@ architecture vunit_simulation of tb_ab_to_dq_transforms is
     signal dq_to_ab_transform : dq_to_ab_record := init_dq_to_ab_transform;
     signal ab_to_dq_transform : ab_to_dq_record := init_ab_to_dq_transform;
 
+    signal input_d : integer := 50;
+    signal input_q : integer := 50;
+
 
 begin
 
@@ -88,21 +91,33 @@ begin
             create_dq_to_ab_transform(multiplier(phase_b), dq_to_ab_transform);
             create_ab_to_dq_transform(multiplier(phase_c), ab_to_dq_transform);
             --------------------------------------------------
-            if sincos_is_ready(sincos(phase_a)) then
-                angle_rad16 <= angle_rad16 + 1;
-                request_sincos(sincos(phase_a), angle_rad16);
 
+            if sincos_is_ready(sincos(phase_a)) then
+                --------------------------------------------------
                 request_dq_to_ab_transform(
                     dq_to_ab_transform          ,
                     get_sine(sincos(phase_a))   ,
                     get_cosine(sincos(phase_a)) ,
-                    -10e3                       , 500);
+                    input_d                       , input_q);
+                --------------------------------------------------
+            end if;
 
+            if dq_to_ab_transform_is_ready(dq_to_ab_transform) then
                 request_ab_to_dq_transform(
                     ab_to_dq_transform          ,
                     get_sine(sincos(phase_a))   ,
                     get_cosine(sincos(phase_a)) ,
                     dq_to_ab_transform.alpha    , dq_to_ab_transform.beta);
+            end if;
+
+            if ab_to_dq_transform_is_ready(ab_to_dq_transform) then
+                angle_rad16 <= angle_rad16 + 1;
+                request_sincos(sincos(phase_a), angle_rad16);
+            end if;
+
+            if ab_to_dq_transform_is_ready(ab_to_dq_transform) then
+                assert abs(input_d-get_d_component(ab_to_dq_transform)) < 4 report "d component error out of range" severity error;
+                assert abs(input_q-get_q_component(ab_to_dq_transform)) < 4 report "q component error out of range" severity error;
             end if;
 
 

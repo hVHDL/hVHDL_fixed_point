@@ -33,6 +33,15 @@ package ab_to_dq_transform_pkg is
         false);
 
 ------------------------------------------------------------------------
+    function ab_to_dq_transform_is_ready ( ab_dq_transform_object : ab_to_dq_record)
+        return boolean;
+------------------------------------------------------------------------
+    function get_d_component ( ab_dq_transform_object : ab_to_dq_record)
+        return int18;
+------------------------------------------------------------------------
+    function get_q_component ( ab_dq_transform_object : ab_to_dq_record)
+        return int18;
+------------------------------------------------------------------------
     procedure request_ab_to_dq_transform (
         signal ab_dq_transform_object : out ab_to_dq_record;
         sine                          : in int18;
@@ -50,6 +59,36 @@ end package ab_to_dq_transform_pkg;
 
 package body ab_to_dq_transform_pkg is
 
+------------------------------------------------------------------------
+    function ab_to_dq_transform_is_ready
+    (
+        ab_dq_transform_object : ab_to_dq_record
+    )
+    return boolean
+    is
+    begin
+        return ab_dq_transform_object.ab_to_dq_calculation_is_ready;
+    end ab_to_dq_transform_is_ready;
+------------------------------------------------------------------------
+    function get_d_component
+    (
+        ab_dq_transform_object : ab_to_dq_record
+    )
+    return int18
+    is
+    begin
+        return ab_dq_transform_object.d;
+    end get_d_component;
+------------------------------------------------------------------------
+    function get_q_component
+    (
+        ab_dq_transform_object : ab_to_dq_record
+    )
+    return int18
+    is
+    begin
+        return ab_dq_transform_object.q;
+    end get_q_component;
 ------------------------------------------------------------------------
     procedure request_ab_to_dq_transform
     (
