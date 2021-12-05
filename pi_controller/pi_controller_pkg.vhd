@@ -33,6 +33,10 @@ package pi_controller_pkg is
         signal pi_controller : out pi_controller_record;
         pi_control_input : in int18);
 
+    procedure request_pi_control (
+        signal pi_controller : out pi_controller_record;
+        pi_control_input : in int18);
+
 ------------------------------------------------------------------------
     function pi_control_calculation_is_ready ( pi_controller : pi_controller_record)
         return boolean;
@@ -102,6 +106,16 @@ package body pi_controller_pkg is
         pi_controller.pi_error <= pi_control_input;
         
     end calculate_pi_control;
+------------------------------------------------------------------------ 
+    procedure request_pi_control
+    (
+        signal pi_controller : out pi_controller_record;
+        pi_control_input : in int18
+    ) is
+    begin
+        calculate_pi_control(pi_controller, pi_control_input);
+        
+    end request_pi_control;
 ------------------------------------------------------------------------ 
     function get_pi_control_output
     (
