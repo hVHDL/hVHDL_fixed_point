@@ -83,6 +83,16 @@ end package multiplier_pkg;
 package body multiplier_pkg is
 
 ------------------------------------------------------------------------
+    function to_integer
+    (
+        std_vector : std_logic_vector 
+    )
+    return integer
+    is
+    begin
+        return to_integer(unsigned(std_vector));
+    end to_integer;
+------------------------------------------------------------------------
     procedure increment
     (
         signal counter_to_be_incremented : inout integer
@@ -112,7 +122,7 @@ package body multiplier_pkg is
         multiplier_is_requested_with_1 <= '0';
         shift_register <= shift_register(shift_register'left-1 downto 0) & multiplier_is_requested_with_1;
 
-        multiplier_is_busy <= shift_register /= "000";
+        multiplier_is_busy <= to_integer(shift_register) /= 0;
 
     end create_multiplier;
 
@@ -218,7 +228,7 @@ package body multiplier_pkg is
     is
     begin
         
-        return multiplier.shift_register = "000" and (multiplier.multiplier_is_requested_with_1 = '0');
+        return to_integer(multiplier.shift_register) = 0 and (multiplier.multiplier_is_requested_with_1 = '0');
     end multiplier_is_not_busy;
 ------------------------------------------------------------------------
     procedure increment_counter_when_ready
