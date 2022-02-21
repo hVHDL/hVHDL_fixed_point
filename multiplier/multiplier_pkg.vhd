@@ -100,7 +100,7 @@ package body multiplier_pkg is
         signal multiplier : inout multiplier_record
     ) is
 
-        alias multiplier_result           is multiplier.multiplier_result;
+        alias multiplier_result              is multiplier.multiplier_result;
         alias shift_register                 is multiplier.shift_register;
         alias multiplier_is_busy             is multiplier.multiplier_is_busy;
         alias multiplier_is_requested_with_1 is multiplier.multiplier_is_requested_with_1;
@@ -112,7 +112,6 @@ package body multiplier_pkg is
         signed_data_b(signed_data_b'right) <= signed_data_b(0);
 
         multiplier_result(multiplier_result'right) <= signed_data_a(signed_data_a'left) * signed_data_b(signed_data_b'left); 
-        multiplier_is_requested_with_1 <= '0';
         shift_register <= shift_register(shift_register'left-1 downto 0) & multiplier_is_requested_with_1;
 
         multiplier_is_busy <= to_integer(shift_register) /= 0;

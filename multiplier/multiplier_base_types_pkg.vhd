@@ -11,11 +11,11 @@ package multiplier_base_types_pkg is
     constant init_output_array : output_array := (0=> (others => '0'));
 
     type multiplier_base_record is record
-        signed_data_a        : input_array;
-        signed_data_b        : input_array;
-        multiplier_result : output_array;
-        shift_register       : std_logic_vector(0 downto 0);
-        multiplier_is_busy   : boolean;
+        signed_data_a                  : input_array;
+        signed_data_b                  : input_array;
+        multiplier_result              : output_array;
+        shift_register                 : std_logic_vector(0 downto 0);
+        multiplier_is_busy             : boolean;
         multiplier_is_requested_with_1 : std_logic;
     end record;
 
