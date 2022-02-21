@@ -2,8 +2,7 @@ library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
-library math_library;
-    use math_library.multiplier_pkg.all;
+    use work.multiplier_pkg.all;
 
 package ab_to_dq_transform_pkg is
 

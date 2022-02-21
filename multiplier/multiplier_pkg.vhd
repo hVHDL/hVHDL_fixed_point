@@ -2,25 +2,16 @@ library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
+    use work.multiplier_base_types_pkg.all;
+
 package multiplier_pkg is
 
     subtype signed_36_bit is signed(35 downto 0);
     subtype int18 is integer range -2**17 to 2**17-1;
     subtype uint17 is integer range 0 to 2**17-1;
 
-    type multiplier_record is record
-        signed_data_a        : signed(17 downto 0);
-        signed_data_b        : signed(17 downto 0);
-        data_a_buffer        : signed(17 downto 0);
-        data_b_buffer        : signed(17 downto 0);
-        signed_36_bit_buffer : signed(35 downto 0);
-        signed_36_bit_result : signed(35 downto 0);
-        shift_register       : std_logic_vector(2 downto 0);
-        multiplier_is_busy   : boolean;
-        multiplier_is_requested_with_1 : std_logic;
-    end record;
-
-    constant multiplier_init_values : multiplier_record := ( (others => '0'),(others => '0'),(others => '0'), (others => '0'), (others => '0'), (others => '0'), (others => '0'), false, '0');
+    subtype multiplier_record is work.multiplier_base_types_pkg.multiplier_base_record;
+    constant multiplier_init_values : multiplier_record := initialize_multiplier_base;
     constant init_multiplier : multiplier_record := multiplier_init_values;
 
 ------------------------------------------------------------------------
@@ -114,11 +105,10 @@ package body multiplier_pkg is
         alias signed_data_b is multiplier.signed_data_b;
     begin
         
-        multiplier.data_a_buffer <= signed_data_a;
-        multiplier.data_b_buffer <= signed_data_b;
+        signed_data_a(signed_data_a'right) <= signed_data_a(0);
+        signed_data_b(signed_data_b'right) <= signed_data_b(0);
 
-        multiplier.signed_36_bit_buffer <= multiplier.data_a_buffer * multiplier.data_b_buffer; 
-        signed_36_bit_result <= multiplier.signed_36_bit_buffer;
+        signed_36_bit_result(signed_36_bit_result'right) <= signed_data_a(signed_data_a'left) * signed_data_b(signed_data_b'left); 
         multiplier_is_requested_with_1 <= '0';
         shift_register <= shift_register(shift_register'left-1 downto 0) & multiplier_is_requested_with_1;
 
@@ -134,8 +124,8 @@ package body multiplier_pkg is
         data_b : in int18
     ) is
     begin
-        multiplier.signed_data_a <= to_signed(data_a, 18);
-        multiplier.signed_data_b <= to_signed(data_b, 18);
+        multiplier.signed_data_a(0) <= to_signed(data_a, 18);
+        multiplier.signed_data_b(0) <= to_signed(data_b, 18);
         multiplier.multiplier_is_requested_with_1 <= '1';
 
     end multiply;
@@ -148,8 +138,8 @@ package body multiplier_pkg is
     ) is
     begin
         if multiplier_is_not_busy(multiplier) then
-            multiplier.signed_data_a <= to_signed(data_a, 18);
-            multiplier.signed_data_b <= to_signed(data_b, 18);
+            multiplier.signed_data_a(0) <= to_signed(data_a, 18);
+            multiplier.signed_data_b(0) <= to_signed(data_b, 18);
             multiplier.multiplier_is_requested_with_1 <= '1';
         end if;
         
@@ -215,7 +205,7 @@ package body multiplier_pkg is
     return integer
     is
     begin
-        return get_multiplier_result(multiplier.signed_36_bit_result, radix);
+        return get_multiplier_result(multiplier.signed_36_bit_result(multiplier.signed_36_bit_result'left), radix);
         
     end get_multiplier_result;
 

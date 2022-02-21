@@ -6,11 +6,10 @@ LIBRARY ieee  ;
 library vunit_lib;
     use vunit_lib.run_pkg.all;
 
-library math_library;
-    use math_library.multiplier_pkg.all;
-    use math_library.sincos_pkg.all;
-    use math_library.abc_to_ab_transform_pkg.all;
-    use math_library.ab_to_abc_transform_pkg.all;
+    use work.multiplier_pkg.all;
+    use work.sincos_pkg.all;
+    use work.abc_to_ab_transform_pkg.all;
+    use work.ab_to_abc_transform_pkg.all;
 
 entity tb_abc_to_ab_transform is
   generic (runner_cfg : string);

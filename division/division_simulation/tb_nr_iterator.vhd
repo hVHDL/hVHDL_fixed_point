@@ -6,10 +6,9 @@ LIBRARY std  ;
     use ieee.math_real.all;
     USE std.textio.all  ; 
 
-library math_library;
-    use math_library.multiplier_pkg.all;
-    use math_library.division_pkg.all;
-    use math_library.division_internal_pkg.all;
+    use work.multiplier_pkg.all;
+    use work.division_pkg.all;
+    use work.division_internal_pkg.all;
 
 entity tb_nr_iterator is
 end;

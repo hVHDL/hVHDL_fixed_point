@@ -2,9 +2,8 @@ library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
-library math_library;
-    use math_library.multiplier_pkg.all;
-    use math_library.division_internal_pkg.all; -- used in body
+    use work.multiplier_pkg.all;
+    use work.division_internal_pkg.all; -- used in body
 
 package division_pkg is
 --------------------------------------------------
