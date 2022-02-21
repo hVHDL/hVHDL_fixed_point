@@ -6,8 +6,7 @@ LIBRARY ieee  ;
 library vunit_lib;
     use vunit_lib.run_pkg.all;
 
-library math_library;
-    use math_library.multiplier_pkg.all;
+    use work.multiplier_pkg.all;
 
 entity tb_multiplier is
   generic (runner_cfg : string);
@@ -73,14 +72,14 @@ begin
 
             simulation_counter <= simulation_counter + 1;
             CASE simulation_counter is
-                WHEN 1 => multiply(hw_multiplier, -3, 1);
-                WHEN 2 => multiply(hw_multiplier, -5, 1);
-                WHEN 3 => multiply(hw_multiplier, -25, 1);
-                WHEN 4 => multiply(hw_multiplier, 100, 1);
-                WHEN 5 => multiply(hw_multiplier, 1000, 1);
-                WHEN 6 => multiply(hw_multiplier, 985, 1);
-                WHEN 7 => multiply(hw_multiplier, 10090, 1);
-                WHEN 8 => multiply(hw_multiplier, 33586, 1);
+                WHEN 1 => multiply(hw_multiplier , -3    , 1);
+                WHEN 2 => multiply(hw_multiplier , -5    , 1);
+                WHEN 3 => multiply(hw_multiplier , -25   , 1);
+                WHEN 4 => multiply(hw_multiplier , 100   , 1);
+                WHEN 5 => multiply(hw_multiplier , 1000  , 1);
+                WHEN 6 => multiply(hw_multiplier , 985   , 1);
+                WHEN 7 => multiply(hw_multiplier , 10090 , 1);
+                WHEN 8 => multiply(hw_multiplier , 33586 , 1);
                 WHEN 9 =>
                     simulation_counter <= 9;
                     sequential_multiply(hw_multiplier, -1, -1);

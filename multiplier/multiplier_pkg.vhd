@@ -73,6 +73,9 @@ end package multiplier_pkg;
 
 package body multiplier_pkg is
 
+    constant data_a_bit_width : integer := initialize_multiplier_base.signed_data_a(0)'length;
+    constant data_b_bit_width : integer := initialize_multiplier_base.signed_data_b(0)'length;
+
 ------------------------------------------------------------------------
     function to_integer
     (
@@ -97,12 +100,12 @@ package body multiplier_pkg is
         signal multiplier : inout multiplier_record
     ) is
 
-        alias signed_36_bit_result is multiplier.signed_36_bit_result;
-        alias shift_register is multiplier.shift_register;
-        alias multiplier_is_busy is multiplier.multiplier_is_busy;
+        alias signed_36_bit_result           is multiplier.signed_36_bit_result;
+        alias shift_register                 is multiplier.shift_register;
+        alias multiplier_is_busy             is multiplier.multiplier_is_busy;
         alias multiplier_is_requested_with_1 is multiplier.multiplier_is_requested_with_1;
-        alias signed_data_a is multiplier.signed_data_a;
-        alias signed_data_b is multiplier.signed_data_b;
+        alias signed_data_a                  is multiplier.signed_data_a;
+        alias signed_data_b                  is multiplier.signed_data_b;
     begin
         
         signed_data_a(signed_data_a'right) <= signed_data_a(0);
@@ -124,8 +127,8 @@ package body multiplier_pkg is
         data_b : in int18
     ) is
     begin
-        multiplier.signed_data_a(0) <= to_signed(data_a, 18);
-        multiplier.signed_data_b(0) <= to_signed(data_b, 18);
+        multiplier.signed_data_a(0) <= to_signed(data_a, data_a_bit_width);
+        multiplier.signed_data_b(0) <= to_signed(data_b, data_b_bit_width);
         multiplier.multiplier_is_requested_with_1 <= '1';
 
     end multiply;
@@ -138,8 +141,8 @@ package body multiplier_pkg is
     ) is
     begin
         if multiplier_is_not_busy(multiplier) then
-            multiplier.signed_data_a(0) <= to_signed(data_a, 18);
-            multiplier.signed_data_b(0) <= to_signed(data_b, 18);
+            multiplier.signed_data_a(0) <= to_signed(data_a, data_a_bit_width);
+            multiplier.signed_data_b(0) <= to_signed(data_b, data_b_bit_width);
             multiplier.multiplier_is_requested_with_1 <= '1';
         end if;
         
@@ -160,7 +163,7 @@ package body multiplier_pkg is
     -- get rounded result
     function get_multiplier_result
     (
-        multiplier_output : signed_36_bit;
+        multiplier_output : signed(initialize_multiplier_base.signed_36_bit_result(0)'range);
         radix : natural range 0 to 18
     ) return integer 
     is
@@ -184,8 +187,7 @@ package body multiplier_pkg is
             end if;
         end "+";
     --------------------------------------------------         
-        variable bit_vector_slice : signed(17 downto 0);
-        constant output_word_bit_width : natural := 18;
+        variable bit_vector_slice : signed(output_left_index downto 0);
         alias multiplier_raw_result is multiplier_output;
     begin
         bit_vector_slice := multiplier_raw_result((multiplier_raw_result'left-output_word_bit_width + radix) downto radix); 
