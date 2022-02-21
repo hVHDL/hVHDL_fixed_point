@@ -22,18 +22,18 @@ package multiplier_pkg is
 ------------------------------------------------------------------------
     procedure multiply_and_get_result (
         signal multiplier : inout multiplier_record;
-        radix : natural range 0 to 17;
-        signal result : out int18;
-        left, right : int18) ; 
+        radix : natural range 0 to output_word_bit_width;
+        signal result : out integer;
+        left, right : integer) ; 
 ------------------------------------------------------------------------
     procedure multiply (
         signal multiplier : inout multiplier_record;
-        data_a : in int18;
-        data_b : in int18);
+        data_a : in integer;
+        data_b : in integer);
 ------------------------------------------------------------------------
     function get_multiplier_result (
         multiplier : multiplier_record;
-        radix : natural range 0 to 18) 
+        radix : natural range 0 to output_word_bit_width) 
     return integer ;
 ------------------------------------------------------------------------
     function multiplier_is_ready (
@@ -46,8 +46,8 @@ package multiplier_pkg is
 ------------------------------------------------------------------------
     procedure sequential_multiply (
         signal multiplier : inout multiplier_record;
-        data_a : in int18;
-        data_b : in int18);
+        data_a : in integer;
+        data_b : in integer);
 ------------------------------------------------------------------------
     procedure increment_counter_when_ready (
         multiplier : multiplier_record;
@@ -56,14 +56,14 @@ package multiplier_pkg is
     procedure multiply_and_increment_counter (
         signal multiplier : inout multiplier_record;
         signal counter : inout integer;
-        left, right : int18);
+        left, right : integer);
 
 ------------------------------------------------------------------------
 end package multiplier_pkg;
 
     --------------------------------------------------
-        -- impure function "*" ( left, right : int18)
-        -- return int18
+        -- impure function "*" ( left, right : integer)
+        -- return integer
         -- is
         -- begin
         --     sequential_multiply(hw_multiplier, left, right);
@@ -100,7 +100,7 @@ package body multiplier_pkg is
         signal multiplier : inout multiplier_record
     ) is
 
-        alias signed_36_bit_result           is multiplier.signed_36_bit_result;
+        alias multiplier_result           is multiplier.multiplier_result;
         alias shift_register                 is multiplier.shift_register;
         alias multiplier_is_busy             is multiplier.multiplier_is_busy;
         alias multiplier_is_requested_with_1 is multiplier.multiplier_is_requested_with_1;
@@ -111,7 +111,7 @@ package body multiplier_pkg is
         signed_data_a(signed_data_a'right) <= signed_data_a(0);
         signed_data_b(signed_data_b'right) <= signed_data_b(0);
 
-        signed_36_bit_result(signed_36_bit_result'right) <= signed_data_a(signed_data_a'left) * signed_data_b(signed_data_b'left); 
+        multiplier_result(multiplier_result'right) <= signed_data_a(signed_data_a'left) * signed_data_b(signed_data_b'left); 
         multiplier_is_requested_with_1 <= '0';
         shift_register <= shift_register(shift_register'left-1 downto 0) & multiplier_is_requested_with_1;
 
@@ -123,8 +123,8 @@ package body multiplier_pkg is
     procedure multiply
     (
         signal multiplier : inout multiplier_record;
-        data_a : in int18;
-        data_b : in int18
+        data_a : in integer;
+        data_b : in integer
     ) is
     begin
         multiplier.signed_data_a(0) <= to_signed(data_a, data_a_bit_width);
@@ -136,8 +136,8 @@ package body multiplier_pkg is
     procedure sequential_multiply
     (
         signal multiplier : inout multiplier_record;
-        data_a : in int18;
-        data_b : in int18
+        data_a : in integer;
+        data_b : in integer
     ) is
     begin
         if multiplier_is_not_busy(multiplier) then
@@ -163,8 +163,8 @@ package body multiplier_pkg is
     -- get rounded result
     function get_multiplier_result
     (
-        multiplier_output : signed(initialize_multiplier_base.signed_36_bit_result(0)'range);
-        radix : natural range 0 to 18
+        multiplier_output : signed(initialize_multiplier_base.multiplier_result(0)'range);
+        radix : natural range 0 to output_word_bit_width
     ) return integer 
     is
     ---------------------------------------------------
@@ -202,12 +202,12 @@ package body multiplier_pkg is
     function get_multiplier_result
     (
         multiplier : multiplier_record;
-        radix : natural range 0 to 18
+        radix : natural range 0 to output_word_bit_width
     )
     return integer
     is
     begin
-        return get_multiplier_result(multiplier.signed_36_bit_result(multiplier.signed_36_bit_result'left), radix);
+        return get_multiplier_result(multiplier.multiplier_result(multiplier.multiplier_result'left), radix);
         
     end get_multiplier_result;
 
@@ -237,9 +237,9 @@ package body multiplier_pkg is
     procedure multiply_and_get_result
     (
         signal multiplier : inout multiplier_record;
-        radix : natural range 0 to 17;
-        signal result : out int18;
-        left, right : int18
+        radix : natural range 0 to output_word_bit_width;
+        signal result : out integer;
+        left, right : integer
     ) 
     is
     begin
@@ -256,7 +256,7 @@ package body multiplier_pkg is
     (
         signal multiplier : inout multiplier_record;
         signal counter : inout integer;
-        left, right : int18
+        left, right : integer
     ) 
     is
     begin
