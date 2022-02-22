@@ -8,29 +8,32 @@ package first_order_filter_pkg is
 
 ------------------------------------------------------------------------
     type first_order_filter is record
-        process_counter : natural range 0 to 15;
-        filterin_is_ready : boolean;
-        filter_is_busy : boolean;
-        filter_input : int18;
-        filter_output : int18;
-        filter_memory : int18; 
+        multiplier_counter : natural range 0 to 15;
+        process_counter    : natural range 0 to 15;
+        filterin_is_ready  : boolean;
+        filter_is_busy     : boolean;
+        filter_input       : int18;
+        filter_output      : int18;
+        filter_memory      : int18;
     end record;
 
-    constant init_filter_state : first_order_filter := (process_counter => 9, filterin_is_ready => false, filter_is_busy => false, filter_input => 0, filter_output => 0, filter_memory => 0); 
+    subtype first_order_filter_record is first_order_filter;
+    constant init_filter_state : first_order_filter := (multiplier_counter => 5, process_counter => 9, filterin_is_ready => false, filter_is_busy => false, filter_input => 0, filter_output => 0, filter_memory => 0); 
+    constant init_first_order_filter : first_order_filter_record := init_filter_state;
 
 --------------------------------------------------
     procedure create_first_order_filter (
-        signal filter : inout first_order_filter;
+        signal filter     : inout first_order_filter;
         signal multiplier : inout multiplier_record;
-        constant b0 : int18;
-        constant b1 : int18);
+        constant b0       : integer;
+        constant b1       : integer);
 --------------------------------------------------
     procedure filter_data (
         signal filter : out first_order_filter;
-        data_to_filter : in int18);
+        data_to_filter : in integer);
 --------------------------------------------------
     function get_filter_output ( filter : in first_order_filter)
-        return int18; 
+        return integer; 
 ------------------------------------------------------------------------
     function filter_is_ready ( filter : first_order_filter)
         return boolean;
@@ -45,17 +48,17 @@ package body first_order_filter_pkg is
     (
         signal filter : inout first_order_filter;
         signal multiplier : inout multiplier_record;
-        constant b0 : int18;
-        constant b1 : int18
+        constant b0 : integer;
+        constant b1 : integer
     ) is
-        constant a1 : int18 := 2**17-1-b1-b0;
+        constant a1 : integer := 2**17-1-b1-b0;
         alias filterin_is_ready is filter.filterin_is_ready;
         alias filter_is_busy  is filter.filter_is_busy;
         alias process_counter is filter.process_counter;
         alias filter_memory   is filter.filter_memory;
         alias filter_input    is filter.filter_input;
         alias filter_output   is filter.filter_output;
-        variable y : int18;
+        variable y : integer;
     begin
             filterin_is_ready <= false;
             filter_is_busy <= true;
@@ -99,7 +102,7 @@ package body first_order_filter_pkg is
     procedure filter_data
     (
         signal filter : out first_order_filter;
-        data_to_filter : in int18
+        data_to_filter : in integer
     ) is
     begin
         filter.process_counter <= 0;
@@ -111,7 +114,7 @@ package body first_order_filter_pkg is
     (
         filter : in first_order_filter
     )
-    return int18
+    return integer
     is
     begin
         return filter.filter_output;

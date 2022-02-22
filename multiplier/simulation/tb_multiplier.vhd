@@ -25,9 +25,21 @@ architecture sim of tb_multiplier is
     signal simulation_counter : natural := 0;
     signal multiplier_output : signed(35 downto 0);
     signal multiplier_is_ready_when_1 : std_logic;
-    signal int18_multiplier_output : int18 := 0;
+    signal int18_multiplier_output : integer := 0;
 
     signal hw_multiplier : multiplier_record := multiplier_init_values;
+
+    type int_array is array (integer range <>) of integer;
+    signal input_a_array : int_array(0 to 6) :=(1  , 16899 , -6589 , 32768 , -32768 , 58295 , -65536);
+    signal input_b_array : int_array(0 to 6) :=(-1 , 1     , 1     , 1     , 1      , 1     , 1);
+    signal output_array : int_array(0 to 6)  := ((input_a_array(0)*input_b_array(0)),
+                                          (input_a_array(1)*input_b_array(1)),
+                                          (input_a_array(2)*input_b_array(2)),
+                                          (input_a_array(3)*input_b_array(3)),
+                                          (input_a_array(4)*input_b_array(4)),
+                                          (input_a_array(5)*input_b_array(5)),
+                                          (input_a_array(6)*input_b_array(6)));
+    signal output_counter : natural := 0;
 
 begin
 
@@ -72,16 +84,15 @@ begin
 
             simulation_counter <= simulation_counter + 1;
             CASE simulation_counter is
-                WHEN 1 => multiply(hw_multiplier , -3    , 1);
-                WHEN 2 => multiply(hw_multiplier , -5    , 1);
-                WHEN 3 => multiply(hw_multiplier , -25   , 1);
-                WHEN 4 => multiply(hw_multiplier , 100   , 1);
-                WHEN 5 => multiply(hw_multiplier , 1000  , 1);
-                WHEN 6 => multiply(hw_multiplier , 985   , 1);
-                WHEN 7 => multiply(hw_multiplier , 10090 , 1);
-                WHEN 8 => multiply(hw_multiplier , 33586 , 1);
-                WHEN 9 =>
-                    simulation_counter <= 9;
+                WHEN 0 => multiply(hw_multiplier , input_a_array(0) , input_a_array(0));
+                WHEN 1 => multiply(hw_multiplier , input_a_array(1) , input_a_array(1));
+                WHEN 2 => multiply(hw_multiplier , input_a_array(2) , input_a_array(2));
+                WHEN 3 => multiply(hw_multiplier , input_a_array(3) , input_a_array(3));
+                WHEN 4 => multiply(hw_multiplier , input_a_array(4) , input_a_array(4));
+                WHEN 5 => multiply(hw_multiplier , input_a_array(5) , input_a_array(5));
+                WHEN 6 => multiply(hw_multiplier , input_a_array(6) , input_a_array(6));
+                WHEN 7 =>
+                    simulation_counter <= 7;
                     sequential_multiply(hw_multiplier, -1, -1);
                     if multiplier_is_not_busy(hw_multiplier) then
                         simulation_counter <= 10;
@@ -90,9 +101,11 @@ begin
                 WHEN others => -- do nothing
             end CASE;
             if multiplier_is_ready(hw_multiplier) then
-                int18_multiplier_output <= get_multiplier_result(hw_multiplier,1);
-                report "multiplication result at simulation_counter value " & 
-                    integer'image(simulation_counter)  &" : " & integer'image((get_multiplier_result(hw_multiplier,0)));
+                output_counter <= output_counter + 1;
+                if output_counter <= 6 then
+                    int18_multiplier_output <= get_multiplier_result(hw_multiplier,1) - output_array(output_counter);
+                end if;
+                -- assert abs(get_multiplier_result(hw_multiplier,1) - output_array(output_counter)/2) < 5 report "got wrong value " & integer'image(get_multiplier_result(hw_multiplier,1)) severity error;
             end if; 
 
         end if; -- rstn

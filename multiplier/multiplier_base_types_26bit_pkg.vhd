@@ -4,7 +4,7 @@ library ieee;
 
 package multiplier_base_types_pkg is
 
-    constant number_of_input_bits : integer := 18;
+    constant number_of_input_bits : integer := 26;
 
     type input_array is array (integer range 1 downto 0) of signed(number_of_input_bits-1 downto 0);
     constant init_input_array :  input_array := (0=> (others => '0'), 1 => (others => '0'));

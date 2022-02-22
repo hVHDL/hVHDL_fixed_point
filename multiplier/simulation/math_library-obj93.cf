@@ -1,4 +1,0 @@
-v 4
-file . "..\multiplier_pkg.vhd" "3bc850775a2577e0700deff2f12f38696d90ceec" "20211102164305.444":
-  package multiplier_pkg at 1( 0) + 0 on 483 body;
-  package body multiplier_pkg at 75( 3196) + 0 on 484;

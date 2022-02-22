@@ -108,13 +108,14 @@ package body multiplier_pkg is
         alias signed_data_b                  is multiplier.signed_data_b;
     begin
         
-        signed_data_a(signed_data_a'right) <= signed_data_a(0);
-        signed_data_b(signed_data_b'right) <= signed_data_b(0);
+        signed_data_a <= signed_data_a(signed_data_a'left-1 downto 0) & signed_data_a(0);
+        signed_data_b <= signed_data_b(signed_data_b'left-1 downto 0) & signed_data_b(0);
 
-        multiplier_result(multiplier_result'right) <= signed_data_a(signed_data_a'left) * signed_data_b(signed_data_b'left); 
+        multiplier_result <= multiplier_result(multiplier_result'left-1 downto 0) & (signed_data_a(signed_data_a'left) * signed_data_b(signed_data_b'left));
         shift_register <= shift_register(shift_register'left-1 downto 0) & multiplier_is_requested_with_1;
 
         multiplier_is_busy <= to_integer(shift_register) /= 0;
+        multiplier_is_requested_with_1 <= '0';
 
     end create_multiplier;
 
