@@ -63,7 +63,7 @@ begin
             create_first_order_filter(filter, multiplier, 5000, 5000);
 
             if simulation_counter = 0 or filter_is_ready(filter) then
-                filter_data(filter,65536);
+                filter_data(filter,655360);
             end if;
 
 

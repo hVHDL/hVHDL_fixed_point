@@ -10,6 +10,8 @@ package multiplier_pkg is
     subtype int18 is integer range -2**17 to 2**17-1;
     subtype uint17 is integer range 0 to 2**17-1;
 
+    subtype int is integer range -2**(number_of_input_bits-1) to 2**(number_of_input_bits-1)-1;
+
     subtype multiplier_record is work.multiplier_base_types_pkg.multiplier_base_record;
     constant multiplier_init_values : multiplier_record := initialize_multiplier_base;
     constant init_multiplier : multiplier_record := multiplier_init_values;

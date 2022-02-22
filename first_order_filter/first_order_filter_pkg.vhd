@@ -12,9 +12,9 @@ package first_order_filter_pkg is
         process_counter    : natural range 0 to 15;
         filterin_is_ready  : boolean;
         filter_is_busy     : boolean;
-        filter_input       : int18;
-        filter_output      : int18;
-        filter_memory      : int18;
+        filter_input       : int;
+        filter_output      : int;
+        filter_memory      : int;
     end record;
 
     subtype first_order_filter_record is first_order_filter;
@@ -52,26 +52,29 @@ package body first_order_filter_pkg is
         constant b1 : integer
     ) is
         constant a1 : integer := 2**17-1-b1-b0;
-        alias filterin_is_ready is filter.filterin_is_ready;
-        alias filter_is_busy  is filter.filter_is_busy;
-        alias process_counter is filter.process_counter;
-        alias filter_memory   is filter.filter_memory;
-        alias filter_input    is filter.filter_input;
-        alias filter_output   is filter.filter_output;
+        alias multiplier_counter is  filter.multiplier_counter;
+        alias filterin_is_ready  is  filter.filterin_is_ready;
+        alias filter_is_busy     is  filter.filter_is_busy;
+        alias process_counter    is  filter.process_counter;
+        alias filter_memory      is  filter.filter_memory;
+        alias filter_input       is  filter.filter_input;
+        alias filter_output      is  filter.filter_output;
         variable y : integer;
     begin
             filterin_is_ready <= false;
             filter_is_busy <= true;
-            CASE process_counter is
+            CASE multiplier_counter is
                 WHEN 0 =>
                     multiply(multiplier, filter_input, b0);
-                    process_counter <= process_counter + 1;
-
+                    multiplier_counter <= multiplier_counter + 1;
                 WHEN 1 =>
                     multiply(multiplier, filter_input, b1);
-                    process_counter <= process_counter + 1;
-
-                WHEN 2 =>
+                    multiplier_counter <= multiplier_counter + 1;
+                WHEN others => -- do nohting
+            end CASE;
+                    
+            CASE process_counter is
+                WHEN 0 =>
                     if multiplier_is_ready(multiplier) then
                         y := filter_memory + get_multiplier_result(multiplier, 17);
                         filter_output <= y;
@@ -79,11 +82,11 @@ package body first_order_filter_pkg is
                         process_counter <= process_counter + 1;
                     end if;
 
-                WHEN 3 =>
+                WHEN 1 =>
                     filter_memory <= get_multiplier_result(multiplier, 17);
                     process_counter <= process_counter + 1;
 
-                WHEN 4 => 
+                WHEN 2 => 
 
                     if multiplier_is_ready(multiplier) then
                         filter_memory <= filter_memory + get_multiplier_result(multiplier, 17);
@@ -105,6 +108,7 @@ package body first_order_filter_pkg is
         data_to_filter : in integer
     ) is
     begin
+        filter.multiplier_counter <= 0;
         filter.process_counter <= 0;
         filter.filter_input <= data_to_filter;
         
