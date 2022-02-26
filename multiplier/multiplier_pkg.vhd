@@ -75,8 +75,10 @@ end package multiplier_pkg;
 
 package body multiplier_pkg is
 
-    constant data_a_bit_width : integer := initialize_multiplier_base.signed_data_a(0)'length;
-    constant data_b_bit_width : integer := initialize_multiplier_base.signed_data_b(0)'length;
+    constant data_a_bit_width           : integer := initialize_multiplier_base.signed_data_a(0)'length;
+    constant data_b_bit_width           : integer := initialize_multiplier_base.signed_data_b(0)'length;
+    constant number_of_input_registers  : integer := initialize_multiplier_base.signed_data_a'length;
+    constant number_of_output_registers : integer := initialize_multiplier_base.multiplier_result'length;
 
 ------------------------------------------------------------------------
     function to_integer
@@ -110,11 +112,10 @@ package body multiplier_pkg is
         alias signed_data_b                  is multiplier.signed_data_b;
     begin
         
-        signed_data_a <= signed_data_a(signed_data_a'left-1 downto 0) & signed_data_a(0);
-        signed_data_b <= signed_data_b(signed_data_b'left-1 downto 0) & signed_data_b(0);
-
+        signed_data_a     <= signed_data_a(signed_data_a'left-1 downto 0) & signed_data_a(0);
+        signed_data_b     <= signed_data_b(signed_data_b'left-1 downto 0) & signed_data_b(0);
         multiplier_result <= multiplier_result(multiplier_result'left-1 downto 0) & (signed_data_a(signed_data_a'left) * signed_data_b(signed_data_b'left));
-        shift_register <= shift_register(shift_register'left-1 downto 0) & multiplier_is_requested_with_1;
+        shift_register    <= shift_register(shift_register'left-1 downto 0) & multiplier_is_requested_with_1;
 
         multiplier_is_busy <= to_integer(shift_register) /= 0;
         multiplier_is_requested_with_1 <= '0';
