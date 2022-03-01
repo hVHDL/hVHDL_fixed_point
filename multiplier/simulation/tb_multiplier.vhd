@@ -42,6 +42,8 @@ architecture sim of tb_multiplier is
     signal output_counter : natural := 0;
     signal result : integer := 0;
 
+    signal output_needs_to_be_checked : boolean := false;
+
 begin
 
 ------------------------------------------------------------------------
@@ -102,12 +104,17 @@ begin
                 WHEN others => -- do nothing
             end CASE;
             multiplier_result <= get_multiplier_result(hw_multiplier, 16);
+            output_needs_to_be_checked <= false;
             if multiplier_is_ready(hw_multiplier) then
                 output_counter <= output_counter + 1;
                 int18_multiplier_output <= get_multiplier_result(hw_multiplier,16);
-                result <= input_a_array(output_counter);
-                -- assert abs(get_multiplier_result(hw_multiplier,16) - input_a_array(output_counter)) <= 5 report "got " & integer'image(get_multiplier_result(hw_multiplier,16)) & " expected " & integer'image(input_a_array(output_counter))  severity error;
+                result <= input_a_array(output_counter) - get_multiplier_result(hw_multiplier,16);
+                output_needs_to_be_checked <= true;
             end if; 
+
+            if output_needs_to_be_checked then
+                assert abs(result) <= 5 report "got " & integer'image(result);
+            end if;
 
         end if; -- rstn
     end process clocked_reset_generator;	
