@@ -15,7 +15,7 @@ package multiplier_base_types_pkg is
         signed_data_a                  : input_array;
         signed_data_b                  : input_array;
         multiplier_result              : output_array;
-        shift_register                 : std_logic_vector(2 downto 0);
+        shift_register                 : std_logic_vector(3 downto 0);
         multiplier_is_busy             : boolean;
         multiplier_is_requested_with_1 : std_logic;
     end record;

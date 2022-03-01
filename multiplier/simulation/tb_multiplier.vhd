@@ -26,20 +26,21 @@ architecture sim of tb_multiplier is
     signal multiplier_output : signed(35 downto 0);
     signal multiplier_is_ready_when_1 : std_logic;
     signal int18_multiplier_output : integer := 0;
+    signal multiplier_result : integer := 0;
 
     signal hw_multiplier : multiplier_record := multiplier_init_values;
 
     type int_array is array (integer range <>) of integer;
-    signal input_a_array : int_array(0 to 6) :=(1  , 16899 , -6589 , 32768 , -32768 , 58295 , -65536);
-    signal input_b_array : int_array(0 to 6) :=(-1 , 1     , 1     , 1     , 1      , 1     , 1);
-    signal output_array : int_array(0 to 6)  := ((input_a_array(0)*input_b_array(0)),
-                                          (input_a_array(1)*input_b_array(1)),
-                                          (input_a_array(2)*input_b_array(2)),
-                                          (input_a_array(3)*input_b_array(3)),
-                                          (input_a_array(4)*input_b_array(4)),
-                                          (input_a_array(5)*input_b_array(5)),
-                                          (input_a_array(6)*input_b_array(6)));
+    signal input_a_array : int_array(0 to 7) :=(-5  , 16899 , -6589 , 32768 , -32768 , 58295 , -65536, 55555);
+    -- signal output_array : int_array(0 to 6)  := ((input_a_array(0)*input_b_array(0)),
+    --                                       (input_a_array(1)*input_b_array(1)),
+    --                                       (input_a_array(2)*input_b_array(2)),
+    --                                       (input_a_array(3)*input_b_array(3)),
+    --                                       (input_a_array(4)*input_b_array(4)),
+    --                                       (input_a_array(5)*input_b_array(5)),
+    --                                       (input_a_array(6)*input_b_array(6)));
     signal output_counter : natural := 0;
+    signal result : integer := 0;
 
 begin
 
@@ -84,28 +85,28 @@ begin
 
             simulation_counter <= simulation_counter + 1;
             CASE simulation_counter is
-                WHEN 0 => multiply(hw_multiplier , input_a_array(0) , input_a_array(0));
-                WHEN 1 => multiply(hw_multiplier , input_a_array(1) , input_a_array(1));
-                WHEN 2 => multiply(hw_multiplier , input_a_array(2) , input_a_array(2));
-                WHEN 3 => multiply(hw_multiplier , input_a_array(3) , input_a_array(3));
-                WHEN 4 => multiply(hw_multiplier , input_a_array(4) , input_a_array(4));
-                WHEN 5 => multiply(hw_multiplier , input_a_array(5) , input_a_array(5));
-                WHEN 6 => multiply(hw_multiplier , input_a_array(6) , input_a_array(6));
+                WHEN 0 => multiply(hw_multiplier , input_a_array(0) , 65536);
+                WHEN 1 => multiply(hw_multiplier , input_a_array(1) , 65536);
+                WHEN 2 => multiply(hw_multiplier , input_a_array(2) , 65536);
+                WHEN 3 => multiply(hw_multiplier , input_a_array(3) , 65536);
+                WHEN 4 => multiply(hw_multiplier , input_a_array(4) , 65536);
+                WHEN 5 => multiply(hw_multiplier , input_a_array(5) , 65536);
+                WHEN 6 => multiply(hw_multiplier , input_a_array(6) , 65536);
                 WHEN 7 =>
                     simulation_counter <= 7;
-                    sequential_multiply(hw_multiplier, -1, -1);
+                    sequential_multiply(hw_multiplier, input_a_array(7), 65536);
                     if multiplier_is_not_busy(hw_multiplier) then
                         simulation_counter <= 10;
                     end if;
 
                 WHEN others => -- do nothing
             end CASE;
+            multiplier_result <= get_multiplier_result(hw_multiplier, 16);
             if multiplier_is_ready(hw_multiplier) then
                 output_counter <= output_counter + 1;
-                if output_counter <= 6 then
-                    int18_multiplier_output <= get_multiplier_result(hw_multiplier,1) - output_array(output_counter);
-                end if;
-                -- assert abs(get_multiplier_result(hw_multiplier,1) - output_array(output_counter)/2) < 5 report "got wrong value " & integer'image(get_multiplier_result(hw_multiplier,1)) severity error;
+                int18_multiplier_output <= get_multiplier_result(hw_multiplier,16);
+                result <= input_a_array(output_counter);
+                -- assert abs(get_multiplier_result(hw_multiplier,16) - input_a_array(output_counter)) <= 5 report "got " & integer'image(get_multiplier_result(hw_multiplier,16)) & " expected " & integer'image(input_a_array(output_counter))  severity error;
             end if; 
 
         end if; -- rstn

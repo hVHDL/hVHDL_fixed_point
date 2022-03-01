@@ -107,18 +107,16 @@ package body multiplier_pkg is
         alias multiplier_result              is multiplier.multiplier_result;
         alias shift_register                 is multiplier.shift_register;
         alias multiplier_is_busy             is multiplier.multiplier_is_busy;
-        alias multiplier_is_requested_with_1 is multiplier.multiplier_is_requested_with_1;
         alias signed_data_a                  is multiplier.signed_data_a;
         alias signed_data_b                  is multiplier.signed_data_b;
     begin
         
-        signed_data_a     <= signed_data_a(signed_data_a'left-1 downto 0) & signed_data_a(0);
-        signed_data_b     <= signed_data_b(signed_data_b'left-1 downto 0) & signed_data_b(0);
+        signed_data_a     <= signed_data_a(signed_data_a'left-1 downto 0)         & signed_data_a(0);
+        signed_data_b     <= signed_data_b(signed_data_b'left-1 downto 0)         & signed_data_b(0);
         multiplier_result <= multiplier_result(multiplier_result'left-1 downto 0) & (signed_data_a(signed_data_a'left) * signed_data_b(signed_data_b'left));
-        shift_register    <= shift_register(shift_register'left-1 downto 0) & multiplier_is_requested_with_1;
+        shift_register    <= shift_register(shift_register'left-1 downto 0)       & '0';
 
         multiplier_is_busy <= to_integer(shift_register) /= 0;
-        multiplier_is_requested_with_1 <= '0';
 
     end create_multiplier;
 
@@ -129,10 +127,11 @@ package body multiplier_pkg is
         data_a : in integer;
         data_b : in integer
     ) is
+        alias multiplier_is_requested_with_1 is multiplier.shift_register(0);
     begin
         multiplier.signed_data_a(0) <= to_signed(data_a, data_a_bit_width);
         multiplier.signed_data_b(0) <= to_signed(data_b, data_b_bit_width);
-        multiplier.multiplier_is_requested_with_1 <= '1';
+        multiplier_is_requested_with_1 <= '1';
 
     end multiply;
 ------------------------------------------------------------------------
@@ -142,11 +141,12 @@ package body multiplier_pkg is
         data_a : in integer;
         data_b : in integer
     ) is
+        alias multiplier_is_requested_with_1 is multiplier.shift_register(0);
     begin
         if multiplier_is_not_busy(multiplier) then
             multiplier.signed_data_a(0) <= to_signed(data_a, data_a_bit_width);
             multiplier.signed_data_b(0) <= to_signed(data_b, data_b_bit_width);
-            multiplier.multiplier_is_requested_with_1 <= '1';
+            multiplier_is_requested_with_1 <= '1';
         end if;
         
     end sequential_multiply;
@@ -223,7 +223,7 @@ package body multiplier_pkg is
     is
     begin
         
-        return to_integer(multiplier.shift_register) = 0 and (multiplier.multiplier_is_requested_with_1 = '0');
+        return to_integer(multiplier.shift_register) = 0;
     end multiplier_is_not_busy;
 ------------------------------------------------------------------------
     procedure increment_counter_when_ready
