@@ -38,6 +38,11 @@ package first_order_filter_pkg is
         constant b0       : integer;
         constant b1       : integer);
 --------------------------------------------------
+    procedure create_first_order_filter (
+        signal filter          : inout first_order_filter_record;
+        signal multiplier      : inout multiplier_record;
+        constant time_constant : real);
+--------------------------------------------------
     procedure filter_data (
         signal filter : out first_order_filter_record;
         data_to_filter : in integer);
@@ -110,6 +115,21 @@ package body first_order_filter_pkg is
             end CASE; 
         
     end create_first_order_filter;
+------------------------------------------------------------------------ 
+    procedure create_first_order_filter
+    (
+        signal filter          : inout first_order_filter_record;
+        signal multiplier      : inout multiplier_record;
+        constant time_constant : real
+    ) is
+
+        constant b0 : integer := integer(time_constant*32768.0);
+        constant b1 : integer := b0;
+    begin
+        create_first_order_filter(filter, multiplier, b0, b1);
+
+    end create_first_order_filter;
+
 ------------------------------------------------------------------------ 
 
     procedure filter_data
