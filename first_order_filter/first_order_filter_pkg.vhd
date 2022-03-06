@@ -7,7 +7,7 @@ library ieee;
 package first_order_filter_pkg is
 
 ------------------------------------------------------------------------
-    type first_order_filter is record
+    type first_order_filter_record is record
         multiplier_counter : natural range 0 to 15;
         process_counter    : natural range 0 to 15;
         filterin_is_ready  : boolean;
@@ -17,25 +17,35 @@ package first_order_filter_pkg is
         filter_memory      : int;
     end record;
 
-    subtype first_order_filter_record is first_order_filter;
-    constant init_filter_state : first_order_filter := (multiplier_counter => 5, process_counter => 9, filterin_is_ready => false, filter_is_busy => false, filter_input => 0, filter_output => 0, filter_memory => 0); 
+    -- this is used on an older project as the recrod name
+    subtype first_order_filter is first_order_filter_record;
+
+    constant init_filter_state : first_order_filter_record := (
+        multiplier_counter => 5     ,
+        process_counter    => 9     ,
+        filterin_is_ready  => false ,
+        filter_is_busy     => false ,
+        filter_input       => 0     ,
+        filter_output      => 0     ,
+        filter_memory      => 0     );
+
     constant init_first_order_filter : first_order_filter_record := init_filter_state;
 
 --------------------------------------------------
     procedure create_first_order_filter (
-        signal filter     : inout first_order_filter;
+        signal filter     : inout first_order_filter_record;
         signal multiplier : inout multiplier_record;
         constant b0       : integer;
         constant b1       : integer);
 --------------------------------------------------
     procedure filter_data (
-        signal filter : out first_order_filter;
+        signal filter : out first_order_filter_record;
         data_to_filter : in integer);
 --------------------------------------------------
-    function get_filter_output ( filter : in first_order_filter)
+    function get_filter_output ( filter : in first_order_filter_record)
         return integer; 
 ------------------------------------------------------------------------
-    function filter_is_ready ( filter : first_order_filter)
+    function filter_is_ready ( filter : first_order_filter_record)
         return boolean;
 ------------------------------------------------------------------------
 
@@ -46,7 +56,7 @@ package body first_order_filter_pkg is
 ------------------------------------------------------------------------
     procedure create_first_order_filter
     (
-        signal filter : inout first_order_filter;
+        signal filter : inout first_order_filter_record;
         signal multiplier : inout multiplier_record;
         constant b0 : integer;
         constant b1 : integer
@@ -104,7 +114,7 @@ package body first_order_filter_pkg is
 
     procedure filter_data
     (
-        signal filter : out first_order_filter;
+        signal filter : out first_order_filter_record;
         data_to_filter : in integer
     ) is
     begin
@@ -114,9 +124,10 @@ package body first_order_filter_pkg is
         
     end filter_data;
 
+------------------------------------------------------------------------
     function get_filter_output
     (
-        filter : in first_order_filter
+        filter : in first_order_filter_record
     )
     return integer
     is
@@ -127,7 +138,7 @@ package body first_order_filter_pkg is
 ------------------------------------------------------------------------
     function filter_is_ready
     (
-        filter : first_order_filter
+        filter : first_order_filter_record
     )
     return boolean
     is
@@ -135,8 +146,4 @@ package body first_order_filter_pkg is
         return filter.filterin_is_ready;
     end filter_is_ready;
 ------------------------------------------------------------------------
-
-
-
 end package body first_order_filter_pkg;
-
