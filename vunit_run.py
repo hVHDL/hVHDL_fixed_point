@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parent
 VU = VUnit.from_argv()
 
 mathlib = VU.add_library("math_library_18x18")
-mathlib.add_source_files(ROOT / "multiplier" /"multiplier_base_types_pkg.vhd") 
+mathlib.add_source_files(ROOT / "multiplier" /"multiplier_base_types_18bit_pkg.vhd") 
 mathlib.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
 mathlib.add_source_files(ROOT / "sincos/sincos_pkg.vhd") 
 mathlib.add_source_files(ROOT / "coordinate_transforms/abc_to_ab_transform/abc_to_ab_transform_pkg.vhd") 
