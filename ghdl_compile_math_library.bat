@@ -6,7 +6,7 @@ SET project_root=%%F
 )
 SET source=%project_root%/../
 
-ghdl -a --ieee=synopsys --std=08 %source%/math_library/multiplier/multiplier_base_types_pkg.vhd
+ghdl -a --ieee=synopsys --std=08 %source%/math_library/multiplier/multiplier_base_types_18bit_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 %source%/math_library/multiplier/multiplier_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 %source%/math_library/sincos/sincos_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 %source%/math_library/division/division_internal_pkg.vhd
