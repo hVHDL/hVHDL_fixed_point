@@ -8,21 +8,25 @@ LIBRARY std  ;
 
     use work.multiplier_pkg.all;
     use work.sincos_pkg.all;
+    use work.lut_sine_pkg.all;
 
-entity tb_sincos is
+library vunit_lib;
+    use vunit_lib.run_pkg.all;
+
+entity sincos_tb is
+  generic (runner_cfg : string);
 end;
 
-architecture sim of tb_sincos is
+architecture sim of sincos_tb is
     signal rstn : std_logic;
 
-    signal simulation_running : boolean;
-    signal simulator_clock : std_logic;
-    signal clocked_reset : std_logic;
-    constant clock_per : time := 1 ns;
-    constant clock_half_per : time := 0.5 ns;
+    signal simulator_clock : std_logic := '0';
+    constant clock_period : time := 1 ns;
     constant simtime_in_clocks : integer := 5000;
 ------------------------------------------------------------------------
     signal simulation_counter : natural := 0;
+
+------------------------------------------------------------------------
 
     signal angle_rad16 : unsigned(15 downto 0) := (others => '0');
 
@@ -30,33 +34,25 @@ architecture sim of tb_sincos is
     signal sincos : sincos_record := init_sincos;
     signal sin : int18 := 0;
     signal cos : int18 := 32768;
+    signal lutsine : integer := 0;
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+    signal sin_lut : ram_record;
 
 begin
 
 ------------------------------------------------------------------------
     simtime : process
     begin
-        simulation_running <= true;
-        wait for simtime_in_clocks*clock_per;
-        simulation_running <= false;
+        test_runner_setup(runner, runner_cfg);
+        wait for simtime_in_clocks*clock_period;
+        test_runner_cleanup(runner); -- Simulation ends here
         wait;
     end process simtime;	
 
-------------------------------------------------------------------------
-    sim_clock_gen : process
-    begin
-        simulator_clock <= '0';
-        rstn <= '0';
-        simulator_clock <= '0';
-        wait for clock_half_per;
-        while simulation_running loop
-            wait for clock_half_per;
-                rstn <= '1';
-                simulator_clock <= not simulator_clock;
-            end loop;
-            report "sincos finished";
-        wait;
-    end process;
+    simulator_clock <= not simulator_clock after clock_period/2.0;
 ------------------------------------------------------------------------
 
     clocked_reset_generator : process(simulator_clock, rstn)
@@ -66,6 +62,7 @@ begin
 
             create_multiplier(sincos_multiplier);
             create_sincos(sincos_multiplier, sincos);
+            create_lut_sine(sin_lut);
 
             if simulation_counter = 10 or sincos_is_ready(sincos) then
                 angle_rad16 <= angle_rad16 + 511;
@@ -75,6 +72,9 @@ begin
                 sin <= get_sine(sincos);
                 cos <= get_cosine(sincos);
             end if;
+
+            request_sine_from_lut(sin_lut, simulation_counter mod lookup_table_bits);
+            lutsine <= get_sine_from_lut(sin_lut);
 
         end if; -- rstn
     end process clocked_reset_generator;	
