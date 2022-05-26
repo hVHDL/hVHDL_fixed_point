@@ -34,4 +34,6 @@ mathlib26.add_source_files(ROOT / "multiplier/simulation/tb_multiplier.vhd")
 mathlib26.add_source_files(ROOT / "first_order_filter/first_order_filter_pkg.vhd")
 mathlib26.add_source_files(ROOT / "first_order_filter/first_order_filter_simulation" / "*.vhd")
 
+mathlib26.add_source_files(ROOT / "example" / "*.vhd")
+
 VU.main()
