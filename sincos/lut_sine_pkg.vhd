@@ -3,12 +3,15 @@ library ieee;
     use ieee.numeric_std.all;
     use ieee.math_real.all;
 
+    use work.lookup_table_generator_pkg.all;
+
 package lut_sine_pkg is
 
     constant lookup_table_bits : integer := 2**10;
     subtype lut_integer is integer range -2**16 to 2**16-1;
 
     type integer_array is array (integer range <>) of lut_integer;
+
 
     type ram_record is record
         address : integer range 0 to lookup_table_bits;
@@ -36,6 +39,10 @@ package lut_sine_pkg is
         signal ram_object : out ram_record;
         address : integer);
 ------------------------------------------------------------------------
+
+    constant sine_table_entries : integer_array(0 to lookup_table_bits-1) := calculate_sine_lut(lookup_table_bits,16); 
+
+------------------------------------------------------------------------
 end package lut_sine_pkg;
 
 
@@ -48,14 +55,19 @@ package body lut_sine_pkg is
     )
     return integer_array
     is
-        subtype lut_integer is integer range -2**(number_of_bits-1) to 2**(number_of_bits-1)-1;
         variable sine_lut : integer_array(0 to number_of_entries-1);
-        variable jee : real := 0.0;
+        variable index : real := 0.0;
+        variable angle : real := 0.0;
+        variable calculated_sine : real := 0.0;
+        variable sine_scaled_to_integer : real := 0.0;
 
     begin
         for i in 0 to number_of_entries-1 loop
-            jee := sin(2.0*math_pi/real(number_of_entries)*real(i))*(2.0**number_of_bits-1.0);
-            sine_lut(i) := integer(jee);
+            index := real(i);
+            angle := 1.0/real(number_of_entries)*index;
+            calculated_sine := lookup_table_generator(angle);
+            sine_scaled_to_integer := calculated_sine*(2.0**number_of_bits-1.0);
+            sine_lut(i) := integer(sine_scaled_to_integer);
 
         end loop;
         return sine_lut;
@@ -66,7 +78,7 @@ package body lut_sine_pkg is
     (
         signal ram_object : inout ram_record
     ) is
-        constant sines : integer_array(0 to lookup_table_bits-1) := calculate_sine_lut(lookup_table_bits,16);
+        constant sines : integer_array := sine_table_entries;
     begin
 
         ram_object.read_requested_with_1 <= '0';
