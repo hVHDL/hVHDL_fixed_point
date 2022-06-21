@@ -97,7 +97,7 @@ begin
                 expected_result <= integer((used_dividend/used_divisor)*2.0**14);
             end if;
 
-            check(abs(division_result - expected_result) < 100, "division result should be less than 100!");
+            check(abs(division_result - expected_result) < 100, "division error should be less than 100!");
 
 
         end if; -- rising_edge
