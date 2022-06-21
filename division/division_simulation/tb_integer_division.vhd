@@ -1,104 +1,106 @@
 LIBRARY ieee  ; 
-LIBRARY std  ; 
     USE ieee.NUMERIC_STD.all  ; 
     USE ieee.std_logic_1164.all  ; 
-    USE ieee.std_logic_textio.all  ; 
     use ieee.math_real.all;
-    USE std.textio.all  ; 
+
+library vunit_lib;
+context vunit_lib.vunit_context;
 
     use work.multiplier_pkg.all;
     use work.division_pkg.all;
 
-entity tb_integer_division is
+entity divider_tb is
+  generic (runner_cfg : string);
 end;
 
-architecture sim of tb_integer_division is
-    signal rstn : std_logic;
+architecture vunit_simulation of divider_tb is
 
-    signal simulation_running : boolean;
-    signal simulator_clock : std_logic;
-    signal clocked_reset : std_logic;
-    constant clock_per : time := 1 ns;
-    constant clock_half_per : time := 0.5 ns;
-    constant simtime_in_clocks : integer := 10e3;
-------------------------------------------------------------------------
-    signal simulation_counter : natural := 1;
+    constant clock_period      : time    := 1 ns;
+    constant simtime_in_clocks : integer := 500;
+    
+    signal simulator_clock     : std_logic := '0';
+    signal simulation_counter  : natural   := 0;
+    -----------------------------------
+    -- simulation specific signals ----
+    signal multiplier : multiplier_record := init_multiplier;
+    signal division : division_record := init_division;
 
-    signal hw_multiplier : multiplier_record := multiplier_init_values;
-    signal hw_multiplier1 : multiplier_record := multiplier_init_values;
-    signal division_process_counter : natural range 0 to 15 := 15;
+    function to_radix14
+    (
+        number : real
+    )
+    return integer
+    is
+    begin
+        return integer(number*2.0**12);
+    end to_radix14;
 
-    signal divisor_lut_index : natural := 15;
-    signal number_to_be_reciprocated : natural := 32767 + divisor_lut_index*1024;
+    signal division_result : integer := 0;
+    signal expected_result : integer := 0;
 
-    signal divider : division_record := init_division;
+    type real_array is array (integer range 0 to 9) of real;
 
------------------------------------------------------------------------- 
-    signal test_divident : natural := 128;
+    function "/" ( left, right : real_array) return real_array
+    is
+        variable result : real_array;
+    begin
+        for i in left'range loop
+            result(i) := left(i)/right(i);
+        end loop;
+        return result;
+    end "/";
 
-    signal division_result : int18 := 0;
-    signal x : int18 := 0;
-------------------------------------------------------------------------
+    constant dividends : real_array := (1.0     , 0.986    , 0.2353  , 7.3519 , 4.2663 , 3.7864 , 0.3699 , 5.31356 , 4.1369 , 1.3468);
+    constant divisors : real_array  := (1.83369 , 2.468168 , 3.46876 , 5.356  , 6.3269 , 1.5316 , 4.136  , 0.866   , 0.5469 , 2.8899);
+    signal results : real_array := dividends/divisors;
+    signal i : integer := 0;
+
+    signal used_divisor  : real := 0.0;
+    signal used_dividend : real := 0.0;
+
 begin
 
 ------------------------------------------------------------------------
     simtime : process
     begin
-        simulation_running <= true;
-        wait for simtime_in_clocks*clock_per;
-        simulation_running <= false;
-        report "*******************";
-        report "division successful! last tested number " & integer'image(test_divident) & "at clock cycle " & integer'image(simtime_in_clocks);
-        report "*******************";
+        test_runner_setup(runner, runner_cfg);
+        wait for simtime_in_clocks*clock_period;
+        test_runner_cleanup(runner); -- Simulation ends here
         wait;
     end process simtime;	
 
-------------------------------------------------------------------------
-    sim_clock_gen : process
-    begin
-        simulator_clock <= '0';
-        rstn <= '0';
-        simulator_clock <= '0';
-        wait for clock_half_per;
-        while simulation_running loop
-            wait for clock_half_per;
-                rstn <= '1';
-                simulator_clock <= not simulator_clock;
-            end loop;
-            report "division simulation finished";
-        wait;
-    end process;
+    simulator_clock <= not simulator_clock after clock_period/2.0;
 ------------------------------------------------------------------------
 
-    clocked_reset_generator : process(simulator_clock, rstn)
-    --------------------------------------------------
-        variable div_result : int18;
-    --------------------------------------------------
+    stimulus : process(simulator_clock)
+
     begin
         if rising_edge(simulator_clock) then
-
-            create_multiplier(hw_multiplier);
-            create_division(hw_multiplier, divider);
-
             simulation_counter <= simulation_counter + 1;
-            -- if simulation_counter mod 20  = 0 then
-            if simulation_counter mod 25 = 0 then
-                test_divident <= test_divident + 39;
-                if test_divident < 32768 then 
-                    request_division(divider , 500, 500, 2);
-                end if;
-            end if; 
 
-            if division_is_ready(hw_multiplier, divider) then 
+            create_multiplier(multiplier);
+            create_division(multiplier, division);
 
-                division_result <= get_division_result(hw_multiplier , divider , 16);
-                -- assert abs(division_result-65535) < 67 report "division result : " & integer'image(abs(division_result-65535)) & " input " & integer'image(test_divident-1) severity error;
-
+            if simulation_counter = 5 then
+                request_division(division, to_radix14(dividends(i)), to_radix14(divisors(i)));
+                used_dividend <= dividends(i);
+                used_divisor <= divisors(i);
+                i <= (i + 1) mod 10;
             end if;
 
-        end if; -- rstn
-    end process clocked_reset_generator;	
-    x <= divider.x;
+            if division_is_ready(multiplier, division) then
+                i <= (i + 1) mod 10;
+                request_division(division, to_radix14(dividends(i)), to_radix14(divisors(i)));
+                used_dividend <= dividends(i);
+                used_divisor <= divisors(i);
+                division_result <= get_division_result(multiplier, division, 14);
+                expected_result <= integer((used_dividend/used_divisor)*2.0**14);
+            end if;
 
+            check(abs(division_result - expected_result) < 100, "division result should be less than 100!");
+
+
+        end if; -- rising_edge
+    end process stimulus;	
 ------------------------------------------------------------------------
-end sim;
+end vunit_simulation;

@@ -10,6 +10,10 @@ VU = VUnit.from_argv()
 mathlib = VU.add_library("math_library_18x18")
 mathlib.add_source_files(ROOT / "multiplier" /"multiplier_base_types_18bit_pkg.vhd") 
 mathlib.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
+
+mathlib.add_source_files(ROOT / "division" / "*.vhd") 
+mathlib.add_source_files(ROOT / "division/division_simulation/tb_integer_division.vhd") 
+
 mathlib.add_source_files(ROOT / "sincos/sincos_pkg.vhd") 
 mathlib.add_source_files(ROOT / "sincos/lut_generator_functions/sine_harmonics_lut_generator_pkg.vhd") 
 mathlib.add_source_files(ROOT / "sincos/lut_sine_pkg.vhd") 
