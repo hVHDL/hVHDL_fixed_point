@@ -12,7 +12,16 @@ package multiplier_pkg is
 
     subtype int is integer range -2**(number_of_input_bits-1) to 2**(number_of_input_bits-1)-1;
 
-    subtype multiplier_record is work.multiplier_base_types_pkg.multiplier_base_record;
+    type multiplier_base_record is record
+        signed_data_a                  : input_array;
+        signed_data_b                  : input_array;
+        multiplier_result              : output_array;
+        shift_register                 : std_logic_vector(3 downto 0);
+    end record;
+
+    constant initialize_multiplier_base : multiplier_base_record := (init_input_array, init_input_array, init_output_array, (others => '0'));
+
+    subtype multiplier_record is multiplier_base_record;
     constant multiplier_init_values : multiplier_record := initialize_multiplier_base;
     constant init_multiplier : multiplier_record := multiplier_init_values;
 
@@ -59,7 +68,6 @@ package multiplier_pkg is
         signal multiplier : inout multiplier_record;
         signal counter : inout integer;
         left, right : integer);
-
 ------------------------------------------------------------------------
 end package multiplier_pkg;
 
@@ -103,10 +111,8 @@ package body multiplier_pkg is
     (
         signal multiplier : inout multiplier_record
     ) is
-
         alias multiplier_result              is multiplier.multiplier_result;
         alias shift_register                 is multiplier.shift_register;
-        alias multiplier_is_busy             is multiplier.multiplier_is_busy;
         alias signed_data_a                  is multiplier.signed_data_a;
         alias signed_data_b                  is multiplier.signed_data_b;
     begin
@@ -115,8 +121,6 @@ package body multiplier_pkg is
         signed_data_b     <= signed_data_b(signed_data_b'left-1 downto 0)         & signed_data_b(0);
         multiplier_result <= multiplier_result(multiplier_result'left-1 downto 0) & (signed_data_a(signed_data_a'left) * signed_data_b(signed_data_b'left));
         shift_register    <= shift_register(shift_register'left-1 downto 0)       & '0';
-
-        multiplier_is_busy <= to_integer(shift_register) /= 0;
 
     end create_multiplier;
 
@@ -268,6 +272,5 @@ package body multiplier_pkg is
         counter <= counter + 1;
         
     end multiply_and_increment_counter;
-
 ------------------------------------------------------------------------
 end package body multiplier_pkg; 
