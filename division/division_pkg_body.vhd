@@ -77,13 +77,16 @@ package body division_pkg is
     )
     return boolean
     is
+        variable returned_value : boolean;
     begin
         if division.check_division_to_be_ready then
-            return multiplier_is_ready(division_multiplier);
+            returned_value := multiplier_is_ready(division_multiplier);
         else
-            return false;
+            returned_value := false;
         end if;
         
+        return returned_value;
+
     end division_is_ready;
 ------------------------------------------------------------------------ 
 
