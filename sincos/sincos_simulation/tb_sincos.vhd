@@ -73,7 +73,7 @@ begin
                 cos <= get_cosine(sincos);
             end if;
 
-            request_sine_from_lut(sin_lut, simulation_counter mod lookup_table_bits);
+            request_sine_from_lut(sin_lut, simulation_counter mod 2**10);
             lutsine <= get_sine_from_lut(sin_lut);
 
         end if; -- rstn

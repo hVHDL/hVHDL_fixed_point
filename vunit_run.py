@@ -16,6 +16,7 @@ mathlib.add_source_files(ROOT / "division/division_simulation/tb_integer_divisio
 
 mathlib.add_source_files(ROOT / "sincos/sincos_pkg.vhd") 
 mathlib.add_source_files(ROOT / "sincos/lut_generator_functions/sine_harmonics_lut_generator_pkg.vhd") 
+mathlib.add_source_files(ROOT / "hVHDL_memory_library/fpga_ram" / "*.vhd") 
 mathlib.add_source_files(ROOT / "sincos/lut_sine_pkg.vhd") 
 mathlib.add_source_files(ROOT / "sincos/sincos_simulation/tb_sincos.vhd")
 mathlib.add_source_files(ROOT / "coordinate_transforms/abc_to_ab_transform/abc_to_ab_transform_pkg.vhd") 
