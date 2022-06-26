@@ -27,12 +27,8 @@ architecture sim of sincos_tb is
 ------------------------------------------------------------------------
 
     signal angle_rad16 : integer := 0;
-
     signal sincos_multiplier : multiplier_record := init_multiplier;
     signal sincos : sincos_record := init_sincos;
-    signal lutsine : integer := 0;
-
-    signal used_angle : integer := 0;
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
