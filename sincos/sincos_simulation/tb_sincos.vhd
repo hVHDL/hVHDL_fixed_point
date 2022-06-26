@@ -62,11 +62,12 @@ begin
                 angle_rad16 <= (angle_rad16 + 511) mod 2**16;
                 request_sincos(sincos, (angle_rad16 + 511) mod 2**16);
             end if; 
+
             if sincos_is_ready(sincos) then
-                check(abs(real(get_sine(sincos))/2.0**15 - sin(real(angle_rad16)/2.0**16*2.0*math_pi)) < 0.1,
+                check(abs(real(get_sine(sincos))/2.0**15 - sin(real(angle_rad16)/2.0**16*2.0*math_pi)) < 0.0005,
                     "error is too large");
 
-                check(abs(real(get_cosine(sincos))/2.0**15 - cos(real(angle_rad16)/2.0**16*2.0*math_pi)) < 0.1,
+                check(abs(real(get_cosine(sincos))/2.0**15 - cos(real(angle_rad16)/2.0**16*2.0*math_pi)) < 0.0005,
                     "error is too large");
             end if;
 
