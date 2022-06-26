@@ -4,14 +4,12 @@ LIBRARY std  ;
     USE ieee.std_logic_1164.all  ; 
     USE ieee.std_logic_textio.all  ; 
     use ieee.math_real.all;
-    USE std.textio.all  ; 
 
     use work.multiplier_pkg.all;
     use work.sincos_pkg.all;
-    use work.lut_sine_pkg.all;
 
 library vunit_lib;
-    use vunit_lib.run_pkg.all;
+    context vunit_lib.vunit_context;
 
 entity sincos_tb is
   generic (runner_cfg : string);
@@ -28,19 +26,16 @@ architecture sim of sincos_tb is
 
 ------------------------------------------------------------------------
 
-    signal angle_rad16 : unsigned(15 downto 0) := (others => '0');
+    signal angle_rad16 : integer := 0;
 
     signal sincos_multiplier : multiplier_record := init_multiplier;
     signal sincos : sincos_record := init_sincos;
-    signal sin : int18 := 0;
-    signal cos : int18 := 32768;
     signal lutsine : integer := 0;
 
+    signal used_angle : integer := 0;
+
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
-
-    signal sin_lut : ram_record;
-
 begin
 
 ------------------------------------------------------------------------
@@ -62,19 +57,18 @@ begin
 
             create_multiplier(sincos_multiplier);
             create_sincos(sincos_multiplier, sincos);
-            create_lut_sine(sin_lut);
 
             if simulation_counter = 10 or sincos_is_ready(sincos) then
-                angle_rad16 <= angle_rad16 + 511;
-                request_sincos(sincos, angle_rad16);
+                angle_rad16 <= (angle_rad16 + 511) mod 2**16;
+                request_sincos(sincos, (angle_rad16 + 511) mod 2**16);
             end if; 
             if sincos_is_ready(sincos) then
-                sin <= get_sine(sincos);
-                cos <= get_cosine(sincos);
-            end if;
+                check(abs(real(get_sine(sincos))/2.0**15 - sin(real(angle_rad16)/2.0**16*2.0*math_pi)) < 0.1,
+                    "error is too large");
 
-            request_sine_from_lut(sin_lut, simulation_counter mod 2**10);
-            lutsine <= get_sine_from_lut(sin_lut);
+                check(abs(real(get_cosine(sincos))/2.0**15 - cos(real(angle_rad16)/2.0**16*2.0*math_pi)) < 0.1,
+                    "error is too large");
+            end if;
 
         end if; -- rstn
     end process clocked_reset_generator;	
