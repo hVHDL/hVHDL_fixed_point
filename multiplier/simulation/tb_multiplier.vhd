@@ -32,13 +32,6 @@ architecture sim of tb_multiplier is
 
     type int_array is array (integer range <>) of integer;
     signal input_a_array : int_array(0 to 7) :=(-5  , 16899 , -6589 , 32768 , -32768 , 58295 , -65536, 55555);
-    -- signal output_array : int_array(0 to 6)  := ((input_a_array(0)*input_b_array(0)),
-    --                                       (input_a_array(1)*input_b_array(1)),
-    --                                       (input_a_array(2)*input_b_array(2)),
-    --                                       (input_a_array(3)*input_b_array(3)),
-    --                                       (input_a_array(4)*input_b_array(4)),
-    --                                       (input_a_array(5)*input_b_array(5)),
-    --                                       (input_a_array(6)*input_b_array(6)));
     signal output_counter : natural := 0;
     signal result : integer := 0;
 
