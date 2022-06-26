@@ -43,4 +43,6 @@ mathlib26.add_source_files(ROOT / "first_order_filter/first_order_filter_simulat
 
 mathlib26.add_source_files(ROOT / "example" / "*.vhd")
 
+mathlib.add_source_files(ROOT / "fixed_point_interface_tests" / "*.vhd") 
+
 VU.main()
