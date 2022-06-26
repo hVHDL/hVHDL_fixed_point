@@ -4,21 +4,11 @@ library ieee;
     use ieee.math_real.all;
 
     use work.lookup_table_generator_pkg.all;
+    use work.ram_read_port_pkg.all;
 
 package lut_sine_pkg is
 
-    constant lookup_table_bits : integer := 2**10;
-    subtype lut_integer is integer range -2**16 to 2**16-1;
-
-    type integer_array is array (integer range <>) of lut_integer;
-
-
-    type ram_record is record
-        address : integer range 0 to lookup_table_bits;
-        read_requested_with_1 : std_logic;
-        data_is_ready : boolean;
-        data : lut_integer;
-    end record;
+    subtype ram_record is ram_read_port_record;
 
 ------------------------------------------------------------------------
     procedure create_lut_sine (
@@ -81,12 +71,7 @@ package body lut_sine_pkg is
         constant sines : integer_array := sine_table_entries;
     begin
 
-        ram_object.read_requested_with_1 <= '0';
-        ram_object.data_is_ready         <= ram_object.read_requested_with_1 = '1';
-
-        if ram_object.read_requested_with_1 = '1' then
-            ram_object.data <= sines(ram_object.address);
-        end if;
+        create_ram_read_port(ram_object, sines);
         
     end create_lut_sine;
 ------------------------------------------------------------------------
@@ -96,8 +81,7 @@ package body lut_sine_pkg is
         address : integer
     ) is
     begin
-        ram_object.read_requested_with_1 <= '1';
-        ram_object.address <= address;
+        request_data_from_ram(ram_object, address);
     end request_sine_from_lut;
 ------------------------------------------------------------------------
     function sine_lut_is_ready
@@ -107,7 +91,7 @@ package body lut_sine_pkg is
     return boolean
     is
     begin
-        return ram_object.data_is_ready;
+        return ram_read_is_ready(ram_object);
     end sine_lut_is_ready;
 ------------------------------------------------------------------------
     function get_sine_from_lut

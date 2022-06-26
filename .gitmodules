@@ -1,0 +1,3 @@
+[submodule "hVHDL_memory_library"]
+	path = hVHDL_memory_library
+	url = https://github.com/hVHDL/hVHDL_memory_library
