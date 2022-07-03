@@ -99,6 +99,16 @@ package body division_pkg is
     begin
         return division.division_process_counter /= 3;
     end division_is_busy;
+------------------------------
+    function division_is_not_busy
+    (
+        division : in division_record
+    )
+    return boolean
+    is
+    begin
+        return not division_is_busy(division);
+    end division_is_not_busy;
 
 ------------------------------------------------------------------------
     function get_division_result

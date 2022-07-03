@@ -5,6 +5,7 @@ library ieee;
 
     use work.lookup_table_generator_pkg.all;
     use work.ram_read_port_pkg.all;
+    use work.ram_configuration_pkg.all;
 
 package lut_sine_pkg is
 
@@ -30,7 +31,7 @@ package lut_sine_pkg is
         address : integer);
 ------------------------------------------------------------------------
 
-    constant sine_table_entries : integer_array(0 to lookup_table_bits-1) := calculate_sine_lut(lookup_table_bits,16); 
+    constant sine_table_entries : integer_array(0 to lookup_table_size-1) := calculate_sine_lut(lookup_table_size,16); 
 
 ------------------------------------------------------------------------
 end package lut_sine_pkg;

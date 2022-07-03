@@ -9,6 +9,7 @@ VU = VUnit.from_argv()
 
 mathlib = VU.add_library("math_library_18x18")
 mathlib.add_source_files(ROOT / "hVHDL_memory_library/fpga_ram" / "*.vhd") 
+mathlib.add_source_files(ROOT / "hVHDL_memory_library/fpga_ram/ram_configuration/ram_configuration_16x1024_pkg.vhd") 
 
 mathlib.add_source_files(ROOT / "multiplier" /"multiplier_base_types_18bit_pkg.vhd") 
 mathlib.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 

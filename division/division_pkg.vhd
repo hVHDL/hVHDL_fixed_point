@@ -42,6 +42,9 @@ package division_pkg is
 ------------------------------------------------------------------------
     function division_is_busy ( division : in division_record)
         return boolean;
+------------------------------
+    function division_is_not_busy ( division : in division_record)
+        return boolean;
 ------------------------------------------------------------------------
     function get_division_result (
         multiplier : multiplier_record;
