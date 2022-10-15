@@ -11,6 +11,7 @@ package multiplier_pkg is
     subtype uint17 is integer range 0 to 2**17-1;
 
     subtype int is integer range -2**(number_of_input_bits-1) to 2**(number_of_input_bits-1)-1;
+    alias int_word_length is number_of_input_bits;
 
     type multiplier_base_record is record
         signed_data_a                  : input_array;
