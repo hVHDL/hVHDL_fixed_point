@@ -12,13 +12,13 @@ package abc_to_ab_transform_pkg is
         abc_to_ab_multiplier_process_counter : natural range 0 to 15;
         abc_to_ab_calculation_process_counter : natural range 0 to 15;
 
-        alpha : int18;
-        beta  : int18;
-        gamma : int18;
+        alpha : int;
+        beta  : int;
+        gamma : int;
 
-        alpha_sum : int18;
-        beta_sum  : int18;
-        gamma_sum : int18;
+        alpha_sum : int;
+        beta_sum  : int;
+        gamma_sum : int;
 
         abc_to_ab_is_ready : boolean;
     end record;

@@ -43,8 +43,8 @@ package body division_pkg is
     procedure request_division
     (
         signal division : out division_record;
-        number_to_be_divided : int18;
-        number_to_be_reciprocated : int18
+        number_to_be_divided : int;
+        number_to_be_reciprocated : int
     ) is
     begin
         division.x                                  <= get_initial_value_for_division(remove_leading_zeros(number_to_be_reciprocated));
@@ -59,8 +59,8 @@ package body division_pkg is
     procedure request_division
     (
         signal division : out division_record;
-        number_to_be_divided : int18;
-        number_to_be_reciprocated : int18;
+        number_to_be_divided : int;
+        number_to_be_reciprocated : int;
         iterations : range_of_nr_iteration
     ) is
     begin

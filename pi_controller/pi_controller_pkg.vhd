@@ -8,33 +8,33 @@ package pi_controller_pkg is
 
 ------------------------------------------------------------------------
     type pi_controller_record is record
-        integrator : int18;
-        pi_out     : int18;
+        integrator : int;
+        pi_out     : int;
         pi_control_process_counter : natural range 0 to 7;
-        pi_error : int18;
-        pi_high_limit : int18;
-        pi_low_limit : int18;
+        pi_error : int;
+        pi_high_limit : int;
+        pi_low_limit : int;
     end record;
     constant pi_controller_init : pi_controller_record := (0, 0, 7, 0, 32768, -32768);
     constant init_pi_controller : pi_controller_record := pi_controller_init;
 
 ------------------------------------------------------------------------
     function get_pi_control_output ( pi_controller : pi_controller_record)
-        return int18;
+        return int;
 ------------------------------------------------------------------------
     procedure create_pi_controller (
         signal hw_multiplier : inout multiplier_record;
         signal pi_controller : inout pi_controller_record;
-        proportional_gain    : in uint17;
-        integrator_gain      : in uint17); 
+        proportional_gain    : in integer range 0 to int'high;
+        integrator_gain      : in integer range 0 to int'high); 
 ------------------------------------------------------------------------
     procedure calculate_pi_control (
         signal pi_controller : out pi_controller_record;
-        pi_control_input : in int18);
+        pi_control_input : in int);
 
     procedure request_pi_control (
         signal pi_controller : out pi_controller_record;
-        pi_control_input : in int18);
+        pi_control_input : in int);
 
 ------------------------------------------------------------------------
     function pi_control_calculation_is_ready ( pi_controller : pi_controller_record)
@@ -50,8 +50,8 @@ package body pi_controller_pkg is
     (
         signal hw_multiplier : inout multiplier_record;
         signal pi_controller : inout pi_controller_record;
-        proportional_gain    : in uint17;
-        integrator_gain      : in uint17
+        proportional_gain    : in integer range 0 to int'high;
+        integrator_gain      : in integer range 0 to int'high
     ) is
         alias pi_control_process_counter is pi_controller.pi_control_process_counter;
         alias kp is proportional_gain;
@@ -97,7 +97,7 @@ package body pi_controller_pkg is
     procedure calculate_pi_control
     (
         signal pi_controller : out pi_controller_record;
-        pi_control_input : in int18
+        pi_control_input : in int
     ) is
     begin
 
@@ -109,7 +109,7 @@ package body pi_controller_pkg is
     procedure request_pi_control
     (
         signal pi_controller : out pi_controller_record;
-        pi_control_input : in int18
+        pi_control_input : in int
     ) is
     begin
         calculate_pi_control(pi_controller, pi_control_input);
@@ -120,7 +120,7 @@ package body pi_controller_pkg is
     (
         pi_controller : pi_controller_record
     )
-    return int18
+    return int
     is
     begin
         return pi_controller.pi_out;

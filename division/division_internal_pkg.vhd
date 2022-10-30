@@ -5,8 +5,8 @@ library ieee;
     use work.multiplier_pkg.all;
 
 package division_internal_pkg is
-    function remove_leading_zeros ( number : int18)
-        return int18;
+    function remove_leading_zeros ( number : int)
+        return int;
 
     function get_initial_value_for_division ( divisor : natural)
         return natural;
@@ -96,9 +96,9 @@ package body division_internal_pkg is
 ------------------------------------------------------------------------
     function remove_leading_zeros
     (
-        number : int18
+        number : int
     )
-    return int18
+    return int
     is
         variable abs_number : natural;
 

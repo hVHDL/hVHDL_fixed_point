@@ -25,8 +25,8 @@ architecture vunit_simulation of tb_example is
         counter          : natural           ;
         process_counter  : natural           ;
         process_counter2 : natural           ;
-        y                : int18             ;
-        mem              : int18             ;
+        y                : int             ;
+        mem              : int             ;
     end record;
 
     constant init_filter : filter_object_record := (

@@ -6,18 +6,25 @@ library ieee;
 
 package multiplier_pkg is
 
-    subtype signed_36_bit is signed(35 downto 0);
-    subtype int18 is integer range -2**17 to 2**17-1;
-    subtype uint17 is integer range 0 to 2**17-1;
+    type input_array is array (integer range number_of_input_registers-1 downto 0) of signed(number_of_input_bits-1 downto 0);
+    constant init_input_array :  input_array := (others => (others => '0'));
+    type output_array is array (integer range number_of_output_registers-1 downto 0) of signed(init_input_array(0)'length*2-1 downto 0);
+    constant init_output_array :  output_array := (others => (others => '0'));
+
+    constant output_word_bit_width      : natural := init_input_array(0)'length;
+    constant output_left_index          : natural := output_word_bit_width-1;
+
 
     subtype int is integer range -2**(number_of_input_bits-1) to 2**(number_of_input_bits-1)-1;
     alias int_word_length is number_of_input_bits;
+
+    constant number_of_pipeline_cycles : integer := number_of_input_registers + number_of_output_registers-1;
 
     type multiplier_base_record is record
         signed_data_a                  : input_array;
         signed_data_b                  : input_array;
         multiplier_result              : output_array;
-        shift_register                 : std_logic_vector(3 downto 0);
+        shift_register                 : std_logic_vector(number_of_pipeline_cycles downto 0);
     end record;
 
     constant initialize_multiplier_base : multiplier_base_record := (init_input_array, init_input_array, init_output_array, (others => '0'));

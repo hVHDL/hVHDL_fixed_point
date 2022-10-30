@@ -10,11 +10,11 @@ package division_pkg is
     subtype range_of_nr_iteration is natural range 0 to 4;
     type division_record is record
         division_process_counter : natural range 0 to 3;
-        x: int18;
-        number_to_be_reciprocated : int18;
+        x: int;
+        number_to_be_reciprocated : int;
         number_of_newton_raphson_iteration : range_of_nr_iteration;
-        dividend : int18;
-        divisor : int18;
+        dividend : int;
+        divisor : int;
         check_division_to_be_ready : boolean;
     end record;
 
@@ -31,13 +31,13 @@ package division_pkg is
 ------------------------------------------------------------------------
     procedure request_division (
         signal division : out division_record;
-        number_to_be_divided : int18;
-        number_to_be_reciprocated : int18);
+        number_to_be_divided : int;
+        number_to_be_reciprocated : int);
 ------------------------------------------------------------------------
     procedure request_division (
         signal division : out division_record;
-        number_to_be_divided : int18;
-        number_to_be_reciprocated : int18;
+        number_to_be_divided : int;
+        number_to_be_reciprocated : int;
         iterations : range_of_nr_iteration);
 ------------------------------------------------------------------------
     function division_is_busy ( division : in division_record)

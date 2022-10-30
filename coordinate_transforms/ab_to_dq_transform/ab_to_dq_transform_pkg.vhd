@@ -11,15 +11,15 @@ package ab_to_dq_transform_pkg is
         ab_to_dq_multiplier_counter : natural range 0 to 15;
         ab_to_dq_calculation_counter : natural range 0 to 15;
 
-        d     : int18;
-        d_sum : int18;
-        q      : int18;
-        q_sum  : int18;
+        d     : int;
+        d_sum : int;
+        q      : int;
+        q_sum  : int;
 
-        sine   : int18;
-        cosine : int18;
-        alpha  : int18;
-        beta   : int18;
+        sine   : int;
+        cosine : int;
+        alpha  : int;
+        beta   : int;
 
         ab_to_dq_calculation_is_ready : boolean;
     end record;
@@ -36,17 +36,17 @@ package ab_to_dq_transform_pkg is
         return boolean;
 ------------------------------------------------------------------------
     function get_d_component ( ab_dq_transform_object : ab_to_dq_record)
-        return int18;
+        return int;
 ------------------------------------------------------------------------
     function get_q_component ( ab_dq_transform_object : ab_to_dq_record)
-        return int18;
+        return int;
 ------------------------------------------------------------------------
     procedure request_ab_to_dq_transform (
         signal ab_dq_transform_object : out ab_to_dq_record;
-        sine                          : in int18;
-        cosine                        : in int18;
-        alpha                         : in int18;
-        beta                          : in int18);
+        sine                          : in int;
+        cosine                        : in int;
+        alpha                         : in int;
+        beta                          : in int);
 ------------------------------------------------------------------------
     procedure create_ab_to_dq_transform (
         signal hw_multiplier          : inout multiplier_record;
@@ -73,7 +73,7 @@ package body ab_to_dq_transform_pkg is
     (
         ab_dq_transform_object : ab_to_dq_record
     )
-    return int18
+    return int
     is
     begin
         return ab_dq_transform_object.d;
@@ -83,7 +83,7 @@ package body ab_to_dq_transform_pkg is
     (
         ab_dq_transform_object : ab_to_dq_record
     )
-    return int18
+    return int
     is
     begin
         return ab_dq_transform_object.q;
@@ -92,10 +92,10 @@ package body ab_to_dq_transform_pkg is
     procedure request_ab_to_dq_transform
     (
         signal ab_dq_transform_object : out ab_to_dq_record;
-        sine                          : in int18;
-        cosine                        : in int18;
-        alpha                         : in int18;
-        beta                          : in int18
+        sine                          : in int;
+        cosine                        : in int;
+        alpha                         : in int;
+        beta                          : in int
     ) is
     begin
         ab_dq_transform_object.ab_to_dq_multiplier_counter <= 0;

@@ -32,11 +32,11 @@ architecture vunit_simulation of tb_abc_to_ab_transform is
     type abc is (phase_a, phase_b, phase_c);
 
     type sincos_array is array (abc range abc'left to abc'right) of sincos_record;
-    signal sincos : sincos_array := (init_sincos, init_sincos, init_sincos);
+    signal sincos : sincos_array := (others => init_sincos);
     signal angle_rad16 : unsigned(15 downto 0) := (others => '0');
 
     type multiplier_array is array (abc range abc'left to abc'right) of multiplier_record;
-    signal multiplier : multiplier_array := (init_multiplier, init_multiplier, init_multiplier);
+    signal multiplier : multiplier_array := (others => init_multiplier);
 
     signal ab_transform_multiplier : multiplier_record := init_multiplier;
     signal abc_to_ab_transform : abc_to_ab_transform_record := init_abc_to_ab_transform;

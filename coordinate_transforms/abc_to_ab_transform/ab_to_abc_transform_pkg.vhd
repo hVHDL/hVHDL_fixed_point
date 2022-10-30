@@ -11,13 +11,13 @@ package ab_to_abc_transform_pkg is
         alpha_beta_to_abc_multiplier_process_counter : natural range 0 to 15;
         alpha_beta_to_abc_calculation_process_counter : natural range 0 to 15;
 
-        phase_a : int18;
-        phase_b : int18;
-        phase_c : int18;
+        phase_a : int;
+        phase_b : int;
+        phase_c : int;
 
-        phase_a_sum : int18;
-        phase_b_sum : int18;
-        phase_c_sum : int18;
+        phase_a_sum : int;
+        phase_b_sum : int;
+        phase_c_sum : int;
 
         alpha_beta_to_abc_transform_is_ready : boolean;
     end record;

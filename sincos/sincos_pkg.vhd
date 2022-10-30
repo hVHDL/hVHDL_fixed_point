@@ -11,11 +11,11 @@ package sincos_pkg is
         sincos_process_counter : natural range 0 to 15;
         angle_rad16            : unsigned(15 downto 0);
 
-        angle_squared : int18;
-        sin16 : int18;
-        cos16 : int18;
-        sin : int18;
-        cos : int18;
+        angle_squared : int;
+        sin16 : int;
+        cos16 : int;
+        sin : int;
+        cos : int;
         sincos_has_finished : boolean;
     end record;
 
@@ -23,23 +23,23 @@ package sincos_pkg is
 ------------------------------------------------------------------------
     procedure request_sincos (
         signal sincos_object : inout sincos_record;
-        angle_rad16 : in int18);
+        angle_rad16 : in int);
 
     procedure request_sincos (
         signal sincos_object : inout sincos_record;
         angle_rad16 : in unsigned);
 ------------------------------------------------------------------------
     function get_sine ( sincos_object : sincos_record)
-        return int18;
+        return int;
 ------------------------------------------------------------------------
     function get_cosine ( sincos_object : sincos_record)
-        return int18;
+        return int;
 ------------------------------------------------------------------------
     function sincos_is_ready ( sincos_object : sincos_record)
         return boolean;
 ------------------------------------------------------------------------
-    function angle_reduction ( angle_in_rad16 : int18)
-        return int18;
+    function angle_reduction ( angle_in_rad16 : int)
+        return int;
 ------------------------------------------------------------------------
     procedure create_sincos (
         signal hw_multiplier : inout multiplier_record;
@@ -52,9 +52,9 @@ package body sincos_pkg is
 ------------------------------------------------------------------------
     function angle_reduction
     (
-        angle_in_rad16 : int18
+        angle_in_rad16 : int
     )
-        return int18
+        return int
     is
         variable sign16_angle : signed(17 downto 0);
     begin
@@ -75,7 +75,7 @@ package body sincos_pkg is
     procedure request_sincos
     (
         signal sincos_object : inout sincos_record;
-        angle_rad16 : in int18
+        angle_rad16 : in int
     ) is
     begin
             request_sincos(sincos_object, to_unsigned(angle_rad16, 16));
@@ -99,7 +99,7 @@ package body sincos_pkg is
     (
         sincos_object : sincos_record
     )
-    return int18
+    return int
     is
     begin
         return sincos_object.sin;
@@ -109,7 +109,7 @@ package body sincos_pkg is
     (
         sincos_object : sincos_record
     )
-    return int18
+    return int
     is
     begin
         return sincos_object.cos;
@@ -139,9 +139,9 @@ package body sincos_pkg is
         alias cos                    is sincos_object.cos                    ;
         alias sincos_has_finished    is sincos_object.sincos_has_finished    ;
 
-        type int18_array is array (integer range <>) of int18;
-        constant sinegains : int18_array(0 to 2) := (12868 , 21159 , 10180);
-        constant cosgains  : int18_array(0 to 2) := (32768 , 80805 , 64473);
+        type int_array is array (integer range <>) of int;
+        constant sinegains : int_array(0 to 2) := (12868 , 21159 , 10180);
+        constant cosgains  : int_array(0 to 2) := (32768 , 80805 , 64473);
 
         constant one_quarter   : integer := 8192  ;
         constant three_fourths : integer := 24576 ;
