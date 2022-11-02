@@ -3,7 +3,7 @@ LIBRARY ieee  ;
     USE ieee.std_logic_1164.all  ; 
 
 library vunit_lib;
-    use vunit_lib.run_pkg.all;
+    context vunit_lib.vunit_context;
 
     use work.multiplier_pkg.all;
 

@@ -1,4 +1,0 @@
-v 4
-file . "tb_sincos.vhd" "087c44af1d7d9aa67573582c20e715217bec106f" "20210926110234.500":
-  entity tb_sincos at 1( 0) + 0 on 851;
-  architecture sim of tb_sincos at 16( 338) + 0 on 852;

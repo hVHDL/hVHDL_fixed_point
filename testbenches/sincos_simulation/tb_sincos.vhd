@@ -9,7 +9,7 @@ LIBRARY std  ;
     use work.sincos_pkg.all;
 
 library vunit_lib;
-    context vunit_lib.vunit_context;
+context vunit_lib.vunit_context;
 
 entity sincos_tb is
   generic (runner_cfg : string);
