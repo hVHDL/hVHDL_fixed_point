@@ -15,8 +15,8 @@ package multiplier_pkg is
     constant output_left_index          : natural := output_word_bit_width-1;
 
 
-    subtype int is integer range -2**(number_of_input_bits-1) to 2**(number_of_input_bits-1)-1;
     alias int_word_length is number_of_input_bits;
+    subtype int is integer range -2**(number_of_input_bits-1) to 2**(number_of_input_bits-1)-1;
 
     constant number_of_pipeline_cycles : integer := number_of_input_registers + number_of_output_registers-1;
 

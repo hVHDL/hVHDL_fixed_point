@@ -32,6 +32,8 @@ mathlib22.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd")
 mathlib26 = VU.add_library("math_library_26x26")
 mathlib26.add_source_files(ROOT / "multiplier" /"multiplier_base_types_26bit_pkg.vhd") 
 mathlib26.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
+mathlib26.add_source_files(ROOT / "division" / "*.vhd") 
+
 mathlib26.add_source_files(ROOT / "first_order_filter/first_order_filter_pkg.vhd")
 
 mathlib26.add_source_files(ROOT / "example" / "*.vhd")
@@ -42,9 +44,13 @@ mathlib.add_source_files(ROOT / "testbenches/sincos_simulation/tb_sincos.vhd")
 mathlib.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier.vhd")
 mathlib.add_source_files(ROOT / "testbenches/abc_to_ab_transform_simulation/tb_abc_to_ab_transform.vhd")
 mathlib.add_source_files(ROOT / "testbenches/ab_to_dq_simulation/tb_ab_to_dq_transforms.vhd")
-mathlib22.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier.vhd")
 mathlib.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division.vhd")
+mathlib.add_source_files(ROOT / "testbenches/division_simulation/tb_divider_internal_pkg.vhd")
+
+mathlib22.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier.vhd")
+
 mathlib26.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier.vhd")
+# mathlib26.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_integer_division.vhd")
 mathlib26.add_source_files(ROOT / "testbenches/first_order_filter_simulation/tb_first_order_filter.vhd")
 
 VU.main()

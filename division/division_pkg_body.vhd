@@ -1,5 +1,7 @@
 package body division_pkg is
 
+    constant nr_radix : integer := int_word_length-2;
+
 ------------------------------------------------------------------------
     procedure create_division
     (
@@ -18,17 +20,17 @@ package body division_pkg is
                 WHEN 1 =>
                     increment_counter_when_ready(hw_multiplier,m.division_process_counter);
                     if multiplier_is_ready(hw_multiplier) then
-                        multiply(hw_multiplier, m.x, invert_bits(get_multiplier_result(hw_multiplier, 16)));
+                        multiply(hw_multiplier, m.x, invert_bits(get_multiplier_result(hw_multiplier, nr_radix)));
                     end if;
                 WHEN 2 =>
                     if multiplier_is_ready(hw_multiplier) then
-                        m.x <= get_multiplier_result(hw_multiplier, 16);
+                        m.x <= get_multiplier_result(hw_multiplier, nr_radix);
                         if m.number_of_newton_raphson_iteration /= 0 then
                             m.number_of_newton_raphson_iteration <= m.number_of_newton_raphson_iteration - 1;
                             m.division_process_counter <= 0;
                         else
                             m.division_process_counter <= m.division_process_counter + 1;
-                            multiply(hw_multiplier, get_multiplier_result(hw_multiplier, 16), m.dividend);
+                            multiply(hw_multiplier, get_multiplier_result(hw_multiplier, nr_radix), m.dividend);
                             m.check_division_to_be_ready <= true;
                         end if;
                     end if;
@@ -124,7 +126,7 @@ package body division_pkg is
         variable used_radix : integer;
     begin
 
-        used_radix := 16 + 16-radix;
+        used_radix := nr_radix + nr_radix-radix;
             
         multiplier_result  := get_multiplier_result(multiplier,used_radix);
         multiplier_result2 := get_multiplier_result(multiplier,used_radix/2+1);
