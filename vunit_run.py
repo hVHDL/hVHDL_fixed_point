@@ -28,6 +28,7 @@ mathlib.add_source_files(ROOT / "coordinate_transforms/ab_to_dq_transform/ab_to_
 mathlib22 = VU.add_library("math_library_22x22")
 mathlib22.add_source_files(ROOT / "multiplier" /"multiplier_base_types_22bit_pkg.vhd") 
 mathlib22.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
+mathlib22.add_source_files(ROOT / "division" / "*.vhd") 
 
 mathlib26 = VU.add_library("math_library_26x26")
 mathlib26.add_source_files(ROOT / "multiplier" /"multiplier_base_types_26bit_pkg.vhd") 
@@ -46,6 +47,7 @@ mathlib.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_divi
 mathlib.add_source_files(ROOT / "testbenches/division_simulation/tb_divider_internal_pkg.vhd")
 
 mathlib22.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier.vhd")
+mathlib22.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division.vhd")
 
 mathlib26.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier.vhd")
 mathlib26.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division.vhd")

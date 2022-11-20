@@ -71,6 +71,7 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
+        check(maximum_relative_error < 1.0e-3, "maximum relative error should be less than 1/1000");
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
     end process simtime;	
@@ -103,7 +104,7 @@ begin
                 expected_result <= integer((used_dividend/used_divisor)*2.0**(int_word_length-4));
             end if;
 
-            check(abs(1.0-real(division_result) / real(expected_result)) < 0.001, "division error should be less than 100!");
+            check(abs(1.0-real(division_result) / real(expected_result)) < 1.0e-3, "division error should be less than 1/1000!");
 
             if expected_result /= 0 then
                 relative_error <= abs(1.0-real(division_result) / real(expected_result));
@@ -111,8 +112,6 @@ begin
             if maximum_relative_error < relative_error then
                 maximum_relative_error <= relative_error;
             end if;
-
-
 
         end if; -- rising_edge
     end process stimulus;	
