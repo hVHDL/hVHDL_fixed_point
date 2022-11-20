@@ -57,7 +57,7 @@ begin
             check(6.0 = to_real(6*2**(number_of_bits-2)) , "fail4");
 
             check(6*2**(number_of_bits-4) = to_fixed(6.0 , 3) , "fail");
-            check(6*2**(number_of_bits-4) = to_fixed(6.0 , 7.0) , "fail");
+            check(-6*2**(number_of_bits-4) = to_fixed(-6.0 , 7.0) , "fail");
 
             check(32*2**(number_range_bits-6) = to_fixed(32.0, 32.0) , "fail");
             check(32*2**(number_range_bits-get_integer_bits(32.0)) = to_fixed(32.0) , "fail");
