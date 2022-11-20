@@ -53,4 +53,7 @@ mathlib26.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multipli
 mathlib26.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division.vhd")
 mathlib26.add_source_files(ROOT / "testbenches/first_order_filter_simulation/tb_first_order_filter.vhd")
 
+mathlib.add_source_files(ROOT / "testbenches/real_to_fixed/real_to_fixed_tb.vhd")
+
+
 VU.main()
