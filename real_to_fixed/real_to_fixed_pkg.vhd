@@ -27,8 +27,10 @@ package real_to_fixed_pkg is
     function to_fixed ( number : real)
         return integer;
 ------------------------------------------------------------------------
-    function to_real ( number : integer)
-        return real;
+    function to_real (
+        number : integer;
+        number_of_integer_bits : integer)
+    return real;
 ------------------------------------------------------------------------
 
 end package real_to_fixed_pkg;
@@ -87,12 +89,13 @@ package body real_to_fixed_pkg is
 ------------------------------------------------------------------------
     function to_real
     (
-        number : integer
+        number : integer;
+        number_of_integer_bits : integer
     )
     return real
     is
     begin
-        return real(number)/2.0**(number_range_bits-1);
+        return real(number)/2.0**(number_range_bits-number_of_integer_bits);
     end to_real;
 ------------------------------------------------------------------------
 
