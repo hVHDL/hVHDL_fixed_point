@@ -89,7 +89,7 @@ begin
             create_division(multiplier, division);
 
             if simulation_counter = 5 then
-                request_division(division, to_radix12(dividends(i)), to_radix12(divisors(i)),2);
+                request_division(division, to_radix12(dividends(i)), to_radix12(divisors(i)));
                 used_dividend <= dividends(i);
                 used_divisor <= divisors(i);
                 i <= (i + 1) mod 10;
