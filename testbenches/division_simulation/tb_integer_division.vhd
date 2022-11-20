@@ -31,7 +31,7 @@ architecture vunit_simulation of divider_tb is
     return integer
     is
     begin
-        return integer(number*2.0**12);
+        return integer(number*2.0**(int_word_length-6));
     end to_radix12;
 
 ------------------------------------------------------------------------
@@ -61,6 +61,8 @@ architecture vunit_simulation of divider_tb is
 
     signal multiplier : multiplier_record := init_multiplier;
     signal division : division_record := init_division;
+    signal relative_error : real := 0.0;
+    signal maximum_relative_error : real := 0.0;
 
 begin
 
@@ -86,7 +88,7 @@ begin
             create_division(multiplier, division);
 
             if simulation_counter = 5 then
-                request_division(division, to_radix12(dividends(i)), to_radix12(divisors(i)));
+                request_division(division, to_radix12(dividends(i)), to_radix12(divisors(i)),2);
                 used_dividend <= dividends(i);
                 used_divisor <= divisors(i);
                 i <= (i + 1) mod 10;
@@ -97,11 +99,19 @@ begin
                 request_division(division, to_radix12(dividends(i)), to_radix12(divisors(i)));
                 used_dividend   <= dividends(i);
                 used_divisor    <= divisors(i);
-                division_result <= get_division_result(multiplier, division, 14);
-                expected_result <= integer((used_dividend/used_divisor)*2.0**14);
+                division_result <= get_division_result(multiplier, division, (int_word_length-4));
+                expected_result <= integer((used_dividend/used_divisor)*2.0**(int_word_length-4));
             end if;
 
-            check(abs(division_result - expected_result) < 100, "division error should be less than 100!");
+            check(abs(1.0-real(division_result) / real(expected_result)) < 0.001, "division error should be less than 100!");
+
+            if expected_result /= 0 then
+                relative_error <= abs(1.0-real(division_result) / real(expected_result));
+            end if;
+            if maximum_relative_error < relative_error then
+                maximum_relative_error <= relative_error;
+            end if;
+
 
 
         end if; -- rising_edge
