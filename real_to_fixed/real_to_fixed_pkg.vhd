@@ -46,8 +46,8 @@ package body real_to_fixed_pkg is
     is
         variable integer_bits : integer;
     begin
-        if number >= 1.0 then
-            integer_bits := integer(round(log2(number)+0.51));
+        if abs(number) >= 1.0 then
+            integer_bits := integer(round(log2(abs(number))+0.51));
         else
             integer_bits := 1;
         end if;

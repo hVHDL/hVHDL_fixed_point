@@ -32,10 +32,10 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
 
-        check(2**(number_of_bits-1) = to_fixed(2.0   , 1)        , "fail1");
-        check(1.0 = to_real(to_fixed(1.0             , 1),1)       , "fail2");
-        check(0.5 = to_real(2**(number_of_bits-2)/2, 1) , "fail3");
-        check(6.0 = to_real(6*2**(number_of_bits-2), 1) , "fail4");
+        check(2**(number_of_bits-1) = to_fixed(2.0  , 1) , "fail1");
+        check(1.0 = to_real(to_fixed(1.0            , 1) , 1)        , "fail2");
+        check(0.5 = to_real(2**(number_of_bits-2)/2 , 1) , "fail3");
+        check(6.0 = to_real(6*2**(number_of_bits-2) , 1) , "fail4");
 
         check(6.13566836 = to_real(to_fixed(6.135668361,3),3) , "fail5");
 
@@ -43,8 +43,9 @@ begin
         check(-6*2**(number_of_bits-4)    = to_fixed(-6.0 , 7.0)  , "fail");
         check(32*2**(number_range_bits-6) = to_fixed(32.0 , 32.0) , "fail");
 
-        check(32*2**(number_range_bits-get_integer_bits(32.0))     = to_fixed(32.0)   , "fail");
-        check(1024*2**(number_range_bits-get_integer_bits(1024.0)) = to_fixed(1024.0) , "fail");
+        check(32*2**(number_range_bits-get_integer_bits(32.0))         = to_fixed(32.0)   , "fail");
+        check(-2**16*2**(number_range_bits-get_integer_bits(-2.0**16)) = to_fixed(-2.0**16) , "fail");
+        check(-468*2**(number_range_bits-get_integer_bits(-468.0))     = to_fixed(-468.0) , "fail");
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
     end process stimulus;	
