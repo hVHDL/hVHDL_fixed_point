@@ -48,8 +48,8 @@ architecture vunit_simulation of divider_tb is
     end "/";
 ------------------------------------------------------------------------
 
-    constant dividends : real_array := (1.0     , 0.986    , 0.2353  , 7.3519 , 4.2663 , 3.7864 , 0.3699 , 5.31356 , 4.1369 , 1.3468);
-    constant divisors : real_array  := (1.83369 , 2.468168 , 3.46876 , 5.356  , 6.3269 , 1.5316 , 4.136  , 0.866   , 0.5469 , 2.8899);
+    constant dividends : real_array := (1.0     , 0.986    , 0.2353  , 7.3519 , -4.2663 , -3.7864 , 0.3699 , 5.31356 , 4.1369 , 1.3468);
+    constant divisors : real_array  := (1.83369 , -2.468168 , 3.46876 , 5.356  , 6.3269 , -1.5316 , 4.136  , 0.866   , 0.5469 , 2.8899);
     signal results : real_array := dividends/divisors;
     signal i : integer := 0;
 

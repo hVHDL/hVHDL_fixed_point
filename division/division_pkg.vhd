@@ -50,12 +50,12 @@ package division_pkg is
         multiplier : multiplier_record;
         hw_divider : division_record;
         radix      : natural)
-    return natural;
+    return integer;
 ------------------------------------------------------------------------
     function get_division_result (
         multiplier : multiplier_record;
         divisor : natural;
         radix : natural)
-    return natural;
+    return integer;
 ------------------------------------------------------------------------
 end package division_pkg;

@@ -46,7 +46,8 @@ package body division_pkg is
     (
         signal division : out division_record;
         number_to_be_divided : int;
-        number_to_be_reciprocated : int
+        number_to_be_reciprocated : int;
+        iterations : range_of_nr_iteration
     ) is
     begin
         division.x                                  <= get_initial_value_for_division(remove_leading_zeros(number_to_be_reciprocated));
@@ -54,23 +55,18 @@ package body division_pkg is
         division.dividend                           <= number_to_be_divided;
         division.divisor                            <= number_to_be_reciprocated;
         division.division_process_counter           <= 0;
-        division.number_of_newton_raphson_iteration <= 0;
+        division.number_of_newton_raphson_iteration <= iterations - 1;
     end request_division;
-
 ------------------------------------------------------------------------
     procedure request_division
     (
         signal division : out division_record;
         number_to_be_divided : int;
-        number_to_be_reciprocated : int;
-        iterations : range_of_nr_iteration
+        number_to_be_reciprocated : int
     ) is
     begin
-        request_division(division, number_to_be_divided, number_to_be_reciprocated);
-        division.number_of_newton_raphson_iteration <= iterations - 1;
+        request_division(division, number_to_be_divided, number_to_be_reciprocated, 1);
     end request_division;
-
-
 ------------------------------------------------------------------------
     function division_is_ready
     (
@@ -119,7 +115,7 @@ package body division_pkg is
         divisor : natural;
         radix : natural
     )
-    return natural
+    return integer
     is
         variable multiplier_result : integer;
         variable multiplier_result2 : integer;
@@ -132,7 +128,6 @@ package body division_pkg is
     begin
 
         used_radix := nr_radix + nr_radix-radix;
-            
         multiplier_result  := get_multiplier_result(multiplier,used_radix);
 
         for i in integer range int_word_length-2 downto 0 loop
@@ -152,12 +147,18 @@ package body division_pkg is
         hw_divider : division_record;
         radix : natural
     )
-    return natural
+    return integer
     is
         variable multiplier_result : integer;
+        variable returned_value : integer;
     begin
             multiplier_result := get_multiplier_result(multiplier,radix); 
-            return get_division_result(multiplier, hw_divider.divisor, radix);
+            returned_value := get_division_result(multiplier, abs(hw_divider.divisor), radix);
+            if hw_divider.divisor < 0 then
+                returned_value := -returned_value;
+            end if;
+
+            return returned_value;
         
     end get_division_result;
 
