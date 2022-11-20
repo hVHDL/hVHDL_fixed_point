@@ -4,8 +4,11 @@ ghdl -a --ieee=synopsys --std=08 hVHDL_memory_library/fpga_ram/ram_configuration
 ghdl -a --ieee=synopsys --std=08 hVHDL_memory_library/fpga_ram/ram_read_port_pkg.vhd
 
 ghdl -a --ieee=synopsys --std=08 multiplier/multiplier_base_types_18bit_pkg.vhd
+ghdl -a --ieee=synopsys --std=08 real_to_fixed/real_to_fixed_pkg.vhd
+
 ghdl -a --ieee=synopsys --std=08 multiplier/multiplier_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 sincos/sincos_pkg.vhd
+
 
 ghdl -a --ieee=synopsys --std=08 sincos/lut_generator_functions/sine_lut_generator_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 sincos/lut_sine_pkg.vhd
