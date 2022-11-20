@@ -5,25 +5,28 @@ library ieee;
     use work.multiplier_pkg.all;
 
 package division_internal_pkg is
+--------------------------------------------------
     function remove_leading_zeros ( number : int)
         return int;
-
+--------------------------------------------------
     function number_of_leading_zeroes (
         data : unsigned;
         max_shift : integer)
     return integer;
-
+--------------------------------------------------
     function get_initial_value_for_division ( divisor : natural)
         return natural;
-
+--------------------------------------------------
     function invert_bits ( number : natural)
         return natural;
+--------------------------------------------------
 
 end package division_internal_pkg;
 
 
 package body division_internal_pkg is
 
+--------------------------------------------------
     function number_of_leading_zeroes
     (
         data : std_logic_vector;
@@ -45,6 +48,7 @@ package body division_internal_pkg is
         
     end number_of_leading_zeroes;
 
+--------------------------------------------------
     function number_of_leading_zeroes
     (
         data : unsigned;
@@ -155,25 +159,8 @@ package body division_internal_pkg is
             abs_number := abs(number);
             uint_number := to_unsigned(abs_number, int_word_length-1);
             zeroes := number_of_leading_zeroes(uint_number, int_word_length-2);
-            if abs_number < 2**1  then return abs_number*2**15; end if;
-            if abs_number < 2**2  then return abs_number*2**14; end if;
-            if abs_number < 2**3  then return abs_number*2**13; end if;
-            if abs_number < 2**4  then return abs_number*2**12; end if;
-            if abs_number < 2**5  then return abs_number*2**11; end if;
-            if abs_number < 2**6  then return abs_number*2**10; end if;
-            if abs_number < 2**7  then return abs_number*2**9; end if;
-            if abs_number < 2**8  then return abs_number*2**8; end if;
-            if abs_number < 2**9  then return abs_number*2**7; end if;
-            if abs_number < 2**10 then return abs_number*2**6; end if;
-            if abs_number < 2**11 then return abs_number*2**5; end if;
-            if abs_number < 2**12 then return abs_number*2**4; end if;
-            if abs_number < 2**13 then return abs_number*2**3; end if;
-            if abs_number < 2**14 then return abs_number*2**2; end if;
-            if abs_number < 2**15 then return abs_number*2**1; end if;
 
-            return abs_number;
-
-            -- return to_integer(shift_left(uint_number, number_of_leading_zeroes(uint_number, int_word_length-2)));
+            return to_integer(shift_left(uint_number, zeroes-1));
 
     end remove_leading_zeros; 
 

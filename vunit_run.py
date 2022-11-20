@@ -38,8 +38,6 @@ mathlib26.add_source_files(ROOT / "first_order_filter/first_order_filter_pkg.vhd
 
 mathlib26.add_source_files(ROOT / "example" / "*.vhd")
 
-mathlib.add_source_files(ROOT / "fixed_point_interface_tests" / "*.vhd") 
-
 mathlib.add_source_files(ROOT / "testbenches/sincos_simulation/tb_sincos.vhd")
 mathlib.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier.vhd")
 mathlib.add_source_files(ROOT / "testbenches/abc_to_ab_transform_simulation/tb_abc_to_ab_transform.vhd")
@@ -50,7 +48,7 @@ mathlib.add_source_files(ROOT / "testbenches/division_simulation/tb_divider_inte
 mathlib22.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier.vhd")
 
 mathlib26.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier.vhd")
-# mathlib26.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_integer_division.vhd")
+mathlib26.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division.vhd")
 mathlib26.add_source_files(ROOT / "testbenches/first_order_filter_simulation/tb_first_order_filter.vhd")
 
 VU.main()
