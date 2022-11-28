@@ -8,6 +8,7 @@ context vunit_lib.vunit_context;
 
     use work.multiplier_pkg.all;
     use work.division_pkg.all;
+    use work.real_to_fixed_pkg.all;
 
 entity divider_tb is
   generic (runner_cfg : string);
@@ -24,17 +25,6 @@ architecture vunit_simulation of divider_tb is
     -- simulation specific signals ----
 
 ------------------------------------------------------------------------
-    function to_radix12
-    (
-        number : real
-    )
-    return integer
-    is
-    begin
-        return integer(number*2.0**(int_word_length-6));
-    end to_radix12;
-
-------------------------------------------------------------------------
     type real_array is array (integer range 0 to 9) of real;
 
     function "/" ( left, right : real_array) return real_array
@@ -47,6 +37,8 @@ architecture vunit_simulation of divider_tb is
         return result;
     end "/";
 ------------------------------------------------------------------------
+
+    constant bits_in_integer : integer := 5;
 
     constant dividends : real_array := (1.0     , 0.986    , 0.2353  , 7.3519 , -4.2663 , -3.7864 , 0.3699 , 5.31356 , 4.1369 , 1.3468);
     constant divisors : real_array  := (1.83369 , -2.468168 , 3.46876 , 5.356  , 6.3269 , -1.5316 , 4.136  , 0.866   , 0.5469 , 2.8899);
@@ -89,7 +81,7 @@ begin
             create_division(multiplier, division);
 
             if simulation_counter = 5 then
-                request_division(division, to_radix12(dividends(i)), to_radix12(divisors(i)));
+                request_division(division, to_fixed(dividends(i), 5), to_fixed(divisors(i), 5));
                 used_dividend <= dividends(i);
                 used_divisor <= divisors(i);
                 i <= (i + 1) mod 10;
@@ -97,7 +89,7 @@ begin
 
             if division_is_ready(multiplier, division) then
                 i <= (i + 1) mod 10;
-                request_division(division, to_radix12(dividends(i)), to_radix12(divisors(i)));
+                request_division(division, to_fixed(dividends(i),5), to_fixed(divisors(i), 5));
                 used_dividend   <= dividends(i);
                 used_divisor    <= divisors(i);
                 division_result <= get_division_result(multiplier, division, (int_word_length-4));
