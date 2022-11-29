@@ -38,7 +38,6 @@ architecture vunit_simulation of divider_tb is
     end "/";
 ------------------------------------------------------------------------
 
-    constant bits_in_integer : integer := 5;
 
     constant dividends : real_array := (1.0     , 0.986    , 0.2353  , 7.3519 , -4.2663 , -3.7864 , 0.3699 , 5.31356 , 4.1369 , 1.3468);
     constant divisors : real_array  := (1.83369 , -2.468168 , 3.46876 , 5.356  , 6.3269 , -1.5316 , 4.136  , 0.866   , 0.5469 , 2.8899);
@@ -55,6 +54,8 @@ architecture vunit_simulation of divider_tb is
     signal division : division_record := init_division;
     signal relative_error : real := 0.0;
     signal maximum_relative_error : real := 0.0;
+
+    constant bits_in_integer : integer := 5;
 
 begin
 
@@ -81,7 +82,7 @@ begin
             create_division(multiplier, division);
 
             if simulation_counter = 5 then
-                request_division(division, to_fixed(dividends(i), 5), to_fixed(divisors(i), 5));
+                request_division(division, to_fixed(dividends(i), bits_in_integer), to_fixed(divisors(i), bits_in_integer));
                 used_dividend <= dividends(i);
                 used_divisor <= divisors(i);
                 i <= (i + 1) mod 10;
@@ -89,7 +90,7 @@ begin
 
             if division_is_ready(multiplier, division) then
                 i <= (i + 1) mod 10;
-                request_division(division, to_fixed(dividends(i),5), to_fixed(divisors(i), 5));
+                request_division(division, to_fixed(dividends(i),bits_in_integer), to_fixed(divisors(i), 5));
                 used_dividend   <= dividends(i);
                 used_divisor    <= divisors(i);
                 division_result <= get_division_result(multiplier, division, (int_word_length-4));

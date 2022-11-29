@@ -11,11 +11,18 @@ package pi_controller_pkg is
         integrator : int;
         pi_out     : int;
         pi_control_process_counter : natural range 0 to 7;
+        pi_control_multiplier_counter : natural range 0 to 7;
         pi_error : int;
         pi_high_limit : int;
         pi_low_limit : int;
+        is_ready : boolean;
+        pi_controller_radix : natural;
     end record;
-    constant pi_controller_init : pi_controller_record := (0, 0, 7, 0, 32768, -32768);
+
+    function pi_controller_init return pi_controller_record;
+
+    function pi_controller_init ( radix : int)
+        return pi_controller_record;
 
 ------------------------------------------------------------------------
     function get_pi_control_output ( pi_controller : pi_controller_record)
@@ -49,6 +56,29 @@ end package pi_controller_pkg;
 
 package body pi_controller_pkg is
 
+------------------------------------------------------------------------
+    constant pi_controller_initial_values : pi_controller_record := (0, 0, 7, 7, 0, 32768, -32768, false, 12);
+
+    function pi_controller_init return pi_controller_record
+    is
+    begin
+        return pi_controller_initial_values;
+    end pi_controller_init;
+
+    function pi_controller_init
+    (
+        radix : int
+    )
+    return pi_controller_record
+    is
+        variable returned_value : pi_controller_record := pi_controller_initial_values;
+    begin
+        returned_value.pi_controller_radix := radix;
+        return returned_value;
+        
+    end pi_controller_init;
+
+------------------------------------------------------------------------
     function init_pi_controller return pi_controller_record
     is
     begin
@@ -78,42 +108,41 @@ package body pi_controller_pkg is
     ) is
         alias m is pi_controller_object;
 
-        alias pi_control_process_counter is pi_controller_object.pi_control_process_counter;
-        alias kp is proportional_gain;
-        alias ki is integrator_gain;
-        alias pi_error is pi_controller_object.pi_error;
-        alias pi_out is pi_controller_object.pi_out;
-        alias integrator is pi_controller_object.integrator;
-        constant pi_controller_radix : natural := 12;
-        constant pi_controller_limit : natural := 2**15;
     begin
-        CASE pi_control_process_counter is
+        CASE m.pi_control_multiplier_counter is
             WHEN 0 =>
-                multiply(hw_multiplier, kp , pi_error);
-                pi_control_process_counter <= pi_control_process_counter + 1;
+                multiply(hw_multiplier, proportional_gain , m.pi_error);
+                m.pi_control_multiplier_counter <= m.pi_control_multiplier_counter  + 1;
             WHEN 1 =>
-                multiply(hw_multiplier, ki , pi_error);
-                pi_control_process_counter <= pi_control_process_counter + 1;
-            WHEN 2 => 
+                multiply(hw_multiplier, integrator_gain , m.pi_error);
+                m.pi_control_multiplier_counter <= m.pi_control_multiplier_counter + 1;
+            WHEN others => -- wait for start
+        end CASE;
 
+        m.is_ready <= false;
+        CASE m.pi_control_process_counter is
+            WHEN 0 => 
                 if multiplier_is_ready(hw_multiplier) then
-                    pi_control_process_counter <= pi_control_process_counter + 1;
-                    pi_out <= integrator + get_multiplier_result(hw_multiplier, pi_controller_radix);
-                    if integrator + get_multiplier_result(hw_multiplier, pi_controller_radix) >= m.pi_high_limit then
-                        pi_out          <= pi_controller_limit;
-                        integrator      <= pi_controller_limit - get_multiplier_result(hw_multiplier, pi_controller_radix);
-                        pi_control_process_counter <= pi_control_process_counter + 2;
+                    m.pi_control_process_counter <= m.pi_control_process_counter + 1;
+
+                    m.pi_out <= m.integrator + get_multiplier_result(hw_multiplier, m.pi_controller_radix);
+                    if m.integrator + get_multiplier_result(hw_multiplier, m.pi_controller_radix) >= m.pi_high_limit then
+                        m.pi_out          <= m.pi_high_limit;
+                        m.integrator      <= m.pi_high_limit - get_multiplier_result(hw_multiplier, m.pi_controller_radix);
+                        m.pi_control_process_counter <= m.pi_control_process_counter + 2;
                     end if;
 
-                    if integrator + get_multiplier_result(hw_multiplier, pi_controller_radix) <= -m.pi_low_limit then
-                        pi_out          <= -pi_controller_limit;
-                        integrator      <= -pi_controller_limit - get_multiplier_result(hw_multiplier, pi_controller_radix);
-                        pi_control_process_counter <= pi_control_process_counter + 2;
+                    if m.integrator + get_multiplier_result(hw_multiplier, m.pi_controller_radix) <= m.pi_low_limit then
+                        m.pi_out          <= m.pi_low_limit;
+                        m.integrator      <= m.pi_low_limit - get_multiplier_result(hw_multiplier, m.pi_controller_radix);
+                        m.pi_control_process_counter <= m.pi_control_process_counter + 2;
                     end if;
                 end if;
-            WHEN 3 =>
-                integrator <= integrator + get_multiplier_result(hw_multiplier, pi_controller_radix);
-                pi_control_process_counter <= pi_control_process_counter + 1;
+
+                m.is_ready <= true;
+            WHEN 1 =>
+                m.integrator <= m.integrator + get_multiplier_result(hw_multiplier, m.pi_controller_radix);
+                m.pi_control_process_counter <= m.pi_control_process_counter + 1;
             WHEN others => -- wait for restart
         end CASE;
         
@@ -127,6 +156,7 @@ package body pi_controller_pkg is
     begin
 
         pi_controller.pi_control_process_counter <= 0;
+        pi_controller.pi_control_multiplier_counter <= 0;
         pi_controller.pi_error <= pi_control_input;
         
     end calculate_pi_control;
@@ -158,7 +188,7 @@ package body pi_controller_pkg is
     return boolean
     is
     begin
-        return pi_controller.pi_control_process_counter = 3;
+        return pi_controller.is_ready;
         
     end pi_control_calculation_is_ready;
 ------------------------------------------------------------------------ 

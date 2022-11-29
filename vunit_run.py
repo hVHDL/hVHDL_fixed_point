@@ -14,6 +14,8 @@ mathlib.add_source_files(ROOT / "hVHDL_memory_library/fpga_ram/ram_configuration
 mathlib.add_source_files(ROOT / "multiplier" /"multiplier_base_types_18bit_pkg.vhd") 
 mathlib.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
 
+mathlib.add_source_files(ROOT / "pi_controller/pi_controller_pkg.vhd")
+
 mathlib.add_source_files(ROOT / "division" / "*.vhd") 
 
 mathlib.add_source_files(ROOT / "sincos/sincos_pkg.vhd") 
@@ -38,6 +40,8 @@ mathlib26.add_source_files(ROOT / "division" / "*.vhd")
 mathlib26.add_source_files(ROOT / "first_order_filter/first_order_filter_pkg.vhd")
 
 mathlib26.add_source_files(ROOT / "example" / "*.vhd")
+
+mathlib.add_source_files(ROOT / "testbenches/pi_controller/tb_pi_control.vhd")
 
 mathlib.add_source_files(ROOT / "testbenches/sincos_simulation/tb_sincos.vhd")
 mathlib.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier.vhd")
