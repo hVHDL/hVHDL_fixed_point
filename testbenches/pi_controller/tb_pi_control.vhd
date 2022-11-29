@@ -24,7 +24,7 @@ architecture vunit_simulation of pi_control_tb is
     -----------------------------------
     -- simulation specific signals ----
     signal multiplier : multiplier_record       := init_multiplier;
-    signal pi_controller : pi_controller_record := pi_controller_init(radix => 15);
+    signal pi_controller : pi_controller_record := pi_controller_init;
 
     signal model_multiplier : multiplier_record := init_multiplier;
 
@@ -51,14 +51,14 @@ begin
     stimulus : process(simulator_clock)
         function to_fixed (real_input : real) return integer is
         begin
-            return to_fixed(real_input,4);
+            return to_fixed(number =>real_input, integer_bits =>5);
         end to_fixed;
 
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
             create_multiplier(multiplier);
-            create_pi_controller(multiplier, pi_controller, to_fixed(2.0), to_fixed(0.5));
+            create_pi_controller(multiplier, pi_controller, to_fixed(0.50), to_fixed(0.15));
 
             if pi_control_calculation_is_ready(pi_controller) then
                 state <= state + (state * 0.0 + real(get_pi_control_output(pi_controller))/32768.0)*0.1;
