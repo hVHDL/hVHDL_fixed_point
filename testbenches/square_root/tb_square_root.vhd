@@ -44,6 +44,7 @@ architecture vunit_simulation of tb_square_root is
     end nr_iteration;
 
 ------------------------------------------------------------------------
+    signal test_0 : real := nr_iteration(0.25     / 2.0**0, 1.0) / 2.0**0 - 1.0 / sqrt(0.25);
     signal test_1 : real := nr_iteration(0.5     / 2.0**0, 1.0) / 2.0**0 - 1.0 / sqrt(0.5);
     signal test_2 : real := nr_iteration(0.99    / 2.0**0, 1.0) / 2.0**0 - 1.0 / sqrt(0.99);
 
@@ -52,6 +53,8 @@ architecture vunit_simulation of tb_square_root is
     signal test_5 : real := nr_iteration(16.0    / 2.0**(2*3), 1.0) / 2.0**3 - 1.0 / sqrt(16.0);
     signal test_6 : real := nr_iteration(155.7   / 2.0**(2*4), 1.0) / 2.0**4 - 1.0 / sqrt(155.7);
     signal test_7 : real := nr_iteration(588.543 / 2.0**(2*5), 1.0) / 2.0**5 - 1.0 / sqrt(588.543);
+    signal test_8 : real := nr_iteration(1588.543 / 2.0**(2*6), 1.0) / 2.0**6 - 1.0 / sqrt(1588.543);
+    signal test_9 : real := nr_iteration(4588.543 / 2.0**(2*7), 1.0) / 2.0**7 - 1.0 / sqrt(4588.543);
 ------------------------------------------------------------------------
 
 begin
