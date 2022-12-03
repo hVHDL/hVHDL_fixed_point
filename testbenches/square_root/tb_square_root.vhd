@@ -44,13 +44,14 @@ architecture vunit_simulation of tb_square_root is
     end nr_iteration;
 
 ------------------------------------------------------------------------
-    signal test_1 : real := nr_iteration(0.5     / 4.0**0, 1.0) / 2.0**0 - 1.0 / sqrt(0.5);
-    signal test_2 : real := nr_iteration(0.99    / 4.0**0, 1.0) / 2.0**0 - 1.0 / sqrt(0.99);
-    signal test_3 : real := nr_iteration(3.0     / 4.0**1, 1.0) / 2.0**1 - 1.0 / sqrt(3.0);
-    signal test_4 : real := nr_iteration(5.0     / 4.0**2, 1.0) / 2.0**2 - 1.0 / sqrt(5.0);
-    signal test_5 : real := nr_iteration(16.0    / 4.0**3, 1.0) / 2.0**3 - 1.0 / sqrt(16.0);
-    signal test_6 : real := nr_iteration(155.7   / 4.0**4, 1.0) / 2.0**4 - 1.0 / sqrt(155.7);
-    signal test_7 : real := nr_iteration(588.543 / 4.0**5, 1.0) / 2.0**5 - 1.0 / sqrt(588.543);
+    signal test_1 : real := nr_iteration(0.5     / 2.0**0, 1.0) / 2.0**0 - 1.0 / sqrt(0.5);
+    signal test_2 : real := nr_iteration(0.99    / 2.0**0, 1.0) / 2.0**0 - 1.0 / sqrt(0.99);
+
+    signal test_3 : real := nr_iteration(3.0     / 2.0**(2*1), 1.0) / 2.0**1 - 1.0 / sqrt(3.0);
+    signal test_4 : real := nr_iteration(5.0     / 2.0**(2*2), 1.0) / 2.0**2 - 1.0 / sqrt(5.0);
+    signal test_5 : real := nr_iteration(16.0    / 2.0**(2*3), 1.0) / 2.0**3 - 1.0 / sqrt(16.0);
+    signal test_6 : real := nr_iteration(155.7   / 2.0**(2*4), 1.0) / 2.0**4 - 1.0 / sqrt(155.7);
+    signal test_7 : real := nr_iteration(588.543 / 2.0**(2*5), 1.0) / 2.0**5 - 1.0 / sqrt(588.543);
 ------------------------------------------------------------------------
 
 begin
