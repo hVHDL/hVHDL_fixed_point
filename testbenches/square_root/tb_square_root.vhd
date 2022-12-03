@@ -36,32 +36,21 @@ architecture vunit_simulation of tb_square_root is
         x := 1.5*x - 0.5 * number_to_invert * x*x*x;
         x := 1.5*x - 0.5 * number_to_invert * x*x*x;
         x := 1.5*x - 0.5 * number_to_invert * x*x*x;
+        x := 1.5*x - 0.5 * number_to_invert * x*x*x;
+        x := 1.5*x - 0.5 * number_to_invert * x*x*x;
 
         return x;
         
     end nr_iteration;
-------------------------------------------------------------------------
-    function get_reduction_factor
-    (
-        input : real range 0.0 to 2.0**64
-    )
-    return real
-    is
-    begin
-        return 2.0**12;
-    end get_reduction_factor;
-------------------------------------------------------------------------
-    function reduce_input
-    (
-        input : real range 0.0 to 2.0**64
-    )
-    return real
-    is
-    begin
-        return input/2.0**12;
-    end reduce_input;
 
-    signal test_1 : real := nr_iteration(reduce_input(2200.0), 1.1)/get_reduction_factor(2200.0);
+------------------------------------------------------------------------
+    signal test_1 : real := nr_iteration(0.5     / 4.0**0, 1.0) / 2.0**0 - 1.0 / sqrt(0.5);
+    signal test_2 : real := nr_iteration(0.99    / 4.0**0, 1.0) / 2.0**0 - 1.0 / sqrt(0.99);
+    signal test_3 : real := nr_iteration(3.0     / 4.0**1, 1.0) / 2.0**1 - 1.0 / sqrt(3.0);
+    signal test_4 : real := nr_iteration(5.0     / 4.0**2, 1.0) / 2.0**2 - 1.0 / sqrt(5.0);
+    signal test_5 : real := nr_iteration(16.0    / 4.0**3, 1.0) / 2.0**3 - 1.0 / sqrt(16.0);
+    signal test_6 : real := nr_iteration(155.7   / 4.0**4, 1.0) / 2.0**4 - 1.0 / sqrt(155.7);
+    signal test_7 : real := nr_iteration(588.543 / 4.0**5, 1.0) / 2.0**5 - 1.0 / sqrt(588.543);
 ------------------------------------------------------------------------
 
 begin
@@ -95,7 +84,8 @@ begin
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
-            check(test_1 / sqrt(2200.0) < 2.0, "fail");
+            -- check(abs(1.0 - test_1 / (1.0/sqrt(2200.0))) < 0.01, "fail");
+            -- check(abs(1.0 - test_2 / (1.0/sqrt(2800.0))) < 0.01, "fail");
 
 
         end if; -- rising_edge
