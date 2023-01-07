@@ -77,8 +77,15 @@ package multiplier_pkg is
         signal counter : inout integer;
         left, right : integer);
 ------------------------------------------------------------------------
+    function radix_multiply (
+        left, right : integer;
+        word_length : natural;
+        radix       : natural)
+    return integer;
+------------------------------------------------------------------------
 end package multiplier_pkg;
 
+    -- common local functions
     --------------------------------------------------
         -- impure function "*" ( left, right : integer)
         -- return integer
@@ -86,6 +93,16 @@ end package multiplier_pkg;
         -- begin
         --     sequential_multiply(hw_multiplier, left, right);
         --     return get_multiplier_result(hw_multiplier, 15);
+        -- end "*";
+    --------------------------------------------------
+        -- variable radix : integer := 15;
+        --
+        -- impure function "*" ( left, right : integer)
+        -- return integer
+        -- is
+        --     constant word_length : integer := 18;
+        -- begin
+        --     return work.multiplier_pkg.radix_multiply(left,right, word_length, radix);
         -- end "*";
     --------------------------------------------------
 
@@ -281,4 +298,19 @@ package body multiplier_pkg is
         
     end multiply_and_increment_counter;
 ------------------------------------------------------------------------
+    function radix_multiply
+    (
+        left, right : integer;
+        word_length : natural;
+        radix       : natural
+    )
+    return integer
+    is
+        variable result : signed(word_length*2-1 downto 0);
+    begin
+        result := to_signed(left,word_length) * to_signed(right, word_length);
+        return to_integer(result(word_length+radix downto radix));
+    end radix_multiply;
+------------------------------------------------------------------------
+
 end package body multiplier_pkg; 
