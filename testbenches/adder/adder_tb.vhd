@@ -21,13 +21,16 @@ architecture vunit_simulation of adder_tb is
     -- simulation specific signals ----
 
 --------------------------------------------------
+    constant wordlength : natural := 45;
+    subtype addertype is signed(wordlength-1 downto 0);
     type adder_record is record
-        a, b     : integer;
-        result   : integer;
+        a, b     : addertype;
+        result   : addertype;
         pipeline : std_logic_vector(1 downto 0);
     end record;
 
-    constant init_adder : adder_record := (0,0,0, (others => '0'));
+    constant zero : addertype := (others => '0');
+    constant init_adder : adder_record := (zero,zero,zero, (others => '0'));
 
 --------------------------------------------------
     procedure create_adder
@@ -46,8 +49,8 @@ architecture vunit_simulation of adder_tb is
         left, right : integer
     ) is
     begin
-        adder_object.a <= left;
-        adder_object.b <= right;
+        adder_object.a <= to_signed(left, wordlength);
+        adder_object.b <= to_signed(right, wordlength);
         adder_object.pipeline(0) <= '1';
     end add;
 --------------------------------------------------
@@ -64,7 +67,7 @@ architecture vunit_simulation of adder_tb is
     (
         adder_object : adder_record
     )
-    return integer
+    return signed
     is
     begin
         return adder_object.result;
@@ -95,7 +98,7 @@ begin
             left, right : integer
         ) is
         begin
-            add(adder, left,right);
+            add(adder, left, right);
         end add;
     --------------------------------------------------
         procedure subtract
@@ -112,7 +115,7 @@ begin
          is
         begin
             if adder_is_ready(adder) then
-                check(expected_result_is = get_adder_result(adder), "fail");
+                check(to_signed(expected_result_is, wordlength) = get_adder_result(adder), "fail");
             end if;
         end test;
     --------------------------------------------------
@@ -129,6 +132,7 @@ begin
                 WHEN 8 => add(10e3, 20e3);
                 WHEN 11 => add(-11e3, 20e3);
                 WHEN 25 => subtract(100e3, 99e3);
+                WHEN 26 => subtract(99e3, 100e3);
                 when others => -- do nothing
             end CASE;
             if adder_is_ready(adder) then
@@ -142,6 +146,7 @@ begin
                 WHEN 3 => test(30e3);
                 WHEN 4 => test(9e3);
                 WHEN 5 => test(1e3);
+                WHEN 6 => test(-1e3);
                 WHEN others => -- do nothing
             end CASE;
 
