@@ -8,6 +8,8 @@ ROOT = Path(__file__).resolve().parent
 VU = VUnit.from_argv()
 
 mathlib = VU.add_library("math_library_18x18")
+mathlib.add_source_files(ROOT / "testbenches/adder/adder_tb.vhd")
+
 mathlib.add_source_files(ROOT / "hVHDL_memory_library/fpga_ram" / "*.vhd") 
 mathlib.add_source_files(ROOT / "hVHDL_memory_library/fpga_ram/ram_configuration/ram_configuration_16x1024_pkg.vhd") 
 

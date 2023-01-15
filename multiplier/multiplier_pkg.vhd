@@ -78,6 +78,11 @@ package multiplier_pkg is
         left, right : integer);
 ------------------------------------------------------------------------
     function radix_multiply (
+        left, right : signed;
+        radix       : natural)
+    return signed;
+------------------------------------------------------------------------
+    function radix_multiply (
         left, right : integer;
         word_length : natural;
         radix       : natural)
@@ -300,16 +305,30 @@ package body multiplier_pkg is
 ------------------------------------------------------------------------
     function radix_multiply
     (
+        left, right : signed;
+        radix       : natural
+    )
+    return signed
+    is
+        constant word_length : natural := left'length + right'length;
+        variable result : signed(word_length-1 downto 0);
+    begin
+        result := left * right;
+        return result(left'length+radix-1 downto radix);
+    end radix_multiply;
+------------------------------------------------------------------------
+    function radix_multiply
+    (
         left, right : integer;
         word_length : natural;
         radix       : natural
     )
     return integer
     is
-        variable result : signed(word_length*2-1 downto 0);
+        variable result : signed(word_length-1 downto 0);
     begin
-        result := to_signed(left,word_length) * to_signed(right, word_length);
-        return to_integer(result(word_length+radix downto radix));
+        result := radix_multiply(to_signed(left, word_length), to_signed(right, word_length), radix);
+        return to_integer(result);
     end radix_multiply;
 ------------------------------------------------------------------------
 
