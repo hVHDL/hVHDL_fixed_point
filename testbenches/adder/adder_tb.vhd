@@ -21,8 +21,25 @@ architecture vunit_simulation of adder_tb is
     -- simulation specific signals ----
 
 --------------------------------------------------
-    constant wordlength : natural := 45;
+    constant wordlength : natural := 39;
     subtype addertype is signed(wordlength-1 downto 0);
+
+    function to_signed
+    (
+        real_number : real;
+        signed_word_length : natural;
+        fractional_length : natural
+    )
+    return signed
+    is
+        variable int_result : integer;
+    begin
+        int_result := integer(real_number*2.0**fractional_length);
+        return to_signed(int_result, signed_word_length);
+
+    end to_signed;
+--------------------------------------------------
+
     type adder_record is record
         a, b     : addertype;
         result   : addertype;
@@ -46,11 +63,11 @@ architecture vunit_simulation of adder_tb is
     procedure add
     (
         signal adder_object : inout adder_record;
-        left, right : integer
+        left, right : addertype
     ) is
     begin
-        adder_object.a <= to_signed(left, wordlength);
-        adder_object.b <= to_signed(right, wordlength);
+        adder_object.a <= left;
+        adder_object.b <= right;
         adder_object.pipeline(0) <= '1';
     end add;
 --------------------------------------------------
@@ -76,6 +93,7 @@ architecture vunit_simulation of adder_tb is
 
     signal adder : adder_record := init_adder;
     signal result_counter : integer := 0;
+    signal test_real_to_signed_function : addertype := to_signed(3.58, wordlength, 31);
 
 begin
 
@@ -98,7 +116,7 @@ begin
             left, right : integer
         ) is
         begin
-            add(adder, left, right);
+            add(adder, to_signed(left, wordlength), to_signed(right, wordlength));
         end add;
     --------------------------------------------------
         procedure subtract
@@ -106,7 +124,7 @@ begin
             left, right : integer
         ) is
         begin
-            add(adder, left, -right);
+            add(adder, to_signed(left, wordlength), to_signed(-right, wordlength));
         end subtract;
     --------------------------------------------------
         procedure test (
@@ -135,6 +153,7 @@ begin
                 WHEN 26 => subtract(99e3, 100e3);
                 when others => -- do nothing
             end CASE;
+
             if adder_is_ready(adder) then
                 result_counter <= result_counter + 1;
             end if;
