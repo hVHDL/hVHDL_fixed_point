@@ -7,6 +7,10 @@ from vunit import VUnit
 ROOT = Path(__file__).resolve().parent
 VU = VUnit.from_argv()
 
+sos_filter_library = VU.add_library("sos_filter_library")
+sos_filter_library.add_source_files(ROOT / "sos_filter/sos_filter_pkg.vhd")
+sos_filter_library.add_source_files(ROOT / "testbenches/sos_filter/sos_filter_tb.vhd")
+
 mathlib = VU.add_library("math_library_18x18")
 mathlib.add_source_files(ROOT / "testbenches/adder/adder_tb.vhd")
 
