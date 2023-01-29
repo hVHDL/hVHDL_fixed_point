@@ -33,6 +33,10 @@ architecture vunit_simulation of sos_filter_tb is
     signal fix_memory2 : fix_array(0 to 1) := (others => 0);
     signal fix_memory3 : fix_array(0 to 1) := (others => 0);
 
+    -- these gains were obtained with matlab using 
+    -- [b,a] = cheby1(6, 1, 1/30);
+    -- [sos, g] = tf2sos(b,a, 'down',2)
+
     constant b1 : real_array(0 to 2) := (1.10112824474792e-003 , 2.19578135597009e-003  , 1.09466577037144e-003);
     constant b2 : real_array(0 to 2) := (1.16088276025753e-003 , 2.32172985621810e-003  , 1.16086054728631e-003);
     constant b3 : real_array(0 to 2) := (42.4644359704529e-003 , 85.1798866651586e-003  , 42.7159465798333e-003) / 58.875768;
