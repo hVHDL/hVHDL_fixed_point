@@ -22,6 +22,83 @@ architecture vunit_simulation of serial_sos_tb is
     signal simulation_counter  : natural   := 0;
     -----------------------------------
     -- simulation specific signals ----
+------------------------------------------------------------------------
+    type sos_filter_record is record
+        y, x1, x2, u               : integer;
+        state_counter              : integer;
+        result_counter             : integer;
+        sos_filter_is_ready        : boolean;
+        sos_filter_output_is_ready : boolean;
+    end record;
+
+------------------------------------------------------------------------
+    constant init_sos_filter : sos_filter_record := (0,0,0,0,5,5,false,false);
+
+------------------------------------------------------------------------
+    procedure create_sos_filter
+    (
+        signal self : inout sos_filter_record;
+        signal dsp : inout fixed_point_dsp_record;
+        b_gains : in fix_array;
+        a_gains : in fix_array
+    ) is
+    begin
+        if self.state_counter < 5 then
+            self.state_counter <= self.state_counter + 1;
+        end if;
+
+        CASE self.state_counter is
+            WHEN 0 => multiply_add(dsp , self.u , b_gains(0)   , self.x1);
+            WHEN 1 => multiply_add(dsp , self.u , b_gains(1)   , self.x2);
+            WHEN 2 => multiply(dsp     , self.u , b_gains(2));
+            WHEN 3 => multiply_add(dsp , self.y , -a_gains(1)  , get_dsp_result(dsp)) ;
+            WHEN 4 => multiply_add(dsp , self.y , -a_gains(2)  , get_dsp_result(dsp)) ;
+            WHEN others => -- do nothing
+        end CASE;
+
+        self.sos_filter_output_is_ready <= false;
+        self.sos_filter_is_ready <= false;
+        if fixed_point_dsp_is_ready(dsp) then
+
+            if self.result_counter < 5 then
+                self.result_counter <= self.result_counter + 1;
+            end if;
+
+            CASE self.result_counter is
+                WHEN 0 => self.y  <= get_dsp_result(dsp); self.sos_filter_output_is_ready <= true;
+                WHEN 1 => self.x1 <= get_dsp_result(dsp);
+                WHEN 2 => self.x2 <= get_dsp_result(dsp);
+                WHEN 3 => self.x1 <= get_dsp_result(dsp);
+                WHEN 4 => self.x2 <= get_dsp_result(dsp); self.sos_filter_is_ready <= true;
+                WHEN others => -- do nothing
+            end CASE;
+        end if;
+        self.sos_filter_output_is_ready <= fixed_point_dsp_is_ready(dsp) and self.result_counter = 0;
+        
+    end create_sos_filter;
+
+    procedure request_sos_filter
+    (
+        signal sos_filter : out sos_filter_record;
+        input_signal : in integer
+    ) is
+    begin
+       sos_filter.u <=  input_signal;
+       sos_filter.result_counter <= 0;
+       sos_filter.state_counter <= 0;
+    end request_sos_filter;
+------------------------------------------------------------------------
+    function get_sos_filter_output
+    (
+        sos_filter : sos_filter_record
+    )
+    return integer
+    is
+    begin
+        return sos_filter.y;
+    end get_sos_filter_output;
+------------------------------------------------------------------------
+    signal sos_filter : sos_filter_record := init_sos_filter;
 
     ------------------------------
     signal state_counter : integer := 0;
@@ -68,11 +145,7 @@ architecture vunit_simulation of serial_sos_tb is
     signal max_calculation_error : real := 0.0;
 
     signal fixed_point_dsp : fixed_point_dsp_record := init_fixed_point_dsp;
-    signal y, x1, x2  : integer := 0;
-
-    signal result_counter : integer :=0;
-    signal sos_filter_is_ready : boolean := false;
-    signal sos_filter_output_is_ready : boolean := false;
+    signal y : integer := 0;
 
 begin
 
@@ -124,45 +197,13 @@ begin
             calculate_sos(fix_memory3 , fix_filter_out1        , fix_filter_out2 , state_counter , fix_b3 , fix_a3 , 2);
 
             create_fixed_point_dsp(fixed_point_dsp);
+            create_sos_filter(sos_filter, fixed_point_dsp, fix_b1, fix_a1);
 
-            if state_counter < 5 then
-                state_counter <= state_counter + 1;
-            end if;
-
-            CASE state_counter is
-                WHEN 0 => multiply_add(fixed_point_dsp , to_fixed(filter_input) , fix_b1(0)   , x1)                              ;
-                WHEN 1 => multiply_add(fixed_point_dsp , to_fixed(filter_input) , fix_b1(1)   , x2)                              ;
-                WHEN 2 => multiply(fixed_point_dsp     , to_fixed(filter_input) , fix_b1(2))                                     ;
-                WHEN 3 => multiply_add(fixed_point_dsp , y                      , -fix_a1(1)  , get_dsp_result(fixed_point_dsp)) ;
-                WHEN 4 => multiply_add(fixed_point_dsp , y                      , -fix_a1(2)  , get_dsp_result(fixed_point_dsp)) ;
-                WHEN others => -- do nothing
-            end CASE;
-
-            sos_filter_output_is_ready <= false;
-            sos_filter_is_ready <= false;
-            if fixed_point_dsp_is_ready(fixed_point_dsp) then
-
-                if result_counter < 5 then
-                    result_counter <= result_counter + 1;
-                end if;
-
-                CASE result_counter is
-                    WHEN 0 => y  <= get_dsp_result(fixed_point_dsp); sos_filter_output_is_ready <= true;
-                    WHEN 1 => x1 <= get_dsp_result(fixed_point_dsp);
-                    WHEN 2 => x2 <= get_dsp_result(fixed_point_dsp);
-                    WHEN 3 => x1 <= get_dsp_result(fixed_point_dsp);
-                    WHEN 4 => x2 <= get_dsp_result(fixed_point_dsp); sos_filter_is_ready <= true;
-                    WHEN others => -- do nothing
-                end CASE;
-            end if;
+            y <= get_sos_filter_output(sos_filter);
 
             if simulation_counter mod 10 = 0 then
-                state_counter <= 0;
-                result_counter <= 0;
+                request_sos_filter(sos_filter, to_fixed(filter_input));
             end if;
-
-
-            sos_filter_output_is_ready <= fixed_point_dsp_is_ready(fixed_point_dsp) and result_counter = 0;
 
             -- check values
             real_filter_output  <= filter_out2;

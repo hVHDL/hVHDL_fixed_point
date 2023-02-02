@@ -2,7 +2,7 @@ library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
-    use work.multiplier_pkg.all;
+    use work.multiplier_pkg.radix_multiply;
     use work.sos_filter_pkg.all;
 
 package fixed_point_dsp_pkg is
@@ -103,4 +103,3 @@ package body fixed_point_dsp_pkg is
 ------------------------------------------------------------------------
 
 end package body fixed_point_dsp_pkg;
-
