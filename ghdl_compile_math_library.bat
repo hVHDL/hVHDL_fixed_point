@@ -7,6 +7,7 @@ ghdl -a --ieee=synopsys --std=08 multiplier/multiplier_base_types_18bit_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 real_to_fixed/real_to_fixed_pkg.vhd
 
 ghdl -a --ieee=synopsys --std=08 multiplier/multiplier_pkg.vhd
+ghdl -a --ieee=synopsys --std=08 testbenches/multiply_add/fixed_point_dsp_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 sincos/sincos_pkg.vhd
 
 
