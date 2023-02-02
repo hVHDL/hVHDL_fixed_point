@@ -20,16 +20,16 @@ package fixed_point_dsp_pkg is
     procedure multiply_add (
         signal dsp_object : out fixed_point_dsp_record;
         a, b, c : in integer);
-
+------------------------------------------------------------------------
     function fixed_point_dsp_is_ready (
         dsp_object : fixed_point_dsp_record)
     return boolean;
+------------------------------------------------------------------------
 
 end package fixed_point_dsp_pkg;
 
 
 package body fixed_point_dsp_pkg is
-------------------------------------------------------------------------
 ------------------------------------------------------------------------
     procedure create_fixed_point_dsp
     (
