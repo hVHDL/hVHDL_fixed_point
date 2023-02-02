@@ -12,10 +12,13 @@ sos_filter_library.add_source_files(ROOT / "multiplier/multiplier_base_types_18b
 sos_filter_library.add_source_files(ROOT / "multiplier/multiplier_pkg.vhd") 
 sos_filter_library.add_source_files(ROOT / "sos_filter/sos_filter_pkg.vhd")
 sos_filter_library.add_source_files(ROOT / "testbenches/sos_filter/sos_filter_tb.vhd")
+sos_filter_library.add_source_files(ROOT / "testbenches/multiply_add/fixed_point_dsp_pkg.vhd")
+sos_filter_library.add_source_files(ROOT / "testbenches/sos_filter/serial_sos_tb.vhd")
 
 fixed_point_library = VU.add_library("fixed_point_library")
 fixed_point_library.add_source_files(ROOT / "multiplier/multiplier_base_types_18bit_pkg.vhd") 
 fixed_point_library.add_source_files(ROOT / "multiplier/multiplier_pkg.vhd") 
+fixed_point_library.add_source_files(ROOT / "sos_filter/sos_filter_pkg.vhd")
 fixed_point_library.add_source_files(ROOT / "testbenches/multiply_add/fixed_point_dsp_pkg.vhd")
 fixed_point_library.add_source_files(ROOT / "testbenches/multiply_add/multiply_add_tb.vhd")
 

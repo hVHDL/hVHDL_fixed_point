@@ -10,7 +10,6 @@ ghdl -a --ieee=synopsys --std=08 multiplier/multiplier_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 testbenches/multiply_add/fixed_point_dsp_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 sincos/sincos_pkg.vhd
 
-
 ghdl -a --ieee=synopsys --std=08 sincos/lut_generator_functions/sine_lut_generator_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 sincos/lut_sine_pkg.vhd
 
@@ -24,3 +23,5 @@ ghdl -a --ieee=synopsys --std=08 coordinate_transforms/abc_to_ab_transform/ab_to
 ghdl -a --ieee=synopsys --std=08 coordinate_transforms/ab_to_dq_transform/dq_to_ab_transform_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 coordinate_transforms/ab_to_dq_transform/ab_to_dq_transform_pkg.vhd
 
+ghdl -a --ieee=synopsys --std=08 sos_filter/sos_filter_pkg.vhd
+ghdl -a --ieee=synopsys --std=08 testbenches/multiply_add/fixed_point_dsp_pkg.vhd

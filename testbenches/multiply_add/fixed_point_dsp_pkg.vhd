@@ -2,6 +2,9 @@ library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
+    use work.multiplier_pkg.all;
+    use work.sos_filter_pkg.all;
+
 package fixed_point_dsp_pkg is
 ------------------------------------------------------------------------
     type fixed_point_dsp_record is record
@@ -20,6 +23,10 @@ package fixed_point_dsp_pkg is
     procedure multiply_add (
         signal dsp_object : out fixed_point_dsp_record;
         a, b, c : in integer);
+------------------------------------------------------------------------
+    procedure multiply (
+        signal dsp_object : out fixed_point_dsp_record;
+        a, b: in integer);
 ------------------------------------------------------------------------
     function fixed_point_dsp_is_ready (
         dsp_object : fixed_point_dsp_record)
@@ -42,7 +49,7 @@ package body fixed_point_dsp_pkg is
         return integer
         is
         begin
-            return work.multiplier_pkg.radix_multiply(left, right, 32, 16);
+            return work.multiplier_pkg.radix_multiply(left, right, word_length, fractional_bits);
         end "*";
     begin
         self.multiply_add_output <= self.a * self.b + self.c;

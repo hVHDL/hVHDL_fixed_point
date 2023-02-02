@@ -26,7 +26,6 @@ architecture vunit_simulation of multiply_add_tb is
     signal fixed_point_dsp : fixed_point_dsp_record := init_fixed_point_dsp;
     signal result_counter : integer := 0;
 
-
 begin
 
 ------------------------------------------------------------------------
@@ -50,11 +49,11 @@ begin
             create_fixed_point_dsp(fixed_point_dsp);
 
             CASE simulation_counter is 
-                WHEN 0 => multiply_add(fixed_point_dsp, 2**16, 9999, 1);
-                WHEN 6 => multiply_add(fixed_point_dsp, 2**16, 15e3, 15e3);
-                WHEN 7 => multiply_add(fixed_point_dsp, 2**17, 9999, 2);
-                WHEN 8 => multiply_add(fixed_point_dsp, 2**15, -10000, 1);
-                WHEN 17 => multiply_add(fixed_point_dsp, 2**15, 10000, 1);
+                WHEN 0 => multiply_add(fixed_point_dsp, 2**23, 9999, 1);
+                WHEN 6 => multiply_add(fixed_point_dsp, 2**23, 15e3, 15e3);
+                WHEN 7 => multiply_add(fixed_point_dsp, 2**24, 9999, 2);
+                WHEN 8 => multiply_add(fixed_point_dsp, 2**22, -10000, 1);
+                WHEN 17 => multiply_add(fixed_point_dsp, 2**22, 10000, 1);
                 WHEN others =>
             end CASE;
             if fixed_point_dsp_is_ready(fixed_point_dsp) then
