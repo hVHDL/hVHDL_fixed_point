@@ -9,7 +9,7 @@ package fixed_point_dsp_pkg is
 ------------------------------------------------------------------------
     type fixed_point_dsp_record is record
         a,b,c, multiply_add_output : integer;
-        ready_pipeline : std_logic_vector(1 downto 0);
+        ready_pipeline : std_logic_vector(0 downto 0);
     end record;
 
     constant init_fixed_point_dsp : fixed_point_dsp_record := (0,0,0,0, (others => '0'));
@@ -63,8 +63,17 @@ package body fixed_point_dsp_pkg is
     )
     return integer
     is
+        function "*"
+        (
+            left, right : integer
+        )
+        return integer
+        is
+        begin
+            return work.multiplier_pkg.radix_multiply(left, right, word_length, fractional_bits);
+        end "*";
     begin
-        return dsp_object.multiply_add_output;
+        return dsp_object.a * dsp_object.b + dsp_object.c;
     end get_dsp_result;
 ------------------------------------------------------------------------
     procedure multiply_add
@@ -98,7 +107,7 @@ package body fixed_point_dsp_pkg is
     return boolean
     is
     begin
-        return dsp_object.ready_pipeline(dsp_object.ready_pipeline'left) = '1';
+        return dsp_object.ready_pipeline(0) = '1';
     end fixed_point_dsp_is_ready;
 ------------------------------------------------------------------------
 

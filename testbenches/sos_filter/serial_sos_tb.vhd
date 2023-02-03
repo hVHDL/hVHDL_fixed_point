@@ -5,6 +5,7 @@ LIBRARY ieee  ;
 
     use work.sos_filter_pkg.all;
     use work.fixed_point_dsp_pkg.all;
+    use work.dsp_sos_filter_pkg.all;
 
 library vunit_lib;
 context vunit_lib.vunit_context;
@@ -23,82 +24,8 @@ architecture vunit_simulation of serial_sos_tb is
     -----------------------------------
     -- simulation specific signals ----
 ------------------------------------------------------------------------
-    type sos_filter_record is record
-        y, x1, x2, u               : integer;
-        state_counter              : integer;
-        result_counter             : integer;
-        sos_filter_is_ready        : boolean;
-        sos_filter_output_is_ready : boolean;
-    end record;
-
 ------------------------------------------------------------------------
-    constant init_sos_filter : sos_filter_record := (0,0,0,0,5,5,false,false);
-
 ------------------------------------------------------------------------
-    procedure create_sos_filter
-    (
-        signal self : inout sos_filter_record;
-        signal dsp : inout fixed_point_dsp_record;
-        b_gains : in fix_array;
-        a_gains : in fix_array
-    ) is
-    begin
-        if self.state_counter < 5 then
-            self.state_counter <= self.state_counter + 1;
-        end if;
-
-        CASE self.state_counter is
-            WHEN 0 => multiply_add(dsp , self.u , b_gains(0)   , self.x1);
-            WHEN 1 => multiply_add(dsp , self.u , b_gains(1)   , self.x2);
-            WHEN 2 => multiply(dsp     , self.u , b_gains(2));
-            WHEN 3 => multiply_add(dsp , self.y , -a_gains(1)  , get_dsp_result(dsp)) ;
-            WHEN 4 => multiply_add(dsp , self.y , -a_gains(2)  , get_dsp_result(dsp)) ;
-            WHEN others => -- do nothing
-        end CASE;
-
-        self.sos_filter_output_is_ready <= false;
-        self.sos_filter_is_ready <= false;
-        if fixed_point_dsp_is_ready(dsp) then
-
-            if self.result_counter < 5 then
-                self.result_counter <= self.result_counter + 1;
-            end if;
-
-            CASE self.result_counter is
-                WHEN 0 => self.y  <= get_dsp_result(dsp); self.sos_filter_output_is_ready <= true;
-                WHEN 1 => self.x1 <= get_dsp_result(dsp);
-                WHEN 2 => self.x2 <= get_dsp_result(dsp);
-                WHEN 3 => self.x1 <= get_dsp_result(dsp);
-                WHEN 4 => self.x2 <= get_dsp_result(dsp); self.sos_filter_is_ready <= true;
-                WHEN others => -- do nothing
-            end CASE;
-        end if;
-        self.sos_filter_output_is_ready <= fixed_point_dsp_is_ready(dsp) and self.result_counter = 0;
-        
-    end create_sos_filter;
-
-    procedure request_sos_filter
-    (
-        signal sos_filter : out sos_filter_record;
-        input_signal : in integer
-    ) is
-    begin
-       sos_filter.u <=  input_signal;
-       sos_filter.result_counter <= 0;
-       sos_filter.state_counter <= 0;
-    end request_sos_filter;
-------------------------------------------------------------------------
-    function get_sos_filter_output
-    (
-        sos_filter : sos_filter_record
-    )
-    return integer
-    is
-    begin
-        return sos_filter.y;
-    end get_sos_filter_output;
-------------------------------------------------------------------------
-    signal sos_filter : sos_filter_record := init_sos_filter;
 
     ------------------------------
     signal state_counter : integer := 0;
@@ -144,8 +71,15 @@ architecture vunit_simulation of serial_sos_tb is
     signal filter_error : real := 0.0;
     signal max_calculation_error : real := 0.0;
 
-    signal fixed_point_dsp : fixed_point_dsp_record := init_fixed_point_dsp;
     signal y : integer := 0;
+
+    signal sos_filter1 : sos_filter_record := init_sos_filter;
+    signal sos_filter2 : sos_filter_record := init_sos_filter;
+    signal sos_filter3 : sos_filter_record := init_sos_filter;
+
+    signal fixed_point_dsp1 : fixed_point_dsp_record := init_fixed_point_dsp;
+    signal fixed_point_dsp2 : fixed_point_dsp_record := init_fixed_point_dsp;
+    signal fixed_point_dsp3 : fixed_point_dsp_record := init_fixed_point_dsp;
 
 begin
 
@@ -196,13 +130,25 @@ begin
             calculate_sos(fix_memory2 , fix_filter_out         , fix_filter_out1 , state_counter , fix_b2 , fix_a2 , 1);
             calculate_sos(fix_memory3 , fix_filter_out1        , fix_filter_out2 , state_counter , fix_b3 , fix_a3 , 2);
 
-            create_fixed_point_dsp(fixed_point_dsp);
-            create_sos_filter(sos_filter, fixed_point_dsp, fix_b1, fix_a1);
 
-            y <= get_sos_filter_output(sos_filter);
+            create_fixed_point_dsp(fixed_point_dsp1);
+            create_fixed_point_dsp(fixed_point_dsp2);
+            create_fixed_point_dsp(fixed_point_dsp3);
+            create_sos_filter(sos_filter1, fixed_point_dsp1, fix_b1, fix_a1);
+            create_sos_filter(sos_filter2, fixed_point_dsp2, fix_b2, fix_a2);
+            create_sos_filter(sos_filter3, fixed_point_dsp3, fix_b3, fix_a3);
 
-            if simulation_counter mod 10 = 0 then
-                request_sos_filter(sos_filter, to_fixed(filter_input));
+            y <= get_sos_filter_output(sos_filter3);
+
+            if sos_filter1.result_counter = 0 and fixed_point_dsp_is_ready(fixed_point_dsp1) then
+                request_sos_filter(sos_filter2, get_sos_filter_output(sos_filter1));
+            end if;
+            if sos_filter2.result_counter = 0 and fixed_point_dsp_is_ready(fixed_point_dsp2) then
+                request_sos_filter(sos_filter3, get_sos_filter_output(sos_filter2));
+            end if;
+
+            if simulation_counter mod 6 = 0 then
+                request_sos_filter(sos_filter1, to_fixed(filter_input));
             end if;
 
             -- check values

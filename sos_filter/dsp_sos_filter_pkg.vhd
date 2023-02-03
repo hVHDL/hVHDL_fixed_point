@@ -52,8 +52,8 @@ package body dsp_sos_filter_pkg is
             WHEN 0 => multiply_add(dsp , self.u , b_gains(0)   , self.x1);
             WHEN 1 => multiply_add(dsp , self.u , b_gains(1)   , self.x2);
             WHEN 2 => multiply(dsp     , self.u , b_gains(2));
-            WHEN 3 => multiply_add(dsp , self.y , -a_gains(1)  , get_dsp_result(dsp)) ;
-            WHEN 4 => multiply_add(dsp , self.y , -a_gains(2)  , get_dsp_result(dsp)) ;
+            WHEN 3 => multiply_add(dsp , self.y , -a_gains(1)  , self.x1) ;
+            WHEN 4 => multiply_add(dsp , self.y , -a_gains(2)  , self.x2) ;
             WHEN others => -- do nothing
         end CASE;
 
@@ -74,8 +74,6 @@ package body dsp_sos_filter_pkg is
                 WHEN others => -- do nothing
             end CASE;
         end if;
-        self.sos_filter_output_is_ready <= fixed_point_dsp_is_ready(dsp) and self.result_counter = 0;
-        
     end create_sos_filter;
 
     procedure request_sos_filter
