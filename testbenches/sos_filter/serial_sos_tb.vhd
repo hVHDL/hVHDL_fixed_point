@@ -81,6 +81,8 @@ architecture vunit_simulation of serial_sos_tb is
     signal fixed_point_dsp2 : fixed_point_dsp_record := init_fixed_point_dsp;
     signal fixed_point_dsp3 : fixed_point_dsp_record := init_fixed_point_dsp;
 
+    signal serial_sos_out : real := 0.0;
+
 begin
 
 ------------------------------------------------------------------------
@@ -121,6 +123,10 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
+            if state_counter < 5 then
+                state_counter <= state_counter + 1;
+            end if;
+             
             calculate_real_sos(memory1 , filter_input , filter_out  , state_counter , b1 , a1 , 0);
             calculate_real_sos(memory2 , filter_out   , filter_out1 , state_counter , b2 , a2 , 1);
             calculate_real_sos(memory3 , filter_out1  , filter_out2 , state_counter , b3 , a3 , 2);
@@ -149,9 +155,11 @@ begin
 
             if simulation_counter mod 6 = 0 then
                 request_sos_filter(sos_filter1, to_fixed(filter_input));
+                state_counter <= 0;
             end if;
 
             -- check values
+            serial_sos_out <= real(get_sos_filter_output(sos_filter3))/2.0**fractional_bits;
             real_filter_output  <= filter_out2;
             fixed_filter_output <= real(fix_filter_out2)/2.0**fractional_bits;
             filter_error <= real_filter_output - fixed_filter_output;
