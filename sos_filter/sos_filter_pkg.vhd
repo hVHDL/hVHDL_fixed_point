@@ -9,7 +9,7 @@ package sos_filter_pkg is
     type real_array is array (integer range <>) of real;
     type fix_array is array (integer range <>) of integer;
 
-    constant word_length  : integer := 31;
+    constant word_length  : integer := 28;
     constant integer_bits : integer := 8;
     constant fractional_bits : integer := word_length-integer_bits;
 

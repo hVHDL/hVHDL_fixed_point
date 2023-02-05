@@ -39,32 +39,33 @@ package body dsp_sos_filter_pkg is
     procedure create_sos_filter
     (
         signal self : inout sos_filter_record;
-        signal dsp : inout fixed_point_dsp_record;
-        b_gains : in fix_array;
-        a_gains : in fix_array
+        signal dsp  : inout fixed_point_dsp_record;
+        b_gains     : in fix_array;
+        a_gains     : in fix_array
     ) is
     begin
+        self.sos_filter_output_is_ready <= false;
+        self.sos_filter_is_ready <= false;
+
         if self.state_counter < 5 then
             self.state_counter <= self.state_counter + 1;
         end if;
 
+        if self.result_counter < 5 and fixed_point_dsp_is_ready(dsp) then
+            self.result_counter <= self.result_counter + 1;
+        end if;
+
+    ------------------------------
         CASE self.state_counter is
             WHEN 0 => multiply_add(dsp , self.u , b_gains(0)   , self.x1);
             WHEN 1 => multiply_add(dsp , self.u , b_gains(1)   , self.x2);
             WHEN 2 => multiply(dsp     , self.u , b_gains(2));
-            WHEN 3 => multiply_add(dsp , self.y , -a_gains(1)  , self.x1) ;
-            WHEN 4 => multiply_add(dsp , self.y , -a_gains(2)  , self.x2) ;
+            WHEN 3 => multiply_add(dsp , self.y , -a_gains(1)  , self.x1);
+            WHEN 4 => multiply_add(dsp , self.y , -a_gains(2)  , self.x2);
             WHEN others => -- do nothing
         end CASE;
-
-        self.sos_filter_output_is_ready <= false;
-        self.sos_filter_is_ready <= false;
+    ------------------------------
         if fixed_point_dsp_is_ready(dsp) then
-
-            if self.result_counter < 5 then
-                self.result_counter <= self.result_counter + 1;
-            end if;
-
             CASE self.result_counter is
                 WHEN 0 => self.y  <= get_dsp_result(dsp); self.sos_filter_output_is_ready <= true;
                 WHEN 1 => self.x1 <= get_dsp_result(dsp);
@@ -74,6 +75,7 @@ package body dsp_sos_filter_pkg is
                 WHEN others => -- do nothing
             end CASE;
         end if;
+    ------------------------------
     end create_sos_filter;
 
     procedure request_sos_filter
