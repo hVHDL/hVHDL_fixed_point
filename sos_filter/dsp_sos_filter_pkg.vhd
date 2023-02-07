@@ -22,6 +22,12 @@ package dsp_sos_filter_pkg is
         signal dsp : inout fixed_point_dsp_record;
         b_gains : in fix_array;
         a_gains : in fix_array);
+
+    procedure create_sos_filter_and_dsp (
+        signal self : inout sos_filter_record;
+        signal dsp  : inout fixed_point_dsp_record;
+        b_gains     : in fix_array;
+        a_gains     : in fix_array);
 ------------------------------------------------------------------------
     procedure request_sos_filter (
         signal sos_filter : out sos_filter_record;
@@ -29,6 +35,13 @@ package dsp_sos_filter_pkg is
 ------------------------------------------------------------------------
     function get_sos_filter_output ( sos_filter : sos_filter_record)
         return integer;
+------------------------------------------------------------------------
+    procedure cascade_sos_filters (
+        signal triggering_sos_filter : inout sos_filter_record;
+        signal triggered_sos_filter : inout sos_filter_record);
+------------------------------------------------------------------------
+    function sos_filter_out_is_ready ( sos_filter : sos_filter_record)
+        return boolean;
 ------------------------------------------------------------------------
 
 end package dsp_sos_filter_pkg;
@@ -77,7 +90,20 @@ package body dsp_sos_filter_pkg is
         end if;
     ------------------------------
     end create_sos_filter;
+------------------------------------------------------------------------
+    procedure create_sos_filter_and_dsp
+    (
+        signal self : inout sos_filter_record;
+        signal dsp  : inout fixed_point_dsp_record;
+        b_gains     : in fix_array;
+        a_gains     : in fix_array
+    ) is
+    begin
+        create_fixed_point_dsp(dsp);
+        create_sos_filter(self, dsp, b_gains, a_gains);
+    end create_sos_filter_and_dsp;
 
+------------------------------------------------------------------------
     procedure request_sos_filter
     (
         signal sos_filter : out sos_filter_record;
@@ -99,5 +125,27 @@ package body dsp_sos_filter_pkg is
         return sos_filter.y;
     end get_sos_filter_output;
 
+------------------------------------------------------------------------
+    procedure cascade_sos_filters
+    (
+        signal triggering_sos_filter : inout sos_filter_record;
+        signal triggered_sos_filter : inout sos_filter_record
+    ) is
+    begin
+        if sos_filter_out_is_ready(triggering_sos_filter) then
+            request_sos_filter(triggered_sos_filter, get_sos_filter_output(triggering_sos_filter));
+        end if;
+    end cascade_sos_filters;
+------------------------------------------------------------------------
+    function sos_filter_out_is_ready
+    (
+        sos_filter : sos_filter_record
+    )
+    return boolean
+    is
+    begin
+        return sos_filter.sos_filter_output_is_ready;
+    end sos_filter_out_is_ready;
+------------------------------------------------------------------------
 end package body dsp_sos_filter_pkg;
 
