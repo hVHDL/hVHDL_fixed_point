@@ -28,6 +28,13 @@ package dsp_sos_filter_pkg is
         signal dsp  : inout fixed_point_dsp_record;
         b_gains     : in fix_array;
         a_gains     : in fix_array);
+
+    procedure create_ram_sos_filter (
+        signal self                : inout sos_filter_record;
+        signal dsp                 : inout fixed_point_dsp_record;
+        filter_gains               : in integer;
+        signal filter_gain_address : out integer;
+        filter_gain_is_ready       : in boolean);
 ------------------------------------------------------------------------
     procedure request_sos_filter (
         signal sos_filter : out sos_filter_record;
@@ -90,6 +97,49 @@ package body dsp_sos_filter_pkg is
         end if;
     ------------------------------
     end create_sos_filter;
+------------------------------------------------------------------------
+    procedure create_ram_sos_filter
+    (
+        signal self          : inout sos_filter_record;
+        signal dsp           : inout fixed_point_dsp_record;
+        filter_gains         : in integer;
+        signal filter_gain_address  : out integer;
+        filter_gain_is_ready : in boolean
+    ) is
+    begin
+        self.sos_filter_output_is_ready <= false;
+        self.sos_filter_is_ready <= false;
+
+        if self.state_counter < 5 then
+            self.state_counter <= self.state_counter + 1;
+        end if;
+
+        if self.result_counter < 5 and fixed_point_dsp_is_ready(dsp) then
+            self.result_counter <= self.result_counter + 1;
+        end if;
+
+    ------------------------------
+        CASE self.state_counter is
+            WHEN 0 => multiply_add(dsp , self.u , filter_gains   , self.x1);
+            WHEN 1 => multiply_add(dsp , self.u , filter_gains   , self.x2);
+            WHEN 2 => multiply(dsp     , self.u , filter_gains);
+            WHEN 3 => multiply_add(dsp , self.y , -filter_gains  , self.x1);
+            WHEN 4 => multiply_add(dsp , self.y , -filter_gains  , self.x2);
+            WHEN others => -- do nothing
+        end CASE;
+    ------------------------------
+        if fixed_point_dsp_is_ready(dsp) then
+            CASE self.result_counter is
+                WHEN 0 => self.y  <= get_dsp_result(dsp); self.sos_filter_output_is_ready <= true;
+                WHEN 1 => self.x1 <= get_dsp_result(dsp);
+                WHEN 2 => self.x2 <= get_dsp_result(dsp);
+                WHEN 3 => self.x1 <= get_dsp_result(dsp);
+                WHEN 4 => self.x2 <= get_dsp_result(dsp); self.sos_filter_is_ready <= true;
+                WHEN others => -- do nothing
+            end CASE;
+        end if;
+    ------------------------------
+    end create_ram_sos_filter;
 ------------------------------------------------------------------------
     procedure create_sos_filter_and_dsp
     (
