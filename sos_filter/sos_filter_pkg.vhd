@@ -3,6 +3,7 @@ library ieee;
     use ieee.numeric_std.all;
 
     use work.multiplier_pkg.all;
+    use work.real_to_fixed_pkg.all;
 
 package sos_filter_pkg is
 
@@ -11,7 +12,7 @@ package sos_filter_pkg is
 
     constant word_length  : integer := 28;
     constant integer_bits : integer := 8;
-    constant fractional_bits : integer := word_length-integer_bits;
+    constant number_of_fractional_bits : integer := word_length-integer_bits;
 
 ------------------------------------------------------------------------
     impure function to_fixed ( number : real)
@@ -53,7 +54,7 @@ package body sos_filter_pkg is
     return integer
     is
     begin
-        return integer(number * 2.0**fractional_bits);
+        return to_fixed(number, number_of_fractional_bits);
     end to_fixed;
     ------------------------------
 
@@ -87,7 +88,7 @@ package body sos_filter_pkg is
         return integer
         is
         begin
-            return work.multiplier_pkg.radix_multiply(left,right, word_length, fractional_bits);
+            return work.multiplier_pkg.radix_multiply(left,right, word_length, number_of_fractional_bits);
         end "*";
     ------------------------------
     begin

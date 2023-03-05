@@ -56,6 +56,7 @@ architecture vunit_simulation of divider_tb is
     signal maximum_relative_error : real := 0.0;
 
     constant bits_in_integer : integer := 5;
+    constant fractional_length : integer := int_word_length - bits_in_integer-1;
 
 begin
 
@@ -82,7 +83,7 @@ begin
             create_division(multiplier, division);
 
             if simulation_counter = 5 then
-                request_division(division, to_fixed(dividends(i), bits_in_integer), to_fixed(divisors(i), bits_in_integer));
+                request_division(division, to_fixed(dividends(i), fractional_length), to_fixed(divisors(i), fractional_length));
                 used_dividend <= dividends(i);
                 used_divisor <= divisors(i);
                 i <= (i + 1) mod 10;
@@ -90,11 +91,11 @@ begin
 
             if division_is_ready(multiplier, division) then
                 i <= (i + 1) mod 10;
-                request_division(division, to_fixed(dividends(i),bits_in_integer), to_fixed(divisors(i), 5));
+                request_division(division, to_fixed(dividends(i),fractional_length), to_fixed(divisors(i), fractional_length));
                 used_dividend   <= dividends(i);
                 used_divisor    <= divisors(i);
-                division_result <= get_division_result(multiplier, division, (int_word_length-4));
-                expected_result <= integer((used_dividend/used_divisor)*2.0**(int_word_length-4));
+                division_result <= get_division_result(multiplier        , division              , int_word_length-1);
+                expected_result <= to_fixed((used_dividend/used_divisor) , int_word_length-1);
             end if;
 
             check(abs(1.0-real(division_result) / real(expected_result)) < 1.0e-3, "division error should be less than 1/1000!");

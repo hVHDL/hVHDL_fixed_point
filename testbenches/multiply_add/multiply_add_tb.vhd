@@ -9,6 +9,9 @@ context vunit_lib.vunit_context;
     use work.multiplier_pkg.all;
     use work.fixed_point_dsp_pkg.all;
 
+    --todo clean up this dependency
+    use work.sos_filter_pkg.number_of_fractional_bits;
+
 entity multiply_add_tb is
   generic (runner_cfg : string);
 end;
@@ -49,22 +52,22 @@ begin
             create_fixed_point_dsp(fixed_point_dsp);
 
             CASE simulation_counter is 
-                WHEN 0 => multiply_add(fixed_point_dsp, 2**23, 9999, 1);
-                WHEN 6 => multiply_add(fixed_point_dsp, 2**23, 15e3, 15e3);
-                WHEN 7 => multiply_add(fixed_point_dsp, 2**24, 9999, 2);
-                WHEN 8 => multiply_add(fixed_point_dsp, 2**22, -10000, 1);
-                WHEN 17 => multiply_add(fixed_point_dsp, 2**22, 10000, 1);
+                WHEN 0 => multiply_add(fixed_point_dsp  , 2**number_of_fractional_bits     , 9999   , 1);
+                WHEN 6 => multiply_add(fixed_point_dsp  , 2**number_of_fractional_bits     , 15e3   , 15e3);
+                WHEN 7 => multiply_add(fixed_point_dsp  , 2**(number_of_fractional_bits+1) , 9999   , 2);
+                WHEN 8 => multiply_add(fixed_point_dsp  , 2**(number_of_fractional_bits-1) , -10000 , 1);
+                WHEN 17 => multiply_add(fixed_point_dsp , 2**(number_of_fractional_bits-1) , 10000  , 1);
                 WHEN others =>
             end CASE;
             if fixed_point_dsp_is_ready(fixed_point_dsp) then
                 
                 result_counter <= result_counter + 1;
                 CASE result_counter is
-                    WHEN 0 => check(get_dsp_result(fixed_point_dsp) = 10e3, "expected 10e3 got " & integer'image(get_dsp_result(fixed_point_dsp)));
-                    WHEN 1 => check(get_dsp_result(fixed_point_dsp) = 30e3, "expected 30e3 got " & integer'image(get_dsp_result(fixed_point_dsp)));
-                    WHEN 2 => check(get_dsp_result(fixed_point_dsp) = 20e3, "expected 20e3 got " & integer'image(get_dsp_result(fixed_point_dsp)));
-                    WHEN 3 => check(get_dsp_result(fixed_point_dsp) = -4999, "expected -4999 got " & integer'image(get_dsp_result(fixed_point_dsp)));
-                    WHEN 4 => check(get_dsp_result(fixed_point_dsp) = 5001, "expected 5001 got " & integer'image(get_dsp_result(fixed_point_dsp)));
+                    WHEN 0 => check(get_dsp_result(fixed_point_dsp) = 10e3  , "expected 10e3 got " & integer'image(get_dsp_result(fixed_point_dsp)));
+                    WHEN 1 => check(get_dsp_result(fixed_point_dsp) = 30e3  , "expected 30e3 got " & integer'image(get_dsp_result(fixed_point_dsp)));
+                    WHEN 2 => check(get_dsp_result(fixed_point_dsp) = 20e3  , "expected 20e3 got " & integer'image(get_dsp_result(fixed_point_dsp)));
+                    WHEN 3 => check(get_dsp_result(fixed_point_dsp) = -4999 , "expected -4999 got " & integer'image(get_dsp_result(fixed_point_dsp)));
+                    WHEN 4 => check(get_dsp_result(fixed_point_dsp) = 5001  , "expected 5001 got " & integer'image(get_dsp_result(fixed_point_dsp)));
                     WHEN others =>
                 end CASE;
                         

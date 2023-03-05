@@ -49,7 +49,7 @@ package body fixed_point_dsp_pkg is
         return integer
         is
         begin
-            return work.multiplier_pkg.radix_multiply(left, right, word_length, fractional_bits);
+            return work.multiplier_pkg.radix_multiply(left, right, word_length, number_of_fractional_bits);
         end "*";
     begin
         self.multiply_add_output <= self.a * self.b + self.c;
@@ -70,7 +70,7 @@ package body fixed_point_dsp_pkg is
         return integer
         is
         begin
-            return work.multiplier_pkg.radix_multiply(left, right, word_length, fractional_bits);
+            return work.multiplier_pkg.radix_multiply(left, right, word_length, number_of_fractional_bits);
         end "*";
     begin
         return dsp_object.a * dsp_object.b + dsp_object.c;

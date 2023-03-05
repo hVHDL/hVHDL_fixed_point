@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parent
 VU = VUnit.from_argv()
 
 sos_filter_library = VU.add_library("sos_filter_library")
+sos_filter_library.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
 sos_filter_library.add_source_files(ROOT / "multiplier/multiplier_base_types_18bit_pkg.vhd") 
 sos_filter_library.add_source_files(ROOT / "multiplier/multiplier_pkg.vhd") 
 sos_filter_library.add_source_files(ROOT / "sos_filter/sos_filter_pkg.vhd")
@@ -18,6 +19,7 @@ sos_filter_library.add_source_files(ROOT / "testbenches/sos_filter/serial_sos_tb
 sos_filter_library.add_source_files(ROOT / "testbenches/sos_filter/ram_sos_tb.vhd")
 
 fixed_point_library = VU.add_library("fixed_point_library")
+fixed_point_library.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
 fixed_point_library.add_source_files(ROOT / "multiplier/multiplier_base_types_18bit_pkg.vhd") 
 fixed_point_library.add_source_files(ROOT / "multiplier/multiplier_pkg.vhd") 
 fixed_point_library.add_source_files(ROOT / "sos_filter/sos_filter_pkg.vhd")

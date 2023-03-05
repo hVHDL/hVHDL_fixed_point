@@ -174,9 +174,9 @@ begin
 
 
             -- check values
-            serial_sos_out <= real(get_sos_filter_output(sos_filter3))/2.0**fractional_bits;
+            serial_sos_out <= real(get_sos_filter_output(sos_filter3))/2.0**number_of_fractional_bits;
             real_filter_output  <= filter_out2;
-            fixed_filter_output <= real(fix_filter_out2)/2.0**fractional_bits;
+            fixed_filter_output <= real(fix_filter_out2)/2.0**number_of_fractional_bits;
             filter_error <= real_filter_output - fixed_filter_output;
             if abs(filter_error) > max_calculation_error then
                 max_calculation_error <= abs(filter_error);

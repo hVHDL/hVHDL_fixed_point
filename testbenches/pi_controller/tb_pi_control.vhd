@@ -51,7 +51,7 @@ begin
     stimulus : process(simulator_clock)
         function to_fixed (real_input : real) return integer is
         begin
-            return to_fixed(number =>real_input, integer_bits =>5);
+            return to_fixed(real_input, int_word_length-6);
         end to_fixed;
 
     begin
