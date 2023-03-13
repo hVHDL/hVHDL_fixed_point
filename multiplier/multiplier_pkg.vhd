@@ -88,6 +88,9 @@ package multiplier_pkg is
         radix       : natural)
     return integer;
 ------------------------------------------------------------------------
+    function set_number_if_integer_bits ( number : integer)
+        return integer;
+------------------------------------------------------------------------
 end package multiplier_pkg;
 
     -- common local functions
@@ -331,5 +334,14 @@ package body multiplier_pkg is
         return to_integer(result);
     end radix_multiply;
 ------------------------------------------------------------------------
+    function set_number_if_integer_bits
+    (
+        number : integer
+    )
+    return integer
+    is
+    begin
+        return int_word_length-number-1;
+    end set_number_if_integer_bits;
 
 end package body multiplier_pkg; 
