@@ -163,4 +163,15 @@ package body division_pkg is
     end get_division_result;
 
 ------------------------------------------------------------------------ 
+    procedure create_divider_and_multiplier
+    (
+        signal divider_object : inout division_record;
+        signal multiplier_object : inout multiplier_record
+    ) is
+    begin
+        create_multiplier(multiplier_object);
+        create_division(multiplier_object, divider_object);
+        
+    end create_divider_and_multiplier;
+------------------------------------------------------------------------
 end package body division_pkg;

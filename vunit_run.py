@@ -58,6 +58,8 @@ mathlib26.add_source_files(ROOT / "multiplier" /"multiplier_base_types_26bit_pkg
 mathlib26.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
 mathlib26.add_source_files(ROOT / "division" / "*.vhd") 
 
+mathlib26.add_source_files(ROOT / "testbenches/division_simulation/division_tb.vhd")
+
 mathlib26.add_source_files(ROOT / "first_order_filter/first_order_filter_pkg.vhd")
 
 mathlib26.add_source_files(ROOT / "example" / "*.vhd")
@@ -88,5 +90,6 @@ mathlib26.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
 mathlib26.add_source_files(ROOT / "testbenches/real_to_fixed/real_to_fixed_tb.vhd")
 
 mathlib26.add_source_files(ROOT / "testbenches/square_root/tb_square_root.vhd")
+
 
 VU.main()

@@ -58,4 +58,8 @@ package division_pkg is
         radix : natural)
     return integer;
 ------------------------------------------------------------------------
+    procedure create_divider_and_multiplier (
+        signal divider_object : inout division_record;
+        signal multiplier_object : inout multiplier_record);
+------------------------------------------------------------------------
 end package division_pkg;

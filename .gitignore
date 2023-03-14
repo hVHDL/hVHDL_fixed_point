@@ -7,3 +7,4 @@
 *.swo
 /compile*
 vunit_out
+*.o
