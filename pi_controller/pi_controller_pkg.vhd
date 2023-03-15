@@ -8,15 +8,15 @@ package pi_controller_pkg is
 
 ------------------------------------------------------------------------
     type pi_controller_record is record
-        integrator : int;
-        pi_out     : int;
-        pi_control_process_counter : natural range 0 to 7;
+        integrator                    : int;
+        pi_out                        : int;
+        pi_control_process_counter    : natural range 0 to 7;
         pi_control_multiplier_counter : natural range 0 to 7;
-        pi_error : int;
-        pi_high_limit : int;
-        pi_low_limit : int;
-        is_ready : boolean;
-        pi_controller_radix : natural;
+        pi_error                      : int;
+        pi_high_limit                 : int;
+        pi_low_limit                  : int;
+        is_ready                      : boolean;
+        pi_controller_radix           : natural;
     end record;
 
     function pi_controller_init return pi_controller_record;
@@ -32,12 +32,28 @@ package pi_controller_pkg is
 
     function init_pi_controller ( symmetric_limit : integer)
         return pi_controller_record;
+
 ------------------------------------------------------------------------
     procedure create_pi_controller (
-        signal hw_multiplier : inout multiplier_record;
+        signal hw_multiplier        : inout multiplier_record;
         signal pi_controller_object : inout pi_controller_record;
-        proportional_gain    : in integer range 0 to int'high;
-        integrator_gain      : in integer range 0 to int'high); 
+        proportional_gain           : in integer range 0 to int'high;
+        integrator_gain             : in integer range 0 to int'high);
+
+    procedure create_pi_control_and_multiplier (
+        signal self       : inout pi_controller_record;
+        signal multiplier : inout multiplier_record;
+        proportional_gain : in integer range 0 to int'high;
+        integrator_gain   : in integer range 0 to int'high);
+
+    procedure create_pi_control_and_multiplier (
+        signal self       : inout pi_controller_record;
+        signal multiplier : inout multiplier_record;
+        proportional_gain : in integer range 0 to int'high;
+        integrator_gain   : in integer range 0 to int'high;
+        high_limit        : int;
+        low_limit         : int);
+
 ------------------------------------------------------------------------
     procedure calculate_pi_control (
         signal pi_controller : out pi_controller_record;
@@ -50,6 +66,7 @@ package pi_controller_pkg is
 ------------------------------------------------------------------------
     function pi_control_calculation_is_ready ( pi_controller : pi_controller_record)
         return boolean;
+
 ------------------------------------------------------------------------
 end package pi_controller_pkg;
 
@@ -57,7 +74,7 @@ end package pi_controller_pkg;
 package body pi_controller_pkg is
 
 ------------------------------------------------------------------------
-    constant pi_controller_initial_values : pi_controller_record := (0, 0, 7, 7, 0, 32768, -32768, false, 12);
+    constant pi_controller_initial_values : pi_controller_record := (0, 0, 7, 7, 0, 32767, -32768, false, 12);
 
     function pi_controller_init return pi_controller_record
     is
@@ -65,6 +82,7 @@ package body pi_controller_pkg is
         return pi_controller_initial_values;
     end pi_controller_init;
 
+---
     function pi_controller_init
     (
         radix : int
@@ -78,13 +96,13 @@ package body pi_controller_pkg is
         
     end pi_controller_init;
 
-------------------------------------------------------------------------
+---
     function init_pi_controller return pi_controller_record
     is
     begin
         return pi_controller_init;
     end init_pi_controller;
---------------------
+---
     function init_pi_controller
     (
         symmetric_limit : integer
@@ -101,10 +119,10 @@ package body pi_controller_pkg is
 ------------------------------------------------------------------------
     procedure create_pi_controller
     (
-        signal hw_multiplier : inout multiplier_record;
+        signal hw_multiplier        : inout multiplier_record;
         signal pi_controller_object : inout pi_controller_record;
-        proportional_gain    : in integer range 0 to int'high;
-        integrator_gain      : in integer range 0 to int'high
+        proportional_gain           : in integer range 0 to int'high;
+        integrator_gain             : in integer range 0 to int'high
     ) is
         alias m is pi_controller_object;
 
@@ -151,7 +169,7 @@ package body pi_controller_pkg is
     procedure calculate_pi_control
     (
         signal pi_controller : out pi_controller_record;
-        pi_control_input : in int
+        pi_control_input     : in int
     ) is
     begin
 
@@ -192,5 +210,30 @@ package body pi_controller_pkg is
         
     end pi_control_calculation_is_ready;
 ------------------------------------------------------------------------ 
+    procedure create_pi_control_and_multiplier
+    (
+        signal self       : inout pi_controller_record;
+        signal multiplier : inout multiplier_record;
+        proportional_gain : in integer range 0 to int'high;
+        integrator_gain   : in integer range 0 to int'high
+    ) is
+    begin
+        create_multiplier(multiplier);
+        create_pi_controller(multiplier, self, proportional_gain, integrator_gain);
+    end create_pi_control_and_multiplier;
+------------------------------------------------------------------------ 
+    procedure create_pi_control_and_multiplier
+    (
+        signal self       : inout pi_controller_record;
+        signal multiplier : inout multiplier_record;
+        proportional_gain : in integer range 0 to int'high;
+        integrator_gain   : in integer range 0 to int'high;
+        high_limit        : int;
+        low_limit         : int
+    ) is
+    begin
+        create_multiplier(multiplier);
+        create_pi_controller(multiplier, self, proportional_gain, integrator_gain);
+    end create_pi_control_and_multiplier;
+------------------------------------------------------------------------ 
 end package body pi_controller_pkg;
-

@@ -2,11 +2,13 @@ library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
+    use work.multiplier_pipeline_registers_pkg;
+
     -- 18 bit wordlength
 package multiplier_base_types_pkg is
 
     constant number_of_input_bits       : integer := 18;
-    constant number_of_input_registers  : integer := 2;
-    constant number_of_output_registers : integer := 2;
+    alias number_of_input_registers  is multiplier_pipeline_registers_pkg.input_registers;
+    alias number_of_output_registers is multiplier_pipeline_registers_pkg.output_registers;
 
 end package multiplier_base_types_pkg;

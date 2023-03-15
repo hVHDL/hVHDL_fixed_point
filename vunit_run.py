@@ -9,6 +9,7 @@ VU = VUnit.from_argv()
 
 sos_filter_library = VU.add_library("sos_filter_library")
 sos_filter_library.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
+sos_filter_library.add_source_files(ROOT / "multiplier/configuration/multiply_with_1_input_and_output_registers_pkg.vhd")
 sos_filter_library.add_source_files(ROOT / "multiplier/multiplier_base_types_18bit_pkg.vhd") 
 sos_filter_library.add_source_files(ROOT / "multiplier/multiplier_pkg.vhd") 
 sos_filter_library.add_source_files(ROOT / "sos_filter/sos_filter_pkg.vhd")
@@ -20,6 +21,7 @@ sos_filter_library.add_source_files(ROOT / "testbenches/sos_filter/ram_sos_tb.vh
 
 fixed_point_library = VU.add_library("fixed_point_library")
 fixed_point_library.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
+fixed_point_library.add_source_files(ROOT / "multiplier/configuration/multiply_with_1_input_and_output_registers_pkg.vhd")
 fixed_point_library.add_source_files(ROOT / "multiplier/multiplier_base_types_18bit_pkg.vhd") 
 fixed_point_library.add_source_files(ROOT / "multiplier/multiplier_pkg.vhd") 
 fixed_point_library.add_source_files(ROOT / "sos_filter/sos_filter_pkg.vhd")
@@ -32,6 +34,7 @@ mathlib.add_source_files(ROOT / "testbenches/adder/adder_tb.vhd")
 mathlib.add_source_files(ROOT / "hVHDL_memory_library/fpga_ram" / "*.vhd") 
 mathlib.add_source_files(ROOT / "hVHDL_memory_library/fpga_ram/ram_configuration/ram_configuration_16x1024_pkg.vhd") 
 
+mathlib.add_source_files(ROOT / "multiplier/configuration/multiply_with_2_input_and_output_registers_pkg.vhd")
 mathlib.add_source_files(ROOT / "multiplier" /"multiplier_base_types_18bit_pkg.vhd") 
 mathlib.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
 
@@ -49,11 +52,13 @@ mathlib.add_source_files(ROOT / "coordinate_transforms/ab_to_dq_transform/ab_to_
 
 
 mathlib22 = VU.add_library("math_library_22x22")
+mathlib22.add_source_files(ROOT / "multiplier/configuration/multiply_with_1_input_and_output_registers_pkg.vhd")
 mathlib22.add_source_files(ROOT / "multiplier" /"multiplier_base_types_22bit_pkg.vhd") 
 mathlib22.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
 mathlib22.add_source_files(ROOT / "division" / "*.vhd") 
 
 mathlib26 = VU.add_library("math_library_26x26")
+mathlib26.add_source_files(ROOT / "multiplier/configuration/multiply_with_1_input_and_output_registers_pkg.vhd")
 mathlib26.add_source_files(ROOT / "multiplier" /"multiplier_base_types_26bit_pkg.vhd") 
 mathlib26.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
 mathlib26.add_source_files(ROOT / "division" / "*.vhd") 
