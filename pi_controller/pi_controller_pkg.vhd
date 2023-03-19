@@ -36,10 +36,10 @@ package pi_controller_pkg is
 
 ------------------------------------------------------------------------
     procedure create_pi_controller (
-        signal hw_multiplier        : inout multiplier_record;
-        signal pi_controller_object : inout pi_controller_record;
-        proportional_gain           : in integer range 0 to int'high;
-        integrator_gain             : in integer range 0 to int'high);
+        signal self          : inout pi_controller_record;
+        signal hw_multiplier : inout multiplier_record;
+        proportional_gain    : in integer range 0 to int'high;
+        integrator_gain      : in integer range 0 to int'high);
 
     procedure create_pi_control_and_multiplier (
         signal self       : inout pi_controller_record;
@@ -54,6 +54,12 @@ package pi_controller_pkg is
         integrator_gain   : in integer range 0 to int'high;
         high_limit        : int;
         low_limit         : int);
+
+    procedure create_pi_controller (
+        signal hw_multiplier : inout multiplier_record;
+        signal self          : inout pi_controller_record;
+        proportional_gain    : in integer range 0 to int'high;
+        integrator_gain      : in integer range 0 to int'high);
 
 ------------------------------------------------------------------------
     procedure calculate_pi_control (
@@ -127,55 +133,64 @@ package body pi_controller_pkg is
 ------------------------------------------------------------------------
     procedure create_pi_controller
     (
+        signal self : inout pi_controller_record;
         signal hw_multiplier        : inout multiplier_record;
-        signal pi_controller_object : inout pi_controller_record;
         proportional_gain           : in integer range 0 to int'high;
         integrator_gain             : in integer range 0 to int'high
     ) is
-        alias m is pi_controller_object;
-
     begin
-        CASE m.pi_control_multiplier_counter is
+        CASE self.pi_control_multiplier_counter is
             WHEN 0 =>
-                multiply(hw_multiplier, proportional_gain , m.pi_error);
-                m.pi_control_multiplier_counter <= m.pi_control_multiplier_counter  + 1;
+                multiply(hw_multiplier, proportional_gain , self.pi_error);
+                self.pi_control_multiplier_counter <= self.pi_control_multiplier_counter  + 1;
             WHEN 1 =>
-                multiply(hw_multiplier, integrator_gain , m.pi_error);
-                m.pi_control_multiplier_counter <= m.pi_control_multiplier_counter + 1;
+                multiply(hw_multiplier, integrator_gain , self.pi_error);
+                self.pi_control_multiplier_counter <= self.pi_control_multiplier_counter + 1;
             WHEN others => -- wait for start
         end CASE;
 
-        m.is_ready <= false;
-        m.result_is_ready <= false;
-        CASE m.pi_control_process_counter is
+        self.is_ready <= false;
+        self.result_is_ready <= false;
+        CASE self.pi_control_process_counter is
             WHEN 0 => 
                 if multiplier_is_ready(hw_multiplier) then
-                    m.pi_control_process_counter <= m.pi_control_process_counter + 1;
+                    self.pi_control_process_counter <= self.pi_control_process_counter + 1;
 
-                    m.pi_out <= m.integrator + get_multiplier_result(hw_multiplier, m.pi_controller_radix);
-                    if m.integrator + get_multiplier_result(hw_multiplier, m.pi_controller_radix) >= m.pi_high_limit then
-                        m.pi_out          <= m.pi_high_limit;
-                        m.integrator      <= m.pi_high_limit - get_multiplier_result(hw_multiplier, m.pi_controller_radix);
-                        m.pi_control_process_counter <= m.pi_control_process_counter + 2;
-                        m.is_ready <= true;
+                    self.pi_out <= self.integrator + get_multiplier_result(hw_multiplier, self.pi_controller_radix);
+                    if self.integrator + get_multiplier_result(hw_multiplier, self.pi_controller_radix) >= self.pi_high_limit then
+                        self.pi_out          <= self.pi_high_limit;
+                        self.integrator      <= self.pi_high_limit - get_multiplier_result(hw_multiplier, self.pi_controller_radix);
+                        self.pi_control_process_counter <= self.pi_control_process_counter + 2;
+                        self.is_ready <= true;
                     end if;
 
-                    if m.integrator + get_multiplier_result(hw_multiplier, m.pi_controller_radix) <= m.pi_low_limit then
-                        m.pi_out          <= m.pi_low_limit;
-                        m.integrator      <= m.pi_low_limit - get_multiplier_result(hw_multiplier, m.pi_controller_radix);
-                        m.pi_control_process_counter <= m.pi_control_process_counter + 2;
-                        m.is_ready <= true;
+                    if self.integrator + get_multiplier_result(hw_multiplier, self.pi_controller_radix) <= self.pi_low_limit then
+                        self.pi_out          <= self.pi_low_limit;
+                        self.integrator      <= self.pi_low_limit - get_multiplier_result(hw_multiplier, self.pi_controller_radix);
+                        self.pi_control_process_counter <= self.pi_control_process_counter + 2;
+                        self.is_ready <= true;
                     end if;
 
-                    m.result_is_ready <= true;
+                    self.result_is_ready <= true;
                 end if;
             WHEN 1 =>
-                m.integrator <= m.integrator + get_multiplier_result(hw_multiplier, m.pi_controller_radix);
-                m.pi_control_process_counter <= m.pi_control_process_counter + 1;
-                m.is_ready <= true;
+                self.integrator <= self.integrator + get_multiplier_result(hw_multiplier, self.pi_controller_radix);
+                self.pi_control_process_counter <= self.pi_control_process_counter + 1;
+                self.is_ready <= true;
             WHEN others => -- wait for restart
         end CASE;
         
+    end create_pi_controller;
+------------------------------------------------------------------------
+    procedure create_pi_controller
+    (
+        signal hw_multiplier        : inout multiplier_record;
+        signal self : inout pi_controller_record;
+        proportional_gain           : in integer range 0 to int'high;
+        integrator_gain             : in integer range 0 to int'high
+    ) is
+    begin
+        create_pi_controller(self, hw_multiplier, proportional_gain, integrator_gain);
     end create_pi_controller;
 ------------------------------------------------------------------------
     procedure calculate_pi_control
@@ -231,7 +246,7 @@ package body pi_controller_pkg is
     ) is
     begin
         create_multiplier(multiplier);
-        create_pi_controller(multiplier, self, proportional_gain, integrator_gain);
+        create_pi_controller(self, multiplier, proportional_gain, integrator_gain);
     end create_pi_control_and_multiplier;
 ------------------------------------------------------------------------ 
     procedure create_pi_control_and_multiplier
@@ -245,7 +260,7 @@ package body pi_controller_pkg is
     ) is
     begin
         create_multiplier(multiplier);
-        create_pi_controller(multiplier, self, proportional_gain, integrator_gain);
+        create_pi_controller(self, multiplier, proportional_gain, integrator_gain);
     end create_pi_control_and_multiplier;
 ------------------------------------------------------------------------ 
     function pi_control_is_ready

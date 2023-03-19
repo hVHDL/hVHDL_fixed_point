@@ -17,7 +17,7 @@ end;
 architecture vunit_simulation of pi_with_feedforward_tb is
 
     constant clock_period      : time    := 1 ns;
-    constant simtime_in_clocks : integer := 1000;
+    constant simtime_in_clocks : integer := 2500;
     
     signal simulator_clock     : std_logic := '0';
     signal simulation_counter  : natural   := 0;
@@ -32,6 +32,8 @@ architecture vunit_simulation of pi_with_feedforward_tb is
     signal state : real := 0.0;
 
     signal reference : integer := 0;
+
+    signal disturbance : real := 0.0;
 
 begin
 
@@ -58,10 +60,10 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
             create_multiplier(multiplier);
-            create_pi_controller(multiplier, pi_controller, to_fixed(2.50,12), to_fixed(0.15, 12));
+            create_pi_controller(multiplier, pi_controller, to_fixed(5.50,12), to_fixed(1.0, 12));
 
             if pi_control_calculation_is_ready(pi_controller) then
-                state <= state + (state * 0.0 + real(get_pi_control_output(pi_controller))/32768.0)*0.1;
+                state <= state + disturbance + (real(get_pi_control_output(pi_controller))/32768.0)*0.1;
             end if;
 
             if simulation_counter = 0 or pi_control_calculation_is_ready(pi_controller) then
@@ -69,14 +71,22 @@ begin
             end if;
 
             CASE simulation_counter is
-                WHEN 0      => reference <= 0;
-                WHEN 50     => reference <= 500;
-                WHEN 100    => reference <= -8500;
-                WHEN 200    => reference <= -25e3;
-                WHEN 300    => reference <= 25e3;
-                WHEN 700    => reference <= 10e3;
+                WHEN 0      => reference <= to_fixed(0.0);
+                WHEN 50     => reference <= to_fixed(0.3,15);
                 WHEN others => -- do nothgin
             end CASE;
+
+            CASE simulation_counter is
+                WHEN 0      => disturbance <= 0.0;
+                WHEN 200    => disturbance <= -0.13;
+                WHEN 300    => disturbance <= 0.03;
+                WHEN 450    => disturbance <= 0.0;
+                WHEN others => -- do nothgin
+            end CASE;
+
+            if simulation_counter > 550 then
+                disturbance <= 0.03*sin(real(simulation_counter mod 500)/500.0*2.0*math_pi);
+            end if;
 
         end if; -- rising_edge
     end process stimulus;	
