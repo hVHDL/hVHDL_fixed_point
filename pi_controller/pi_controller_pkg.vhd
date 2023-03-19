@@ -90,6 +90,13 @@ package body pi_controller_pkg is
     end pi_controller_init;
 
 ---
+    function init_pi_controller return pi_controller_record
+    is
+    begin
+        return pi_controller_init;
+    end init_pi_controller;
+
+---
     function pi_controller_init
     (
         radix : int
@@ -103,12 +110,6 @@ package body pi_controller_pkg is
         
     end pi_controller_init;
 
----
-    function init_pi_controller return pi_controller_record
-    is
-    begin
-        return pi_controller_init;
-    end init_pi_controller;
 ---
     function init_pi_controller
     (
