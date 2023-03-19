@@ -98,10 +98,10 @@ begin
                 expected_result <= to_fixed((used_dividend/used_divisor) , int_word_length-1);
             end if;
 
-            check(abs(1.0-real(division_result) / real(expected_result)) < 1.0e-3, "division error should be less than 1/1000!");
 
             if expected_result /= 0 then
                 relative_error <= abs(1.0-real(division_result) / real(expected_result));
+                check(abs(1.0-real(division_result) / real(expected_result)) < 1.0e-3, "division error should be less than 1/1000!, got " & real'image(abs(1.0-real(division_result) / real(expected_result))));
             end if;
             if maximum_relative_error < relative_error then
                 maximum_relative_error <= relative_error;
