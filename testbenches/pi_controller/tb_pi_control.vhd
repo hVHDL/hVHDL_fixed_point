@@ -17,7 +17,7 @@ end;
 architecture vunit_simulation of pi_control_tb is
 
     constant clock_period      : time    := 1 ns;
-    constant simtime_in_clocks : integer := 500;
+    constant simtime_in_clocks : integer := 1000;
     
     signal simulator_clock     : std_logic := '0';
     signal simulation_counter  : natural   := 0;
@@ -58,7 +58,7 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
             create_multiplier(multiplier);
-            create_pi_controller(multiplier, pi_controller, to_fixed(0.50), to_fixed(0.15));
+            create_pi_controller(multiplier, pi_controller, to_fixed(2.50,12), to_fixed(0.15, 12));
 
             if pi_control_calculation_is_ready(pi_controller) then
                 state <= state + (state * 0.0 + real(get_pi_control_output(pi_controller))/32768.0)*0.1;
@@ -74,7 +74,7 @@ begin
                 WHEN 100    => reference <= -8500;
                 WHEN 200    => reference <= -25e3;
                 WHEN 300    => reference <= 25e3;
-                WHEN 400    => reference <= 10e3;
+                WHEN 700    => reference <= 10e3;
                 WHEN others => -- do nothgin
             end CASE;
 
