@@ -60,7 +60,7 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
             create_multiplier(multiplier);
-            create_pi_controller(multiplier, pi_controller, to_fixed(5.50,12), to_fixed(1.0, 12));
+            create_pi_controller(pi_controller, multiplier, to_fixed(5.50,12), to_fixed(1.0, 12), -to_fixed(disturbance*10.0,15));
 
             if pi_control_calculation_is_ready(pi_controller) then
                 state <= state + disturbance + (real(get_pi_control_output(pi_controller))/32768.0)*0.1;
@@ -79,8 +79,8 @@ begin
             CASE simulation_counter is
                 WHEN 0      => disturbance <= 0.0;
                 WHEN 200    => disturbance <= -0.13;
-                WHEN 300    => disturbance <= 0.03;
-                WHEN 450    => disturbance <= 0.0;
+                WHEN 250    => disturbance <= 0.13;
+                WHEN 350    => disturbance <= 0.0;
                 WHEN others => -- do nothgin
             end CASE;
 

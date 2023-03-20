@@ -61,6 +61,13 @@ package pi_controller_pkg is
         proportional_gain    : in integer range 0 to int'high;
         integrator_gain      : in integer range 0 to int'high);
 
+    procedure create_pi_controller (
+        signal self          : inout pi_controller_record;
+        signal hw_multiplier : inout multiplier_record;
+        proportional_gain    : in integer range 0 to int'high;
+        integrator_gain      : in integer range 0 to int'high;
+        feedforward          : in int);
+
 ------------------------------------------------------------------------
     procedure calculate_pi_control (
         signal pi_controller : out pi_controller_record;
@@ -133,11 +140,14 @@ package body pi_controller_pkg is
 ------------------------------------------------------------------------
     procedure create_pi_controller
     (
-        signal self : inout pi_controller_record;
-        signal hw_multiplier        : inout multiplier_record;
-        proportional_gain           : in integer range 0 to int'high;
-        integrator_gain             : in integer range 0 to int'high
+        signal self          : inout pi_controller_record;
+        signal hw_multiplier : inout multiplier_record;
+        proportional_gain    : in integer range 0 to int'high;
+        integrator_gain      : in integer range 0 to int'high;
+        feedforward          : in int
     ) is
+
+        variable output_with_feedforward : int;
     begin
         CASE self.pi_control_multiplier_counter is
             WHEN 0 =>
@@ -156,17 +166,18 @@ package body pi_controller_pkg is
                 if multiplier_is_ready(hw_multiplier) then
                     self.pi_control_process_counter <= self.pi_control_process_counter + 1;
 
-                    self.pi_out <= self.integrator + get_multiplier_result(hw_multiplier, self.pi_controller_radix);
-                    if self.integrator + get_multiplier_result(hw_multiplier, self.pi_controller_radix) >= self.pi_high_limit then
+                    output_with_feedforward := self.integrator + get_multiplier_result(hw_multiplier, self.pi_controller_radix) + feedforward;
+                    self.pi_out <= output_with_feedforward;
+                    if output_with_feedforward >= self.pi_high_limit then
                         self.pi_out          <= self.pi_high_limit;
-                        self.integrator      <= self.pi_high_limit - get_multiplier_result(hw_multiplier, self.pi_controller_radix);
+                        self.integrator      <= self.pi_high_limit - get_multiplier_result(hw_multiplier, self.pi_controller_radix) - feedforward;
                         self.pi_control_process_counter <= self.pi_control_process_counter + 2;
                         self.is_ready <= true;
                     end if;
 
-                    if self.integrator + get_multiplier_result(hw_multiplier, self.pi_controller_radix) <= self.pi_low_limit then
+                    if output_with_feedforward <= self.pi_low_limit then
                         self.pi_out          <= self.pi_low_limit;
-                        self.integrator      <= self.pi_low_limit - get_multiplier_result(hw_multiplier, self.pi_controller_radix);
+                        self.integrator      <= self.pi_low_limit - get_multiplier_result(hw_multiplier, self.pi_controller_radix) - feedforward;
                         self.pi_control_process_counter <= self.pi_control_process_counter + 2;
                         self.is_ready <= true;
                     end if;
@@ -191,6 +202,17 @@ package body pi_controller_pkg is
     ) is
     begin
         create_pi_controller(self, hw_multiplier, proportional_gain, integrator_gain);
+    end create_pi_controller;
+------------------------------------------------------------------------
+    procedure create_pi_controller
+    (
+        signal self          : inout pi_controller_record;
+        signal hw_multiplier : inout multiplier_record;
+        proportional_gain    : in integer range 0 to int'high;
+        integrator_gain      : in integer range 0 to int'high
+    ) is
+    begin
+        create_pi_controller(self, hw_multiplier, proportional_gain, integrator_gain, 0);
     end create_pi_controller;
 ------------------------------------------------------------------------
     procedure calculate_pi_control
