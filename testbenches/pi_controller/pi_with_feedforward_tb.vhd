@@ -88,6 +88,16 @@ begin
                 disturbance <= 0.03*sin(real(simulation_counter mod 500)/500.0*2.0*math_pi);
             end if;
 
+            -- test antiwindup with  saturation to +max
+            if simulation_counter > 1000 and simulation_counter < 1100 then
+                state <= 0.0;
+            end if;
+
+            -- test antiwindup with saturation to -max
+            if simulation_counter > 1100 and simulation_counter < 1200 then
+                state <= 0.5;
+            end if;
+
         end if; -- rising_edge
     end process stimulus;	
 ------------------------------------------------------------------------
