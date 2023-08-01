@@ -6,7 +6,8 @@ library ieee;
 
 package multiplier_pkg is
 
-    type input_array is array (integer range number_of_input_registers-1 downto 0) of signed(number_of_input_bits-1 downto 0);
+    subtype s_int is signed(number_of_input_bits-1 downto 0);
+    type input_array is array (integer range number_of_input_registers-1 downto 0) of s_int;
     constant init_input_array :  input_array := (others => (others => '0'));
     type output_array is array (integer range number_of_output_registers-1 downto 0) of signed(init_input_array(0)'length*2-1 downto 0);
     constant init_output_array :  output_array := (others => (others => '0'));
