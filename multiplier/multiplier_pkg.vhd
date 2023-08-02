@@ -60,6 +60,11 @@ package multiplier_pkg is
         multiplier : multiplier_record;
         radix : natural range 0 to output_word_bit_width) 
     return integer ;
+
+    function get_multiplier_result (
+        multiplier : multiplier_record;
+        radix : natural range 0 to output_word_bit_width) 
+    return signed;
 ------------------------------------------------------------------------
     function multiplier_is_ready (
         multiplier : multiplier_record)
@@ -257,6 +262,43 @@ package body multiplier_pkg is
         end if;
         
     end get_multiplier_result;
+------------------------------
+    function get_multiplier_result
+    (
+        multiplier_output : signed(initialize_multiplier_base.multiplier_result(0)'range);
+        radix : natural range 0 to output_word_bit_width
+    ) return signed 
+    is
+    ---------------------------------------------------
+        function "+"
+        (
+            left : integer;
+            right : std_logic 
+        )
+        return integer
+        is
+        begin
+            if left > 0 then
+                if right = '1' then
+                    return left + 1;
+                else
+                    return left;
+                end if;
+            else
+                return left;
+            end if;
+        end "+";
+    --------------------------------------------------         
+        variable bit_vector_slice : signed(output_left_index downto 0);
+    begin
+        bit_vector_slice := multiplier_output((multiplier_output'left-output_word_bit_width + radix) downto radix); 
+        if radix > 0 then
+            bit_vector_slice := (bit_vector_slice) + multiplier_output(radix - 1);
+        end if;
+
+        return bit_vector_slice;
+        
+    end get_multiplier_result;
 --------------------------------------------------
     function get_multiplier_result
     (
@@ -270,6 +312,17 @@ package body multiplier_pkg is
         
     end get_multiplier_result;
 
+    function get_multiplier_result
+    (
+        multiplier : multiplier_record;
+        radix : natural range 0 to output_word_bit_width
+    )
+    return signed
+    is
+    begin
+        return get_multiplier_result(multiplier.multiplier_result(multiplier.multiplier_result'left), radix);
+        
+    end get_multiplier_result;
 ------------------------------------------------------------------------ 
     function multiplier_is_not_busy
     (

@@ -8,10 +8,10 @@ library ieee;
 package square_root_pkg is
 
 ------------------------------------------------------------------------
-    function nr_iteration ( number_to_invert, guess : real)
+    function nr_iteration ( number_to_invert, initial_value : real)
         return real;
 ------------------------------------------------------------------------
-    function nr_iteration ( number_to_invert, guess : integer)
+    function nr_iteration ( number_to_invert, initial_value : integer)
         return integer;
 ------------------------------------------------------------------------
 
@@ -21,17 +21,17 @@ package body square_root_pkg is
 
     function nr_iteration
     (
-        number_to_invert, guess : real
+        number_to_invert, initial_value : real
     )
     return real
     is
         variable x : real := 0.0;
     begin
-        x := guess;
-        x := 1.5*x - 0.5 * number_to_invert * x*x*x;
-        x := 1.5*x - 0.5 * number_to_invert * x*x*x;
-        x := 1.5*x - 0.5 * number_to_invert * x*x*x;
-        x := 1.5*x - 0.5 * number_to_invert * x*x*x;
+        x := initial_value;
+        x := x + x/2.0 - 0.5 * number_to_invert * x*x*x;
+        x := x + x/2.0 - 0.5 * number_to_invert * x*x*x;
+        x := x + x/2.0 - 0.5 * number_to_invert * x*x*x;
+        x := x + x/2.0 - 0.5 * number_to_invert * x*x*x;
 
         return x;
         
@@ -56,13 +56,13 @@ package body square_root_pkg is
 ------------------------------------------------------------------------
     function nr_iteration
     (
-        number_to_invert, guess : integer
+        number_to_invert, initial_value : integer
     )
     return integer
     is
         variable x : integer := 0;
     begin
-        x := guess;
+        x := initial_value;
         x := to_fixed(1.5,5)*x - to_fixed(0.5,5)* number_to_invert * x*x*x;
         x := to_fixed(1.5,5)*x - to_fixed(0.5,5)* number_to_invert * x*x*x;
         x := to_fixed(1.5,5)*x - to_fixed(0.5,5)* number_to_invert * x*x*x;
