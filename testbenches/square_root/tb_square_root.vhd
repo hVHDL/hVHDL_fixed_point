@@ -31,9 +31,7 @@ package body square_root_pkg is
         x := 1.5*x - 0.5 * number_to_invert * x*x*x;
         x := 1.5*x - 0.5 * number_to_invert * x*x*x;
         x := 1.5*x - 0.5 * number_to_invert * x*x*x;
-        -- x := 1.5*x - 0.5 * number_to_invert * x*x*x;
-        -- x := 1.5*x - 0.5 * number_to_invert * x*x*x;
-        -- x := 1.5*x - 0.5 * number_to_invert * x*x*x;
+        x := 1.5*x - 0.5 * number_to_invert * x*x*x;
 
         return x;
         
@@ -153,7 +151,7 @@ begin
             -- testi <= testi and abs(test(simulation_counter mod test'length)) < 1.0e-9;
 
             if input_value < 2.0 then
-                output_value <= -nr_iteration(input_value, 0.826) + 1.0/sqrt(input_value);
+                output_value <=  sqrt(input_value)-nr_iteration(input_value, 0.826);
                 input_value <= input_value + 0.02;
             end if;
         end if; -- rising_edge
