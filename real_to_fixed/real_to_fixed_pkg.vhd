@@ -76,15 +76,16 @@ package body real_to_fixed_pkg is
     return real
     is
         variable retval : real := 0.0;
+        variable temp : signed(number'range) := abs(number);
 
     begin
         for i in number'high-1 downto number'low loop
-            if number(i) = '1' then
+            if temp(i) = '1' then
                 retval := retval + 2.0**(i);
             end if;
         end loop;
 
-        if number < 0 then
+        if number(number'high) = '1' then
             retval := -retval;
         end if;
 
@@ -100,18 +101,22 @@ package body real_to_fixed_pkg is
     return signed
     is
         variable retval : signed(bit_width-1 downto 0) := (others => '0');
-        variable thing : real := abs(number)*2.0**number_of_fractional_bits;
+        variable temp : real := abs(number)*2.0**number_of_fractional_bits;
     begin
 
-        for i in integer range bit_width-1 downto 0 loop
-            if thing >= 2.0**i then
-                thing := thing - 2.0**i;
+        for i in integer range bit_width-2 downto 0 loop
+            if temp >= 2.0**i then
+                temp := temp - 2.0**i;
                 retval(i) := '1';
             else
                 retval(i) := '0';
             end if;
 
         end loop;
+
+        if number < 0.0 then
+            retval := -retval;
+        end if;
 
         return retval;
         

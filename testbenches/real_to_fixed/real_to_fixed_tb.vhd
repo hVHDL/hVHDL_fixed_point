@@ -19,6 +19,8 @@ architecture vunit_simulation of real_to_fixed_tb is
     signal testi : signed(wordlength-1 downto 0) := to_fixed(test_number , wordlength , wordlength-3);
     signal testireal : real := to_real(testi,wordlength-3);
 
+    signal testijee : signed(15 downto 0);
+
 begin
 
 ------------------------------------------------------------------------
@@ -55,10 +57,13 @@ begin
             check(test(0.56846, 26));
 
         elsif run("test 30 bit conversion") then
-            check(test(0.5790234, 30));
+            check(test(-0.5790234, 30));
 
         elsif run("test signed conversion") then
             check(testireal = test_number, real'image(testireal));
+
+        elsif run("test 50 bit signed conversion") then
+            check(to_real(to_fixed(-3.35468,16,16-3) ,16-3) = -3.35468, real'image(to_real(to_fixed(-3.35468,16,16-3) ,16-3)) );
         end if;
 
         test_runner_cleanup(runner); -- Simulation ends here
