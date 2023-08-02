@@ -38,7 +38,7 @@ begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_per;
         if run("test real valued square root") then
-            check(testi, "fail");
+            check(testi);
         end if;
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
