@@ -15,6 +15,7 @@ package fixed_isqrt_pkg is
         state_counter    : natural range 0 to 7;
         state_counter2   : natural range 0 to 7;
         isqrt_is_ready   : boolean;
+        loop_value       : natural range 0 to 3;
     end record;
 
     function init_isqrt return isqrt_record;
@@ -58,7 +59,8 @@ package body fixed_isqrt_pkg is
          to_fixed(0.0   , int_word_length , int_word_length-2) ,
          0              ,
          0              ,
-         false);
+         false          ,
+         0);
          return returned_value;
     end init_isqrt;
 ------------------------------------------------------------------------
@@ -89,13 +91,14 @@ package body fixed_isqrt_pkg is
             WHEN 2 => 
                 if multiplier_is_ready(multiplier) then
                     mult_result := get_multiplier_result(multiplier,int_word_length-1);
+                    self.x      <= self.x + self.x/2 - mult_result;
                     self.result <= self.x + self.x/2 - mult_result;
                     self.state_counter2 <= self.state_counter2 + 1;
                 end if;
             WHEN others => --do nothign
         end CASE;
     end create_isqrt;
-
+------------------------------------------------------------------------
     procedure request_isqrt
     (
         signal self : inout isqrt_record;
@@ -107,6 +110,7 @@ package body fixed_isqrt_pkg is
         self.state_counter2 <= 0;
     end request_isqrt;
 
+------------------------------------------------------------------------
     function isqrt_is_ready
     (
         self : isqrt_record
@@ -185,12 +189,9 @@ begin
     simulator_clock <= not simulator_clock after clock_per/2.0;
 ------------------------------------------------------------------------
     stimulus : process(simulator_clock)
-        variable inv_isqrt_error : real;
-        variable mult_result : signed(self.x'range);
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
-            create_multiplier(multiplier);
 
             request_isqrt <= false;
             if inv_isqrt_is_ready then
@@ -213,6 +214,7 @@ begin
                 WHEN others => --do nothing
             end CASE;
 
+            create_multiplier(multiplier);
             create_isqrt(self, multiplier);
 
         end if; -- rising_edge
