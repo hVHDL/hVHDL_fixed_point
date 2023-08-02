@@ -50,6 +50,11 @@ package multiplier_pkg is
         signal self : inout multiplier_record;
         data_a : in integer;
         data_b : in integer);
+
+    procedure multiply (
+        signal self : inout multiplier_record;
+        data_a : in signed;
+        data_b : in signed);
 ------------------------------------------------------------------------
     function get_multiplier_result (
         multiplier : multiplier_record;
@@ -77,6 +82,11 @@ package multiplier_pkg is
         signal self : inout multiplier_record;
         signal counter : inout integer;
         left, right : integer);
+------------
+    procedure multiply_and_increment_counter (
+        signal self : inout multiplier_record;
+        signal counter : inout integer;
+        left, right : signed);
 ------------------------------------------------------------------------
     function radix_multiply (
         left, right : signed;
@@ -158,6 +168,19 @@ package body multiplier_pkg is
     procedure multiply
     (
         signal self : inout multiplier_record;
+        data_a : in signed;
+        data_b : in signed
+    ) is
+    begin
+        self.signed_data_a(0) <= data_a;
+        self.signed_data_b(0) <= data_b;
+        self.shift_register(0) <= '1';
+
+    end multiply;
+
+    procedure multiply
+    (
+        signal self : inout multiplier_record;
         data_a : in integer;
         data_b : in integer
     ) is
@@ -167,6 +190,7 @@ package body multiplier_pkg is
         self.shift_register(0) <= '1';
 
     end multiply;
+
 ------------------------------------------------------------------------
     procedure sequential_multiply
     (
@@ -300,6 +324,20 @@ package body multiplier_pkg is
         counter <= counter + 1;
         
     end multiply_and_increment_counter;
+------------------------------
+    procedure multiply_and_increment_counter
+    (
+        signal self : inout multiplier_record;
+        signal counter : inout integer;
+        left, right : signed
+    ) 
+    is
+    begin
+
+        multiply(self, left, right);
+        counter <= counter + 1;
+    end multiply_and_increment_counter;
+        
 ------------------------------------------------------------------------
     function radix_multiply
     (
