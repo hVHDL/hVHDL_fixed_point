@@ -63,7 +63,7 @@ begin
             check(testireal = test_number, real'image(testireal));
 
         elsif run("test 50 bit signed conversion") then
-            check(to_real(to_fixed(-3.35468,16,16-3) ,16-3) = -3.35468, real'image(to_real(to_fixed(-3.35468,16,16-3) ,16-3)) );
+            check(to_real(to_fixed(-3.35468,50,50-3) ,50-3) = -3.35468, real'image(to_real(to_fixed(-3.35468,50,50-3) ,50-3)) );
         end if;
 
         test_runner_cleanup(runner); -- Simulation ends here
