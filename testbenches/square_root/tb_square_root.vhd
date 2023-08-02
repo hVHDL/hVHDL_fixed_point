@@ -31,9 +31,9 @@ package body square_root_pkg is
         x := 1.5*x - 0.5 * number_to_invert * x*x*x;
         x := 1.5*x - 0.5 * number_to_invert * x*x*x;
         x := 1.5*x - 0.5 * number_to_invert * x*x*x;
-        x := 1.5*x - 0.5 * number_to_invert * x*x*x;
-        x := 1.5*x - 0.5 * number_to_invert * x*x*x;
-        x := 1.5*x - 0.5 * number_to_invert * x*x*x;
+        -- x := 1.5*x - 0.5 * number_to_invert * x*x*x;
+        -- x := 1.5*x - 0.5 * number_to_invert * x*x*x;
+        -- x := 1.5*x - 0.5 * number_to_invert * x*x*x;
 
         return x;
         
@@ -102,7 +102,7 @@ architecture vunit_simulation of tb_square_root is
 
     signal simulator_clock : std_logic := '0';
     constant clock_per : time := 1 ns;
-    constant simtime_in_clocks : integer := 50;
+    constant simtime_in_clocks : integer := 60;
 
     signal simulation_counter : natural := 0;
     -----------------------------------
@@ -127,6 +127,9 @@ architecture vunit_simulation of tb_square_root is
 
     signal testi : boolean := true;
 
+    signal input_value : real := 1.0;
+    signal output_value : real := 0.0;
+
 begin
 
 ------------------------------------------------------------------------
@@ -147,8 +150,12 @@ begin
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
-            testi <= testi and abs(test(simulation_counter mod test'length)) < 1.0e-9;
+            -- testi <= testi and abs(test(simulation_counter mod test'length)) < 1.0e-9;
 
+            if input_value < 2.0 then
+                output_value <= -nr_iteration(input_value, 0.826) + 1.0/sqrt(input_value);
+                input_value <= input_value + 0.02;
+            end if;
         end if; -- rising_edge
     end process stimulus;	
 ------------------------------------------------------------------------

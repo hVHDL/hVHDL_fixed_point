@@ -44,19 +44,6 @@ package body real_to_fixed_pkg is
         return integer(number*2.0**number_of_fractional_bits);
     end to_fixed;
 ------------------------------------------------------------------------
-    -- function to_fixed
-    -- (
-    --     number : real;
-    --     number_of_fractional_bits : integer;
-    --     bit_width : natural
-    -- )
-    -- return signed
-    -- is
-    -- begin
-    --     assert bit_width >= 8 report "use more than 8 bits for bit width" severity failure;
-    --     return to_signed(integer(number*2.0**number_of_fractional_bits),bit_width);
-    -- end to_fixed;
-------------------------------------------------------------------------
     function to_real
     (
         number : integer;
