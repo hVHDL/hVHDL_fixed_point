@@ -32,6 +32,7 @@ architecture sim of tb_multiplier is
     signal result : integer := 0;
 
     signal output_needs_to_be_checked : boolean := false;
+    signal all_calculations_were_successful : boolean := true;
 
 begin
 
@@ -40,6 +41,9 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_per;
+        if run("all all_calculations_were_successful") then
+            check(all_calculations_were_successful);
+        end if;
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
     end process simtime;	
@@ -48,6 +52,8 @@ begin
 
 ------------------------------------------------------------------------
     clocked_reset_generator : process(simulator_clock)
+
+    --------------------------------------------------
         procedure multiply
         (
             signal self : inout multiplier_record;
@@ -57,7 +63,7 @@ begin
             multiply(self, left, to_fixed(right, 16));
             
         end multiply;
-
+    --------------------------------------------------
         function to_fixed
         (
             input : real
@@ -67,6 +73,7 @@ begin
         begin
             return to_fixed(input,16);
         end to_fixed;
+    --------------------------------------------------
 
     begin
         if rising_edge(simulator_clock) then
@@ -100,7 +107,8 @@ begin
             end if; 
 
             if output_needs_to_be_checked then
-                assert abs(result) <= 5 report "got " & integer'image(result);
+                check(abs(result) <= 5, "expected zero got " & integer'image(result));
+                all_calculations_were_successful <= all_calculations_were_successful and (abs(result) <= 5);
             end if;
 
         end if; -- rstn
