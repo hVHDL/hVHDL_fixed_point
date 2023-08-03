@@ -222,9 +222,12 @@ package body fixed_isqrt_pkg is
     )
     return signed 
     is
+        variable retval : sig := (others => '0');
     begin
+        retval := testsignarray(to_integer('0' & number(number'high-2 downto number'high-1-table_pow2)));
+        -- retval(number'high-2-11 downto 0) := (others => '0');
         
-        return testsignarray(to_integer('0' & number(number'high-2 downto number'high-1-table_pow2)));
+        return retval;
         
     end get_initial_guess;
 
@@ -335,7 +338,7 @@ begin
 
             if isqrt_is_ready(self) then
                 result_error <= abs(1.0/sqrt(input_value) - to_real(get_isqrt_result(self), sign_input_value'length-2));
-                result       <= 1.0/sqrt(input_value)*2.0**24;
+                result       <= 1.0/sqrt(input_value)*2.0**(sign_input_value'length-2);
                 fixed_result <= get_isqrt_result(self);
             end if;
 
