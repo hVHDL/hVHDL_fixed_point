@@ -34,7 +34,7 @@ package fixed_isqrt_pkg is
         signal self     : inout isqrt_record;
         input_number    : signed;
         guess           : signed;
-        number_of_loops : natural range 0 to 3);
+        number_of_loops : natural range 1 to 3);
 ------------------------------------------------------------------------
     function isqrt_is_ready ( self : isqrt_record)
         return boolean;
@@ -111,7 +111,7 @@ package body fixed_isqrt_pkg is
                     self.x              <= inverse_square_root_result;
                     self.state_counter2 <= self.state_counter2 + 1;
                     if self.loop_value > 0 then
-                        request_isqrt(self , self.sign_input_value , inverse_square_root_result , self.loop_value - 1);
+                        request_isqrt(self , self.sign_input_value , inverse_square_root_result , self.loop_value);
                     else
                         self.isqrt_is_ready <= true;
                         self.result <= inverse_square_root_result;
@@ -141,14 +141,14 @@ package body fixed_isqrt_pkg is
         signal self     : inout isqrt_record;
         input_number    : signed;
         guess           : signed;
-        number_of_loops : natural range 0 to 3
+        number_of_loops : natural range 1 to 3
     ) is
     begin
         self.sign_input_value <= input_number;
         self.state_counter    <= 0;
         self.state_counter2   <= 0;
         self.x <= guess;
-        self.loop_value       <= number_of_loops;
+        self.loop_value       <= number_of_loops-1;
     end request_isqrt;
 
 ------------------------------------------------------------------------
@@ -161,7 +161,7 @@ package body fixed_isqrt_pkg is
     begin
         return self.isqrt_is_ready;
     end isqrt_is_ready;
-
+------------------------------------------------------------------------
     function get_isqrt_result
     (
         self : isqrt_record
@@ -175,7 +175,7 @@ package body fixed_isqrt_pkg is
     end get_isqrt_result;
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
-    constant table_pow2 : natural := 5;
+    constant table_pow2 : natural := 4;
     constant number_of_entries : natural := 2**table_pow2;
     type testarray is array (integer range 0 to number_of_entries-1) of real;
 
@@ -317,7 +317,7 @@ begin
                     request_isqrt(self            => self,
                                   input_number    => to_fixed(input_value, sign_input_value'length, sign_input_value'length-2),
                                   guess           => initial_guess,
-                                  number_of_loops => 0);
+                                  number_of_loops => 3);
 
                 WHEN others => --do nothing
             end CASE;
@@ -330,7 +330,7 @@ begin
                     request_isqrt(self            => self,
                                   input_number    => to_fixed(input_value + stepsize, sign_input_value'length, sign_input_value'length-2),
                                   guess           => get_initial_guess(hihii),
-                                  number_of_loops => 0);
+                                  number_of_loops => 3);
 
                     square_root_was_requested <= true;
                 end if;
