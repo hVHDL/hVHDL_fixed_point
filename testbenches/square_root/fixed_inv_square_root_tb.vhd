@@ -175,7 +175,9 @@ package body fixed_isqrt_pkg is
     end get_isqrt_result;
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
-    type testarray is array (integer range 0 to 31) of real;
+    constant table_pow2 : natural := 5;
+    constant number_of_entries : natural := 2**table_pow2;
+    type testarray is array (integer range 0 to number_of_entries-1) of real;
 
     ------------------------------------------------------------------------
     function get_table return testarray 
@@ -183,7 +185,7 @@ package body fixed_isqrt_pkg is
         variable retval : testarray := (others => 0.0);
     begin
         for i in retval'range loop
-            retval(i) := (1.0/(sqrt(real(i*2+32*2+1)/64.0)));
+            retval(i) := (1.0/(sqrt(real(i*2+number_of_entries*2+1)/real(number_of_entries)/2.0)));
         end loop;
 
         return retval;
@@ -195,7 +197,7 @@ package body fixed_isqrt_pkg is
 
     ------------------------------------------------------------------------
     subtype sig is signed(int_word_length-1 downto 0);
-    type signarray is array (integer range 0 to 31) of sig;
+    type signarray is array (integer range 0 to number_of_entries-1) of sig;
 
     ------------------------------------------------------------------------
     function get_signarray return signarray
@@ -222,7 +224,7 @@ package body fixed_isqrt_pkg is
     is
     begin
         
-        return testsignarray(to_integer('0' & number(number'high-2 downto number'high-6)));
+        return testsignarray(to_integer('0' & number(number'high-2 downto number'high-1-table_pow2)));
         
     end get_initial_guess;
 
