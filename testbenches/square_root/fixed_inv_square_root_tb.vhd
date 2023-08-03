@@ -1,6 +1,7 @@
 library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
+    use ieee.math_real.all;
 
     use work.real_to_fixed_pkg.all;
     use work.multiplier_pkg.all;
@@ -41,6 +42,8 @@ package fixed_isqrt_pkg is
     function get_isqrt_result ( self : isqrt_record)
         return signed;
 ------------------------------------------------------------------------
+    function get_initial_guess ( number : signed)
+    return signed;
 
 end package fixed_isqrt_pkg;
 
@@ -170,6 +173,58 @@ package body fixed_isqrt_pkg is
         return self.result;
         
     end get_isqrt_result;
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+    type testarray is array (integer range 0 to 31) of real;
+
+    ------------------------------------------------------------------------
+    function get_table return testarray 
+    is
+        variable retval : testarray := (others => 0.0);
+    begin
+        for i in retval'range loop
+            retval(i) := (1.0/(sqrt(real(i*2+32*2)/64.0)));
+        end loop;
+
+        return retval;
+        
+    end get_table;
+
+    ------------------------------------------------------------------------
+    constant testaa_arrayta : testarray := get_table;
+
+    ------------------------------------------------------------------------
+    subtype sig is signed(int_word_length-1 downto 0);
+    type signarray is array (integer range 0 to 31) of sig;
+
+    ------------------------------------------------------------------------
+    function get_signarray return signarray
+    is
+        constant realtable : testarray := get_table;
+        variable retval : signarray;
+    begin
+        for i in signarray'range loop
+            retval(i) := to_fixed(realtable(i), sig'length,sig'length-2);
+        end loop;
+
+        return retval;
+        
+    end get_signarray;
+
+    ------------------------------------------------------------------------
+    constant testsignarray : signarray := get_signarray;
+
+    function get_initial_guess
+    (
+        number : signed
+    )
+    return signed 
+    is
+    begin
+        
+        return testsignarray(to_integer('0' & number(number'high-2 downto number'high-6)));
+        
+    end get_initial_guess;
 
 ------------------------------------------------------------------------
 end package body fixed_isqrt_pkg;
@@ -196,7 +251,7 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
 
     signal simulator_clock : std_logic := '0';
     constant clock_per : time := 1 ns;
-    constant simtime_in_clocks : integer := 2500;
+    constant simtime_in_clocks : integer := 20e3;
 
     signal simulation_counter : natural := 0;
     -----------------------------------
@@ -209,10 +264,11 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
     signal output_value : real := 0.0;
 
     signal inv_isqrt_is_ready : boolean := false;
+    subtype sig is signed(int_word_length-1 downto 0);
 
-    signal initial_guess : signed(int_word_length-1 downto 0) := to_fixed(1.0/sqrt(1.0+1.0/64.0),int_word_length,int_word_length-2);
-    signal sign_input_value : signed(int_word_length-1 downto 0) := to_fixed(1.0,int_word_length,int_word_length-2);
-    signal fixed_result : signed(int_word_length-1 downto 0) := to_fixed(1.0,int_word_length,int_word_length-2);
+    signal initial_guess    : sig := to_fixed(1.0/sqrt(1.0+1.0/64.0),int_word_length,int_word_length-2);
+    signal sign_input_value : sig := to_fixed(1.0,int_word_length,int_word_length-2);
+    signal fixed_result     : sig := to_fixed(1.0,int_word_length,int_word_length-2);
 
     signal square_root_was_requested : boolean := false;
 
@@ -224,6 +280,8 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
 
     signal max_result_error : real := 0.0;
     signal min_error : real := 1.0;
+
+    signal test : sig := (others => '0');
 
 begin
 
@@ -244,6 +302,8 @@ begin
     simulator_clock <= not simulator_clock after clock_per/2.0;
 ------------------------------------------------------------------------
     stimulus : process(simulator_clock)
+        variable hihii : sig;
+        constant stepsize : real := 1.0/1024.0;
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
@@ -256,27 +316,29 @@ begin
                     request_isqrt(self            => self,
                                   input_number    => to_fixed(input_value, sign_input_value'length, sign_input_value'length-2),
                                   guess           => initial_guess,
-                                  number_of_loops => 0);
+                                  number_of_loops => 1);
 
                 WHEN others => --do nothing
             end CASE;
 
             if isqrt_is_ready(self) then
                 if input_value < 2.0 then
-                    input_value <= input_value + 1.0/256.0;
+                    input_value <= input_value + stepsize;
+                    hihii := to_fixed(input_value + stepsize+1.0/64.0, sign_input_value'length, sign_input_value'length-2);
+                    test <= resize(hihii(sig'high downto sign_input_value'high-5), test'length);
 
                     request_isqrt(self            => self,
-                                  input_number    => to_fixed(input_value + 1.0/256.0, sign_input_value'length, sign_input_value'length-2),
-                                  guess           => initial_guess,
-                                  number_of_loops => 0);
+                                  input_number    => to_fixed(input_value + stepsize, sign_input_value'length, sign_input_value'length-2),
+                                  guess           => get_initial_guess(hihii),
+                                  number_of_loops => 1);
 
                     square_root_was_requested <= true;
                 end if;
             end if;
 
             if isqrt_is_ready(self) then
-                result_error <=  abs(1.0/sqrt(input_value) - to_real(get_isqrt_result(self), sign_input_value'length-2));
-                result <= 1.0/sqrt(input_value)*2.0**24;
+                result_error <= abs(1.0/sqrt(input_value) - to_real(get_isqrt_result(self), sign_input_value'length-2));
+                result       <= 1.0/sqrt(input_value)*2.0**24;
                 fixed_result <= get_isqrt_result(self);
             end if;
 
