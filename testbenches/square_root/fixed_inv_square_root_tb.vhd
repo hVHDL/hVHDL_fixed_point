@@ -183,7 +183,7 @@ package body fixed_isqrt_pkg is
         variable retval : testarray := (others => 0.0);
     begin
         for i in retval'range loop
-            retval(i) := (1.0/(sqrt(real(i*2+32*2)/64.0)));
+            retval(i) := (1.0/(sqrt(real(i*2+32*2+1)/64.0)));
         end loop;
 
         return retval;
@@ -258,8 +258,6 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
     -- simulation specific signals ----
 
 ------------------------------------------------------------------------
-    signal testi : boolean := true;
-
     signal input_value : real := 1.0;
     signal output_value : real := 0.0;
 
@@ -280,8 +278,6 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
 
     signal max_result_error : real := 0.0;
     signal min_error : real := 1.0;
-
-    signal test : sig := (others => '0');
 
 begin
 
@@ -316,7 +312,7 @@ begin
                     request_isqrt(self            => self,
                                   input_number    => to_fixed(input_value, sign_input_value'length, sign_input_value'length-2),
                                   guess           => initial_guess,
-                                  number_of_loops => 1);
+                                  number_of_loops => 0);
 
                 WHEN others => --do nothing
             end CASE;
@@ -324,13 +320,12 @@ begin
             if isqrt_is_ready(self) then
                 if input_value < 2.0 then
                     input_value <= input_value + stepsize;
-                    hihii := to_fixed(input_value + stepsize+1.0/64.0, sign_input_value'length, sign_input_value'length-2);
-                    test <= resize(hihii(sig'high downto sign_input_value'high-5), test'length);
+                    hihii := to_fixed(input_value + stepsize, sign_input_value'length, sign_input_value'length-2);
 
                     request_isqrt(self            => self,
                                   input_number    => to_fixed(input_value + stepsize, sign_input_value'length, sign_input_value'length-2),
                                   guess           => get_initial_guess(hihii),
-                                  number_of_loops => 1);
+                                  number_of_loops => 0);
 
                     square_root_was_requested <= true;
                 end if;
