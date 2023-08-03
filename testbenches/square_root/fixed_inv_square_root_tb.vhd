@@ -67,13 +67,13 @@ package body fixed_isqrt_pkg is
         variable returned_value : isqrt_record;
     begin
         returned_value := (
-         to_fixed(0.0   , 24)             ,
-         to_fixed(0.826 , int_word_length , int_word_length-2) ,
-         to_fixed(0.0   , int_word_length , int_word_length-2) ,
-         to_fixed(0.0   , int_word_length , int_word_length-2) ,
-         7              ,
-         7              ,
-         false          ,
+         (others => '0') ,
+         (others => '0') ,
+         (others => '0') ,
+         (others => '0') ,
+         7               ,
+         7               ,
+         false           ,
          0);
          return returned_value;
     end init_isqrt;
