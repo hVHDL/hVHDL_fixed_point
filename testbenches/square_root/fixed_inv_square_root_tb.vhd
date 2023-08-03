@@ -26,10 +26,21 @@ package fixed_isqrt_pkg is
 ------------------------------------------------------------------------
     procedure request_isqrt (
         signal self : inout isqrt_record;
-        input_number : signed);
+        input_number : signed;
+        guess : signed);
+
+    procedure request_isqrt (
+        signal self     : inout isqrt_record;
+        input_number    : signed;
+        guess           : signed;
+        number_of_loops : natural range 0 to 3);
 ------------------------------------------------------------------------
     function isqrt_is_ready ( self : isqrt_record)
         return boolean;
+------------------------------------------------------------------------
+    function get_isqrt_result ( self : isqrt_record)
+        return signed;
+------------------------------------------------------------------------
 
 end package fixed_isqrt_pkg;
 
@@ -57,8 +68,8 @@ package body fixed_isqrt_pkg is
          to_fixed(0.826 , int_word_length , int_word_length-2) ,
          to_fixed(0.0   , int_word_length , int_word_length-2) ,
          to_fixed(0.0   , int_word_length , int_word_length-2) ,
-         0              ,
-         0              ,
+         7              ,
+         7              ,
          false          ,
          0);
          return returned_value;
@@ -70,6 +81,7 @@ package body fixed_isqrt_pkg is
         signal multiplier : inout multiplier_record
     ) is
         variable mult_result : signed(int_word_length-1 downto 0);
+        variable inverse_square_root_result : signed(int_word_length-1 downto 0);
     begin
         CASE self.state_counter is
             WHEN 0 => multiply_and_increment_counter(multiplier,self.state_counter, self.x, self.x);
@@ -77,6 +89,7 @@ package body fixed_isqrt_pkg is
             WHEN others => --do nothign
         end CASE;
 
+        self.isqrt_is_ready <= false;
         CASE self.state_counter2 is
             WHEN 0 => 
                 if multiplier_is_ready(multiplier) then
@@ -90,10 +103,17 @@ package body fixed_isqrt_pkg is
                 end if;
             WHEN 2 => 
                 if multiplier_is_ready(multiplier) then
-                    mult_result := get_multiplier_result(multiplier,int_word_length-1);
-                    self.x      <= self.x + self.x/2 - mult_result;
-                    self.result <= self.x + self.x/2 - mult_result;
+                    mult_result                := get_multiplier_result(multiplier,int_word_length-1);
+                    inverse_square_root_result := self.x + self.x/2 - mult_result;
+                    self.x              <= inverse_square_root_result;
                     self.state_counter2 <= self.state_counter2 + 1;
+                    if self.loop_value > 0 then
+                        request_isqrt(self , self.sign_input_value , inverse_square_root_result , self.loop_value - 1);
+                    else
+                        self.isqrt_is_ready <= true;
+                        self.result <= inverse_square_root_result;
+                    end if;
+
                 end if;
             WHEN others => --do nothign
         end CASE;
@@ -102,12 +122,30 @@ package body fixed_isqrt_pkg is
     procedure request_isqrt
     (
         signal self : inout isqrt_record;
-        input_number : signed
+        input_number : signed;
+        guess : signed
     ) is
     begin
         self.sign_input_value <= input_number;
-        self.state_counter <= 0;
-        self.state_counter2 <= 0;
+        self.state_counter    <= 0;
+        self.state_counter2   <= 0;
+        self.loop_value       <= 0;
+        self.x <= guess;
+    end request_isqrt;
+
+    procedure request_isqrt
+    (
+        signal self     : inout isqrt_record;
+        input_number    : signed;
+        guess           : signed;
+        number_of_loops : natural range 0 to 3
+    ) is
+    begin
+        self.sign_input_value <= input_number;
+        self.state_counter    <= 0;
+        self.state_counter2   <= 0;
+        self.x <= guess;
+        self.loop_value       <= number_of_loops;
     end request_isqrt;
 
 ------------------------------------------------------------------------
@@ -121,8 +159,21 @@ package body fixed_isqrt_pkg is
         return self.isqrt_is_ready;
     end isqrt_is_ready;
 
+    function get_isqrt_result
+    (
+        self : isqrt_record
+    )
+    return signed
+    is
+    begin
+
+        return self.result;
+        
+    end get_isqrt_result;
+
 ------------------------------------------------------------------------
 end package body fixed_isqrt_pkg;
+------------------------------------------------------------------------
 ------------------------------------------------------------------------
 LIBRARY ieee  ; 
     USE ieee.NUMERIC_STD.all  ; 
@@ -145,7 +196,7 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
 
     signal simulator_clock : std_logic := '0';
     constant clock_per : time := 1 ns;
-    constant simtime_in_clocks : integer := 60;
+    constant simtime_in_clocks : integer := 2500;
 
     signal simulation_counter : natural := 0;
     -----------------------------------
@@ -158,19 +209,21 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
     signal output_value : real := 0.0;
 
     signal inv_isqrt_is_ready : boolean := false;
-    signal request_isqrt : boolean := false;
 
-
-
-    signal sign_input_value : signed(int_word_length-1 downto 0) := to_fixed(1.0,int_word_length,14);
-
+    signal initial_guess : signed(int_word_length-1 downto 0) := to_fixed(1.0/sqrt(1.0+1.0/64.0),int_word_length,int_word_length-2);
+    signal sign_input_value : signed(int_word_length-1 downto 0) := to_fixed(1.0,int_word_length,int_word_length-2);
+    signal fixed_result : signed(int_word_length-1 downto 0) := to_fixed(1.0,int_word_length,int_word_length-2);
 
     signal square_root_was_requested : boolean := false;
 
     signal multiplier : multiplier_record := init_multiplier;
 
+    signal self : isqrt_record := init_isqrt;
+    signal result_error : real := 0.0;
+    signal result : real := 1.0;
 
-     signal self : isqrt_record := init_isqrt;
+    signal max_result_error : real := 0.0;
+    signal min_error : real := 1.0;
 
 begin
 
@@ -181,6 +234,8 @@ begin
         wait for simtime_in_clocks*clock_per;
         if run("square root was requested") then
             check(square_root_was_requested);
+        elsif run("max error was less than 0.05") then
+            check(max_result_error < 0.05, "error was " & real'image(max_result_error));
         end if;
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
@@ -193,29 +248,45 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            request_isqrt <= false;
-            if inv_isqrt_is_ready then
-                if input_value < 2.0 then
-                    input_value <= input_value + 0.02;
-                    request_isqrt <= true;
-                end if;
-            end if;
-
-            inv_isqrt_is_ready <= false;
-            if request_isqrt then
-                inv_isqrt_is_ready <= true;
-                sign_input_value <= to_fixed(input_value,sign_input_value'length, sign_input_value'high-2);
-                square_root_was_requested <= true;
-            end if;
+            create_multiplier(multiplier);
+            create_isqrt(self, multiplier);
 
             CASE simulation_counter is
                 WHEN 10 =>
-                    inv_isqrt_is_ready <= true;
+                    request_isqrt(self            => self,
+                                  input_number    => to_fixed(input_value, sign_input_value'length, sign_input_value'length-2),
+                                  guess           => initial_guess,
+                                  number_of_loops => 0);
+
                 WHEN others => --do nothing
             end CASE;
 
-            create_multiplier(multiplier);
-            create_isqrt(self, multiplier);
+            if isqrt_is_ready(self) then
+                if input_value < 2.0 then
+                    input_value <= input_value + 1.0/256.0;
+
+                    request_isqrt(self            => self,
+                                  input_number    => to_fixed(input_value + 1.0/256.0, sign_input_value'length, sign_input_value'length-2),
+                                  guess           => initial_guess,
+                                  number_of_loops => 0);
+
+                    square_root_was_requested <= true;
+                end if;
+            end if;
+
+            if isqrt_is_ready(self) then
+                result_error <=  abs(1.0/sqrt(input_value) - to_real(get_isqrt_result(self), sign_input_value'length-2));
+                result <= 1.0/sqrt(input_value)*2.0**24;
+                fixed_result <= get_isqrt_result(self);
+            end if;
+
+            if max_result_error < abs(result_error) then
+                max_result_error <= abs(result_error);
+            end if;
+
+            if min_error > result_error and result_error > 0.0 then
+                min_error <= result_error;
+            end if;
 
         end if; -- rising_edge
     end process stimulus;	
