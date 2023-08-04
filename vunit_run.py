@@ -110,5 +110,6 @@ sqrt_lib.add_source_files(ROOT / "multiplier/multiplier_pkg.vhd")
 sqrt_lib.add_source_files(ROOT / "testbenches/square_root/square_root_pkg.vhd")
 sqrt_lib.add_source_files(ROOT / "square_root/fixed_isqrt_pkg.vhd")
 sqrt_lib.add_source_files(ROOT / "testbenches/square_root/fixed_inv_square_root_tb.vhd")
+sqrt_lib.add_source_files(ROOT / "testbenches/square_root/isqrt_scaling_tb.vhd")
 
 VU.main()
