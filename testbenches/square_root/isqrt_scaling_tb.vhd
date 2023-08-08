@@ -1,3 +1,57 @@
+library ieee;
+    use ieee.std_logic_1164.all;
+    use ieee.numeric_std.all;
+    use ieee.math_real.all;
+
+package fixed_point_scaling_pkg is
+------------------------------------------------------------------------
+    function get_number_of_leading_zeros (
+        number    : signed;
+        max_shift : natural)
+        return integer;
+------------------------------------------------------------------------
+    function get_number_of_leading_zeros ( number : signed )
+        return integer;
+------------------------------------------------------------------------
+end package fixed_point_scaling_pkg;
+
+package body fixed_point_scaling_pkg is
+------------------------------------------------------------------------
+    function get_number_of_leading_zeros
+    (
+        number    : signed;
+        max_shift : natural
+    )
+    return integer 
+    is
+        variable number_of_leading_zeros : integer := 0;
+    begin
+        for i in integer range number'high-max_shift to number'high loop
+            if number(i) = '1' then
+                number_of_leading_zeros := 0;
+            else
+                number_of_leading_zeros := number_of_leading_zeros + 1;
+            end if;
+        end loop;
+
+        return number_of_leading_zeros;
+    end get_number_of_leading_zeros;
+------------------------------------------------------------------------
+    function get_number_of_leading_zeros
+    (
+        number : signed
+    )
+    return integer is
+    begin
+        return get_number_of_leading_zeros(number, number'high);
+    end function;
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+end package body fixed_point_scaling_pkg;
+
+
+
+------------------------------------------------------------------------
 LIBRARY ieee  ; 
     USE ieee.NUMERIC_STD.all  ; 
     USE ieee.std_logic_1164.all  ; 
@@ -10,6 +64,7 @@ context vunit_lib.vunit_context;
     use work.real_to_fixed_pkg.all;
     use work.multiplier_pkg.all;
     use work.fixed_isqrt_pkg.all;
+    use work.fixed_point_scaling_pkg.all;
 
 entity isqrt_scaling_tb is
   generic (runner_cfg : string);
@@ -64,33 +119,11 @@ architecture vunit_simulation of isqrt_scaling_tb is
     signal sqrt_was_calculated : boolean := false;
     signal result : real := 0.0;
 
-
-    function get_number_of_leading_zeros
-    (
-        number : signed 
-    )
-    return integer 
-    is
-        variable number_of_leading_zeros : integer := 0;
-    begin
-        for i in integer range number'low to number'high loop
-            if number(i) = '1' then
-                number_of_leading_zeros := 0;
-            else
-                number_of_leading_zeros := number_of_leading_zeros + 1;
-            end if;
-        end loop;
-
-        return number_of_leading_zeros;
-    end get_number_of_leading_zeros;
-
-
     signal should_be_zero  : boolean := false;
     signal should_be_one   : boolean := false;
     signal should_be_two   : boolean := false;
     signal should_be_three : boolean := false;
-    signal should_be_131 : boolean := false;
-
+    signal should_be_131   : boolean := false;
 
 begin
 
@@ -123,7 +156,7 @@ begin
         constant two_leading_zeros    : signed(5 downto 0)   := "001100";
         constant one_leading_zero     : signed(6 downto 0)   := "0100100";
         constant zero_leading_zeros   : signed(131 downto 0) := (131 => '1', others => '0');
-        constant leading_zeros_is_131 : signed(131 downto 0) := (0 => '1', others => '0');
+        constant leading_zeros_is_131 : signed(131 downto 0) := (0   => '1', others => '0');
 
     begin
         if rising_edge(simulator_clock) then
