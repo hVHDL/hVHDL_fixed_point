@@ -125,7 +125,6 @@ begin
         constant zero_leading_zeros   : signed(131 downto 0) := (131 => '1', others => '0');
         constant leading_zeros_is_131 : signed(131 downto 0) := (0 => '1', others => '0');
 
-
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
@@ -134,7 +133,7 @@ begin
             should_be_one   <= get_number_of_leading_zeros(one_leading_zero)     = 1;
             should_be_two   <= get_number_of_leading_zeros(two_leading_zeros)    = 2;
             should_be_three <= get_number_of_leading_zeros(three_leading_zeros)  = 3;
-            should_be_131 <= get_number_of_leading_zeros(leading_zeros_is_131)  = 131;
+            should_be_131   <= get_number_of_leading_zeros(leading_zeros_is_131) = 131;
 
         end if; -- rising_edge
     end process stimulus;	
