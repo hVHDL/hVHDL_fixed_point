@@ -208,7 +208,7 @@ package body fixed_isqrt_pkg is
         variable retval : signarray;
     begin
         for i in signarray'range loop
-            retval(i) := to_fixed(realtable(i), sig'length,sig'length-2);
+            retval(i) := to_fixed(realtable(i) , sig'length , radix);
         end loop;
 
         return retval;
@@ -227,13 +227,11 @@ package body fixed_isqrt_pkg is
         variable retval : sig := (others => '0');
     begin
         retval := testsignarray(to_integer('0' & number(number'high-2 downto number'high-1-table_pow2)));
-        -- retval(number'high-2-11 downto 0) := (others => '0');
         
-        return to_fixed(0.836, sig'length, radix);
+        -- return to_fixed(0.836, sig'length, radix);
+        return retval;
         
     end get_initial_guess;
 
 ------------------------------------------------------------------------
 end package body fixed_isqrt_pkg;
-------------------------------------------------------------------------
-------------------------------------------------------------------------

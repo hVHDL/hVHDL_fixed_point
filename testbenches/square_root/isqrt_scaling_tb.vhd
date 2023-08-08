@@ -64,6 +64,34 @@ architecture vunit_simulation of isqrt_scaling_tb is
     signal sqrt_was_calculated : boolean := false;
     signal result : real := 0.0;
 
+
+    function get_number_of_leading_zeros
+    (
+        number : signed 
+    )
+    return integer 
+    is
+        variable number_of_leading_zeros : integer := 0;
+    begin
+        for i in integer range number'low to number'high loop
+            if number(i) = '1' then
+                number_of_leading_zeros := 0;
+            else
+                number_of_leading_zeros := number_of_leading_zeros + 1;
+            end if;
+        end loop;
+
+        return number_of_leading_zeros;
+    end get_number_of_leading_zeros;
+
+
+    signal should_be_zero  : boolean := false;
+    signal should_be_one   : boolean := false;
+    signal should_be_two   : boolean := false;
+    signal should_be_three : boolean := false;
+    signal should_be_131 : boolean := false;
+
+
 begin
 
 ------------------------------------------------------------------------
@@ -71,8 +99,16 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
-        if run("sqrt was calculated") then
-            check(sqrt_was_calculated);
+        if run("count zero") then
+            check(should_be_zero);
+        elsif run("count one") then
+            check(should_be_one);
+        elsif run("count two") then
+            check(should_be_two);
+        elsif run("count three") then
+            check(should_be_three);
+        elsif run("count 131") then
+            check(should_be_131);
         end if;
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
@@ -83,25 +119,22 @@ begin
 
     stimulus : process(simulator_clock)
 
+        constant three_leading_zeros  : signed(5 downto 0)   := "000100";
+        constant two_leading_zeros    : signed(5 downto 0)   := "001100";
+        constant one_leading_zero     : signed(6 downto 0)   := "0100100";
+        constant zero_leading_zeros   : signed(131 downto 0) := (131 => '1', others => '0');
+        constant leading_zeros_is_131 : signed(131 downto 0) := (0 => '1', others => '0');
+
+
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            create_multiplier(multiplier);
-            create_isqrt(isqrt, multiplier);
-
-
-            CASE simulation_counter is
-                WHEN 10 => request_isqrt(isqrt,shift_left(fixed_input_values(2), 3), to_fixed(0.826), 3);
-                WHEN others => --do nothing
-            end CASE;
-
-            if isqrt_is_ready(isqrt) then
-                sqrt_was_calculated <= true;
-                result <= to_real(get_isqrt_result(isqrt),int_word_length-2);
-                -- check(abs(to_real(shift_left(get_isqrt_result(isqrt),5), int_word_length-2) - 1.0/sqrt(input_values(2))) < 1.0e-12);
-            end if;
-
+            should_be_zero  <= get_number_of_leading_zeros(zero_leading_zeros)   = 0;
+            should_be_one   <= get_number_of_leading_zeros(one_leading_zero)     = 1;
+            should_be_two   <= get_number_of_leading_zeros(two_leading_zeros)    = 2;
+            should_be_three <= get_number_of_leading_zeros(three_leading_zeros)  = 3;
+            should_be_131 <= get_number_of_leading_zeros(leading_zeros_is_131)  = 131;
 
         end if; -- rising_edge
     end process stimulus;	
