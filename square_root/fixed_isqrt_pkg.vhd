@@ -8,6 +8,7 @@ library ieee;
     use work.multiplier_pkg.all;
 
 package fixed_isqrt_pkg is
+    constant radix : natural := int_word_length-4;
 ------------------------------------------------------------------------
     type isqrt_record is record
         x_squared        : signed(int_word_length-1 downto 0);
@@ -23,13 +24,13 @@ package fixed_isqrt_pkg is
     function init_isqrt return isqrt_record;
 ------------------------------------------------------------------------
     procedure create_isqrt (
-        signal self : inout isqrt_record;
+        signal self       : inout isqrt_record;
         signal multiplier : inout multiplier_record);
 ------------------------------------------------------------------------
     procedure request_isqrt (
-        signal self : inout isqrt_record;
+        signal self  : inout isqrt_record;
         input_number : signed;
-        guess : signed);
+        guess        : signed);
 
     procedure request_isqrt (
         signal self     : inout isqrt_record;
@@ -84,7 +85,7 @@ package body fixed_isqrt_pkg is
         signal self : inout isqrt_record;
         signal multiplier : inout multiplier_record
     ) is
-        variable mult_result : signed(int_word_length-1 downto 0);
+        variable mult_result                : signed(int_word_length-1 downto 0);
         variable inverse_square_root_result : signed(int_word_length-1 downto 0);
     begin
         CASE self.state_counter is
@@ -97,17 +98,17 @@ package body fixed_isqrt_pkg is
         CASE self.state_counter2 is
             WHEN 0 => 
                 if multiplier_is_ready(multiplier) then
-                    self.x_squared <= get_multiplier_result(multiplier, int_word_length-2);
+                    self.x_squared <= get_multiplier_result(multiplier, radix);
                     self.state_counter2 <= self.state_counter2 + 1;
                 end if;
             WHEN 1 => 
                 if multiplier_is_ready(multiplier) then
-                    multiply(multiplier, self.x_squared, get_multiplier_result(multiplier,int_word_length-2));
+                    multiply(multiplier, self.x_squared, get_multiplier_result(multiplier,radix));
                     self.state_counter2 <= self.state_counter2 + 1;
                 end if;
             WHEN 2 => 
                 if multiplier_is_ready(multiplier) then
-                    mult_result                := get_multiplier_result(multiplier,int_word_length-1);
+                    mult_result                := get_multiplier_result(multiplier,radix+1);
                     inverse_square_root_result := self.x + self.x/2 - mult_result;
                     self.x              <= inverse_square_root_result;
                     self.state_counter2 <= self.state_counter2 + 1;
@@ -228,7 +229,7 @@ package body fixed_isqrt_pkg is
         retval := testsignarray(to_integer('0' & number(number'high-2 downto number'high-1-table_pow2)));
         -- retval(number'high-2-11 downto 0) := (others => '0');
         
-        return retval;
+        return to_fixed(0.836, sig'length, radix);
         
     end get_initial_guess;
 
