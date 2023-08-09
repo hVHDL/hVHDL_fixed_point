@@ -134,9 +134,6 @@ architecture vunit_simulation of isqrt_scaling_tb is
     constant input_values : real_array := (1.5, 1.0, 15.35689, 17.1359, 32.153, 33.315, 0.4865513, 25.00);
     constant fixed_input_values : sign_array := to_fixed(input_values);
 
-    signal multiplier : multiplier_record := init_multiplier;
-    signal isqrt : isqrt_record := init_isqrt;
-
     signal sqrt_was_calculated : boolean := false;
     signal result : real := 0.0;
 
@@ -155,8 +152,19 @@ architecture vunit_simulation of isqrt_scaling_tb is
     constant leading_zeros_is_131 : signed(131 downto 0) := (0   => '1', others => '0');
     constant leading_zeros_is_132 : signed(131 downto 0) := (others => '0');
 
-    signal should_have_zero_pairs : integer;
-    constant zero_leading_pairs_of_zeros : signed(9 downto 0) := "0111111111";
+    signal should_have_zero_pairs      : integer;
+    signal should_also_have_zero_pairs : integer;
+    signal should_have_one_pair        : integer;
+    signal should_also_have_one_pair   : integer;
+    signal should_have_10_pairs        : integer;
+
+    constant zero_leading_pairs_of_zeros      : signed(9 downto 0) := "0111111111";
+    constant also_zero_leading_pairs_of_zeros : signed(9 downto 0) := "1111111111";
+    constant one_leading_pair_of_zeros        : signed(9 downto 0) := "0001111111";
+    constant also_one_leading_pair_of_zeros   : signed(9 downto 0) := "0010000000";
+
+    constant number_of_pairs : natural := 10;
+    constant has_10_pair_of_zeros   : signed(79 downto 0) := (79-number_of_pairs*2 => '1', others => '0');
 
     function shift_by_2n
     (
@@ -184,7 +192,11 @@ begin
         elsif run("count 131")   then check(should_be_131   = 131);
         elsif run("count 132")   then check(should_be_132   = 132);
 
-        elsif run("count zero pairs") then check(should_have_zero_pairs = 0);
+        elsif run("count zero pairs with leading zero")  then check(should_have_zero_pairs      = 0);
+        elsif run("count zero pairs from ones")          then check(should_also_have_zero_pairs = 0);
+        elsif run("count one pair when 3 leading zeros") then check(should_have_one_pair        = 1);
+        elsif run("count one pair when 2 leading zeros") then check(should_also_have_one_pair   = 1);
+        elsif run("count 10 pairs from long word")       then check(should_have_10_pairs        = 10);
         end if;
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
@@ -205,7 +217,11 @@ begin
             should_be_131   <= get_number_of_leading_zeros(leading_zeros_is_131);
             should_be_132   <= get_number_of_leading_zeros(leading_zeros_is_132);
 
-            should_have_zero_pairs <= get_number_of_leading_pairs_of_zeros(zero_leading_pairs_of_zeros);
+            should_have_zero_pairs      <= get_number_of_leading_pairs_of_zeros(zero_leading_pairs_of_zeros);
+            should_also_have_zero_pairs <= get_number_of_leading_pairs_of_zeros(also_zero_leading_pairs_of_zeros);
+            should_have_one_pair        <= get_number_of_leading_pairs_of_zeros(one_leading_pair_of_zeros);
+            should_also_have_one_pair   <= get_number_of_leading_pairs_of_zeros(also_one_leading_pair_of_zeros);
+            should_have_10_pairs        <= get_number_of_leading_pairs_of_zeros(has_10_pair_of_zeros);
 
         end if; -- rising_edge
     end process stimulus;	
