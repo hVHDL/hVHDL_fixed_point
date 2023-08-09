@@ -3,6 +3,8 @@ echo off
 ghdl -a --ieee=synopsys --std=08 %1/hVHDL_memory_library/fpga_ram/ram_configuration/ram_configuration_16x1024_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 %1/hVHDL_memory_library/fpga_ram/ram_read_port_pkg.vhd
 
+ghdl -a --ieee=synopsys --std=08 %1/fixed_point_scaling/fixed_point_scaling_pkg.vhd
+
 ghdl -a --ieee=synopsys --std=08 %1/multiplier/configuration/multiply_with_1_input_and_output_registers_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 %1/multiplier/multiplier_base_types_18bit_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 %1/real_to_fixed/real_to_fixed_pkg.vhd
