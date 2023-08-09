@@ -13,6 +13,9 @@ package fixed_point_scaling_pkg is
     function get_number_of_leading_zeros ( number : signed )
         return integer;
 ------------------------------------------------------------------------
+    function get_number_of_leading_pairs_of_zeros ( number : signed)
+        return natural;
+------------------------------------------------------------------------
 end package fixed_point_scaling_pkg;
 
 package body fixed_point_scaling_pkg is
@@ -46,11 +49,29 @@ package body fixed_point_scaling_pkg is
         return get_number_of_leading_zeros(number, number'high);
     end function;
 ------------------------------------------------------------------------
+    function get_number_of_leading_pairs_of_zeros
+    (
+        number : signed
+    )
+    return natural 
+    is
+        variable number_of_leading_zeros : integer := 0;
+    begin
+        for i in integer range 0 to number'length/2-1 loop
+            if number(i*2+1 downto i*2) /= "00" then
+                number_of_leading_zeros := 0;
+            else
+                number_of_leading_zeros := number_of_leading_zeros + 1;
+            end if;
+        end loop;
+
+        return number_of_leading_zeros;
+        
+    end get_number_of_leading_pairs_of_zeros;
 ------------------------------------------------------------------------
 end package body fixed_point_scaling_pkg;
 
-
-
+------------------------------------------------------------------------
 ------------------------------------------------------------------------
 LIBRARY ieee  ; 
     USE ieee.NUMERIC_STD.all  ; 
@@ -119,11 +140,34 @@ architecture vunit_simulation of isqrt_scaling_tb is
     signal sqrt_was_calculated : boolean := false;
     signal result : real := 0.0;
 
-    signal should_be_zero  : boolean := false;
-    signal should_be_one   : boolean := false;
-    signal should_be_two   : boolean := false;
-    signal should_be_three : boolean := false;
-    signal should_be_131   : boolean := false;
+    signal should_be_zero  : integer;
+    signal should_be_one   : integer;
+    signal should_be_two   : integer;
+    signal should_be_three : integer;
+    signal should_be_131   : integer;
+    signal should_be_132   : integer;
+
+
+    constant three_leading_zeros  : signed(5 downto 0)   := "000100";
+    constant two_leading_zeros    : signed(5 downto 0)   := "001100";
+    constant one_leading_zero     : signed(6 downto 0)   := "0100100";
+    constant zero_leading_zeros   : signed(131 downto 0) := (131 => '1', others => '0');
+    constant leading_zeros_is_131 : signed(131 downto 0) := (0   => '1', others => '0');
+    constant leading_zeros_is_132 : signed(131 downto 0) := (others => '0');
+
+    signal should_have_zero_pairs : integer;
+    constant zero_leading_pairs_of_zeros : signed(9 downto 0) := "0111111111";
+
+    function shift_by_2n
+    (
+        to_be_shifted : signed;
+        shift_amount : natural
+    )
+    return signed 
+    is
+    begin
+        return shift_left(to_be_shifted, 2*shift_amount);
+    end shift_by_2n;
 
 begin
 
@@ -132,16 +176,15 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
-        if run("count zero") then
-            check(should_be_zero);
-        elsif run("count one") then
-            check(should_be_one);
-        elsif run("count two") then
-            check(should_be_two);
-        elsif run("count three") then
-            check(should_be_three);
-        elsif run("count 131") then
-            check(should_be_131);
+
+        if    run("count zero")  then check(should_be_zero  = 0);
+        elsif run("count one")   then check(should_be_one   = 1);
+        elsif run("count two")   then check(should_be_two   = 2);
+        elsif run("count three") then check(should_be_three = 3);
+        elsif run("count 131")   then check(should_be_131   = 131);
+        elsif run("count 132")   then check(should_be_132   = 132);
+
+        elsif run("count zero pairs") then check(should_have_zero_pairs = 0);
         end if;
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
@@ -151,22 +194,18 @@ begin
 ------------------------------------------------------------------------
 
     stimulus : process(simulator_clock)
-
-        constant three_leading_zeros  : signed(5 downto 0)   := "000100";
-        constant two_leading_zeros    : signed(5 downto 0)   := "001100";
-        constant one_leading_zero     : signed(6 downto 0)   := "0100100";
-        constant zero_leading_zeros   : signed(131 downto 0) := (131 => '1', others => '0');
-        constant leading_zeros_is_131 : signed(131 downto 0) := (0   => '1', others => '0');
-
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            should_be_zero  <= get_number_of_leading_zeros(zero_leading_zeros)   = 0;
-            should_be_one   <= get_number_of_leading_zeros(one_leading_zero)     = 1;
-            should_be_two   <= get_number_of_leading_zeros(two_leading_zeros)    = 2;
-            should_be_three <= get_number_of_leading_zeros(three_leading_zeros)  = 3;
-            should_be_131   <= get_number_of_leading_zeros(leading_zeros_is_131) = 131;
+            should_be_zero  <= get_number_of_leading_zeros(zero_leading_zeros)  ;
+            should_be_one   <= get_number_of_leading_zeros(one_leading_zero)    ;
+            should_be_two   <= get_number_of_leading_zeros(two_leading_zeros)   ;
+            should_be_three <= get_number_of_leading_zeros(three_leading_zeros) ;
+            should_be_131   <= get_number_of_leading_zeros(leading_zeros_is_131);
+            should_be_132   <= get_number_of_leading_zeros(leading_zeros_is_132);
+
+            should_have_zero_pairs <= get_number_of_leading_pairs_of_zeros(zero_leading_pairs_of_zeros);
 
         end if; -- rising_edge
     end process stimulus;	
