@@ -8,7 +8,7 @@ library ieee;
     use work.multiplier_pkg.all;
 
 package fixed_isqrt_pkg is
-    constant radix : natural := int_word_length-4;
+    constant isqrt_radix : natural := int_word_length-4;
 ------------------------------------------------------------------------
     type isqrt_record is record
         x_squared        : signed(int_word_length-1 downto 0);
@@ -98,17 +98,17 @@ package body fixed_isqrt_pkg is
         CASE self.state_counter2 is
             WHEN 0 => 
                 if multiplier_is_ready(multiplier) then
-                    self.x_squared <= get_multiplier_result(multiplier, radix);
+                    self.x_squared <= get_multiplier_result(multiplier, isqrt_radix);
                     self.state_counter2 <= self.state_counter2 + 1;
                 end if;
             WHEN 1 => 
                 if multiplier_is_ready(multiplier) then
-                    multiply(multiplier, self.x_squared, get_multiplier_result(multiplier,radix));
+                    multiply(multiplier, self.x_squared, get_multiplier_result(multiplier,isqrt_radix));
                     self.state_counter2 <= self.state_counter2 + 1;
                 end if;
             WHEN 2 => 
                 if multiplier_is_ready(multiplier) then
-                    mult_result                := get_multiplier_result(multiplier,radix+1);
+                    mult_result                := get_multiplier_result(multiplier,isqrt_radix+1);
                     inverse_square_root_result := self.x + self.x/2 - mult_result;
                     self.x              <= inverse_square_root_result;
                     self.state_counter2 <= self.state_counter2 + 1;
@@ -208,7 +208,7 @@ package body fixed_isqrt_pkg is
         variable retval : signarray;
     begin
         for i in signarray'range loop
-            retval(i) := to_fixed(realtable(i) , sig'length , radix);
+            retval(i) := to_fixed(realtable(i) , sig'length , isqrt_radix);
         end loop;
 
         return retval;

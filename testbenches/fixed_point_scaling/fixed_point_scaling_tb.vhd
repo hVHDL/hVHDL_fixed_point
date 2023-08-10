@@ -29,7 +29,6 @@ architecture vunit_simulation of fixed_point_scaling_tb is
     signal should_be_131   : integer;
     signal should_be_132   : integer;
 
-
     constant three_leading_zeros  : signed(5 downto 0)   := "000100";
     constant two_leading_zeros    : signed(5 downto 0)   := "001100";
     constant one_leading_zero     : signed(6 downto 0)   := "0100100";
@@ -50,17 +49,6 @@ architecture vunit_simulation of fixed_point_scaling_tb is
 
     constant number_of_pairs : natural := 10;
     constant has_10_pair_of_zeros   : signed(79 downto 0) := (79-number_of_pairs*2 => '1', others => '0');
-
-    function shift_by_2n
-    (
-        to_be_shifted : signed;
-        shift_amount : natural
-    )
-    return signed 
-    is
-    begin
-        return shift_left(to_be_shifted, 2*shift_amount);
-    end shift_by_2n;
 
 begin
 

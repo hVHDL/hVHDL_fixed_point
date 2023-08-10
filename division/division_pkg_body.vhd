@@ -6,37 +6,34 @@ package body division_pkg is
     procedure create_division
     (
         signal hw_multiplier : inout multiplier_record;
-        signal division : inout division_record
+        signal self : inout division_record
     ) is
-    --------------------------------------------------
-        alias m is division;
-    --------------------------------------------------
     begin
         
-            CASE m.division_process_counter is
+            CASE self.division_process_counter is
                 WHEN 0 =>
-                    multiply(hw_multiplier, m.x, m.number_to_be_reciprocated);
-                    m.division_process_counter <= m.division_process_counter + 1;
+                    multiply(hw_multiplier, self.x, self.number_to_be_reciprocated);
+                    self.division_process_counter <= self.division_process_counter + 1;
                 WHEN 1 =>
-                    increment_counter_when_ready(hw_multiplier,m.division_process_counter);
+                    increment_counter_when_ready(hw_multiplier,self.division_process_counter);
                     if multiplier_is_ready(hw_multiplier) then
-                        multiply(hw_multiplier, m.x, invert_bits(get_multiplier_result(hw_multiplier, nr_radix)));
+                        multiply(hw_multiplier, self.x, invert_bits(get_multiplier_result(hw_multiplier, nr_radix)));
                     end if;
                 WHEN 2 =>
                     if multiplier_is_ready(hw_multiplier) then
-                        m.x <= get_multiplier_result(hw_multiplier, nr_radix);
-                        if m.number_of_newton_raphson_iteration /= 0 then
-                            m.number_of_newton_raphson_iteration <= m.number_of_newton_raphson_iteration - 1;
-                            m.division_process_counter <= 0;
+                        self.x <= get_multiplier_result(hw_multiplier, nr_radix);
+                        if self.number_of_newton_raphson_iteration /= 0 then
+                            self.number_of_newton_raphson_iteration <= self.number_of_newton_raphson_iteration - 1;
+                            self.division_process_counter <= 0;
                         else
-                            m.division_process_counter <= m.division_process_counter + 1;
-                            multiply(hw_multiplier, get_multiplier_result(hw_multiplier, nr_radix), m.dividend);
-                            m.check_division_to_be_ready <= true;
+                            self.division_process_counter <= self.division_process_counter + 1;
+                            multiply(hw_multiplier, get_multiplier_result(hw_multiplier, nr_radix), self.dividend);
+                            self.check_division_to_be_ready <= true;
                         end if;
                     end if;
                 WHEN others => -- wait for start
                     if multiplier_is_ready(hw_multiplier) then
-                        m.check_division_to_be_ready <= false;
+                        self.check_division_to_be_ready <= false;
                     end if;
             end CASE;
     end create_division;

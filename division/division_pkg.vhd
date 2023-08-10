@@ -9,20 +9,20 @@ package division_pkg is
 --------------------------------------------------
     subtype range_of_nr_iteration is natural range 0 to 4;
     type division_record is record
-        division_process_counter : natural range 0 to 3;
-        x: int;
-        number_to_be_reciprocated : int;
+        division_process_counter           : natural range 0 to 3;
+        x                                  : int;
+        number_to_be_reciprocated          : int;
         number_of_newton_raphson_iteration : range_of_nr_iteration;
-        dividend : int;
-        divisor : int;
-        check_division_to_be_ready : boolean;
+        dividend                           : int;
+        divisor                            : int;
+        check_division_to_be_ready         : boolean;
     end record;
 
     constant init_division : division_record := (3, 0, 0, 0, 0, 0, false);
 ------------------------------------------------------------------------
     procedure create_division (
         signal hw_multiplier : inout multiplier_record;
-        signal division : inout division_record);
+        signal self : inout division_record);
 
 ------------------------------------------------------------------------
     function division_is_ready ( division_multiplier : multiplier_record; division : division_record)
