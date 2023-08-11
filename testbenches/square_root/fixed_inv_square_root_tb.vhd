@@ -68,6 +68,8 @@ begin
     stimulus : process(simulator_clock)
         variable hihii : sig;
         constant stepsize : real := 2.0/512.0;
+
+        constant number_of_nr_iterations : natural := 6;
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
@@ -81,7 +83,7 @@ begin
                     request_isqrt(self            => isqrt,
                     input_number                  => to_fixed(input_value, sign_input_value'length, isqrt_radix),
                                   guess           => initial_guess,
-                                  number_of_loops => 4);
+                                  number_of_loops => number_of_nr_iterations);
 
                 WHEN others => --do nothing
             end CASE;
@@ -94,7 +96,7 @@ begin
                     request_isqrt(self            => isqrt,
                     input_number                  => to_fixed(input_value + stepsize, sign_input_value'length, isqrt_radix),
                                   guess           => get_initial_guess(hihii),
-                                  number_of_loops => 4);
+                                  number_of_loops => number_of_nr_iterations);
 
                     square_root_was_requested <= true;
                 end if;
