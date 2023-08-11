@@ -6,10 +6,7 @@ LIBRARY ieee  ;
 library vunit_lib;
 context vunit_lib.vunit_context;
 
-    use work.square_root_pkg.all;
     use work.real_to_fixed_pkg.all;
-    use work.multiplier_pkg.all;
-    use work.fixed_isqrt_pkg.all;
     use work.fixed_point_scaling_pkg.all;
 
 entity isqrt_scaling_tb is
@@ -25,9 +22,17 @@ architecture vunit_simulation of isqrt_scaling_tb is
     signal simulation_counter  : natural   := 0;
     -----------------------------------
     -- simulation specific signals ----
-    type real_array is array (integer range 0 to 7) of real;
-    type sign_array is array (integer range 0 to 7) of signed(int_word_length-1 downto 0);
 
+    constant used_word_length       : natural := 54;
+    constant number_of_integer_bits : natural := 5;
+    constant used_radix : natural := used_word_length-number_of_integer_bits;
+
+    type real_array is array (integer range 0 to 7) of real;
+    type sign_array is array (integer range 0 to 7) of signed(used_word_length-1 downto 0);
+
+    subtype long_signed is signed(used_word_length-1 downto 0);
+
+------------------------------------------------------------------------
     function to_fixed
     (
         number : real_array
@@ -38,23 +43,14 @@ architecture vunit_simulation of isqrt_scaling_tb is
     begin
 
         for i in real_array'range loop
-            return_value(i) := to_fixed(number(i), int_word_length, int_word_length-8);
+            return_value(i) := to_fixed(number(i), used_word_length, used_radix);
         end loop;
 
         return return_value;
         
     end to_fixed;
 
-    function to_fixed
-    (
-        number : real
-    )
-    return signed
-    is
-    begin
-        return to_fixed(number, int_word_length, int_word_length-2);
-        
-    end to_fixed;
+------------------------------------------------------------------------
 
     constant input_values : real_array := (1.5, 1.0, 15.35689, 17.1359, 32.153, 33.315, 0.4865513, 25.00);
     constant fixed_input_values : sign_array := to_fixed(input_values);
@@ -65,13 +61,38 @@ architecture vunit_simulation of isqrt_scaling_tb is
     function shift_by_2n
     (
         to_be_shifted : signed;
-        shift_amount : natural
+        shift_amount : integer
     )
     return signed 
     is
     begin
-        return shift_left(to_be_shifted, 2*shift_amount);
+        if shift_amount > 0 then
+            return shift_left(to_be_shifted, 2*shift_amount);
+        else
+            return shift_right(to_be_shifted, abs(2*shift_amount));
+        end if;
     end shift_by_2n;
+
+    function scale_input
+    (
+        to_be_shifted : signed 
+    )
+    return signed 
+    is
+    begin
+        return shift_by_2n(to_be_shifted,  get_number_of_leading_pairs_of_zeros(to_be_shifted) - 1);
+    end scale_input;
+
+    signal testi0 : long_signed := scale_input(fixed_input_values(0));
+    signal testi1 : long_signed := scale_input(fixed_input_values(1));
+    signal testi2 : long_signed := scale_input(fixed_input_values(2));
+    signal testi3 : long_signed := scale_input(fixed_input_values(3));
+    signal testi4 : long_signed := scale_input(fixed_input_values(4));
+    signal testi5 : long_signed := scale_input(fixed_input_values(5));
+    signal testi6 : long_signed := scale_input(fixed_input_values(6));
+    signal testi7 : long_signed := scale_input(fixed_input_values(7));
+
+    signal test_scaling : boolean := false;
 
 begin
 
@@ -80,6 +101,9 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
+        if run("correct shift was found") then
+            -- check(test_scaling);
+        end if;
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
     end process simtime;	
@@ -88,9 +112,13 @@ begin
 ------------------------------------------------------------------------
 
     stimulus : process(simulator_clock)
+        variable testi : long_signed := (others => '0');
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
+
+            -- testi := scale_input(fixed_input_values(7));
+            -- test_scaling <= (testi(testi'left downto testi'left-3) = "0001");
 
         end if; -- rising_edge
     end process stimulus;	

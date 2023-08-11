@@ -65,7 +65,7 @@ begin
             div_error <= n-test_result;
             count <= 0;
 
-            x <= 2.0*x-2.1353686*x*x;
+            x <= x*(2.0-2.1353686*x);
             div_error2 <= x-test_result;
 
         end if; -- rising_edge
