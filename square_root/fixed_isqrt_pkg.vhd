@@ -8,7 +8,7 @@ library ieee;
     use work.multiplier_pkg.all;
 
 package fixed_isqrt_pkg is
-    constant isqrt_radix : natural := int_word_length-4;
+    constant isqrt_radix : natural := int_word_length-2;
 ------------------------------------------------------------------------
     type isqrt_record is record
         x_squared        : signed(int_word_length-1 downto 0);
@@ -18,7 +18,7 @@ package fixed_isqrt_pkg is
         state_counter    : natural range 0 to 7;
         state_counter2   : natural range 0 to 7;
         isqrt_is_ready   : boolean;
-        loop_value       : natural range 0 to 3;
+        loop_value       : natural range 0 to 7;
     end record;
 
     function init_isqrt return isqrt_record;
@@ -36,7 +36,7 @@ package fixed_isqrt_pkg is
         signal self     : inout isqrt_record;
         input_number    : signed;
         guess           : signed;
-        number_of_loops : natural range 1 to 3);
+        number_of_loops : natural range 1 to 7);
 ------------------------------------------------------------------------
     function isqrt_is_ready ( self : isqrt_record)
         return boolean;
@@ -143,7 +143,7 @@ package body fixed_isqrt_pkg is
         signal self     : inout isqrt_record;
         input_number    : signed;
         guess           : signed;
-        number_of_loops : natural range 1 to 3
+        number_of_loops : natural range 1 to 7
     ) is
     begin
         self.sign_input_value <= input_number;
