@@ -26,7 +26,7 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
     -- simulation specific signals ----
 
 ------------------------------------------------------------------------
-    signal input_value : real := 0.5;
+    signal input_value : real := 1.0;
     signal output_value : real := 0.0;
 
     signal inv_isqrt_is_ready : boolean := false;
@@ -67,9 +67,9 @@ begin
 ------------------------------------------------------------------------
     stimulus : process(simulator_clock)
         variable hihii : sig;
-        constant stepsize : real := 2.0/512.0;
+        constant stepsize : real := 1.0/512.0;
 
-        constant number_of_nr_iterations : natural := 6;
+        constant number_of_nr_iterations : natural := 1;
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
