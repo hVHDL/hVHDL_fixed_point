@@ -233,8 +233,21 @@ package body fixed_isqrt_pkg is
 
         if number(number'high-1) = '1' then
             retval := testsignarray(table_index);
+            -- retval := to_fixed(0.826, sig'length, isqrt_radix);
         elsif number(number'high-1) = '0' then
-            retval := to_fixed(1.16, sig'length, isqrt_radix);
+            case to_integer(number(number'high-3 downto number'high-4)) is
+                when 0 => 
+                    retval := to_fixed(1.338, sig'length, isqrt_radix);
+                when 1 => 
+                    retval := to_fixed(1.19, sig'length, isqrt_radix);
+                when 2 => 
+                    retval := to_fixed(1.13, sig'length, isqrt_radix);
+                when 3 => 
+                    retval := to_fixed(1.07, sig'length, isqrt_radix);
+                when others => 
+                    retval := to_fixed(1.12, sig'length, isqrt_radix);
+            end case;
+            -- retval := testsignarray(table_index);
         end if;
 
         return retval;
