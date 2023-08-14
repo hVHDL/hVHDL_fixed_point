@@ -8,7 +8,7 @@ library ieee;
     -- 26 bit wordlength
 package multiplier_base_types_pkg is
 
-    constant number_of_input_bits : integer := 50;
+    constant number_of_input_bits : integer := 49;
     alias number_of_input_registers  is multiplier_pipeline_registers_pkg.input_registers;
     alias number_of_output_registers is multiplier_pipeline_registers_pkg.output_registers;
     subtype int is integer;

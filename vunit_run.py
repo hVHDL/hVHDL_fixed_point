@@ -115,6 +115,8 @@ sqrt_lib.add_source_files(ROOT / "testbenches/square_root/fixed_inv_square_root_
 sqrt_lib.add_source_files(ROOT / "testbenches/fixed_point_scaling/fixed_point_scaling_tb.vhd")
 sqrt_lib.add_source_files(ROOT / "testbenches/square_root/isqrt_scaling_tb.vhd")
 
+sqrt_lib.add_source_files(ROOT / "testbenches/square_root/initia_values_tb.vhd")
+
 # vhdl2008_math_library = VU.add_library("vhdl2008_math_library")
 # vhdl2008_math_library.add_source_files(ROOT / "testbenches/multiplier_simulation/multiplier_base_pkg_tb.vhd")
 

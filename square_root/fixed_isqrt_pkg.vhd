@@ -44,6 +44,17 @@ package fixed_isqrt_pkg is
     function get_isqrt_result ( self : isqrt_record)
         return signed;
 ------------------------------------------------------------------------
+    constant table_pow2 : natural := 4;
+    constant number_of_entries : natural := 2**table_pow2;
+    type testarray is array (integer range 0 to number_of_entries-1) of real;
+
+    function get_table return testarray ;
+
+    subtype sig is signed(int_word_length-1 downto 0);
+    type signarray is array (integer range 0 to number_of_entries-1) of sig;
+
+    function get_signarray return signarray;
+
     function get_initial_guess ( number : signed)
     return signed;
 
@@ -177,11 +188,6 @@ package body fixed_isqrt_pkg is
     end get_isqrt_result;
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
-    constant table_pow2 : natural := 4;
-    constant number_of_entries : natural := 2**table_pow2;
-    type testarray is array (integer range 0 to number_of_entries-1) of real;
-
-    ------------------------------------------------------------------------
     function get_table return testarray 
     is
         variable retval : testarray := (others => 0.0);
@@ -195,12 +201,8 @@ package body fixed_isqrt_pkg is
     end get_table;
 
     ------------------------------------------------------------------------
-    constant testaa_arrayta : testarray := get_table;
 
     ------------------------------------------------------------------------
-    subtype sig is signed(int_word_length-1 downto 0);
-    type signarray is array (integer range 0 to number_of_entries-1) of sig;
-
     ------------------------------------------------------------------------
     function get_signarray return signarray
     is
@@ -225,11 +227,17 @@ package body fixed_isqrt_pkg is
     return signed 
     is
         variable retval : sig := (others => '0');
+        variable table_index : natural := 0;
     begin
-        retval := testsignarray(to_integer('0' & number(number'high-2 downto number'high-1-table_pow2)));
-        
-        -- return to_fixed(0.836, sig'length, radix);
-        return retval;
+        -- retval := testsignarray(to_integer('0' & number(number'high-1 downto number'high-table_pow2)));
+
+        if number(number'high-1) = '1' then
+            -- return to_fixed(0.836, sig'length, isqrt_radix);
+            return testsignarray(to_integer('0' & number(number'high-1 downto number'high-table_pow2)));
+        else
+            return to_fixed(1.16, sig'length, isqrt_radix);
+        end if;
+        -- return retval;
         
     end get_initial_guess;
 

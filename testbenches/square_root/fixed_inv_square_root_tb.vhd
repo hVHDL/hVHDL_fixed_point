@@ -26,15 +26,15 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
     -- simulation specific signals ----
 
 ------------------------------------------------------------------------
-    signal input_value : real := 1.0;
+    constant start_value : real := 0.5;
+    signal input_value : real := start_value;
     signal output_value : real := 0.0;
 
     signal inv_isqrt_is_ready : boolean := false;
     subtype sig is signed(int_word_length-1 downto 0);
 
-    signal initial_guess    : sig := to_fixed(1.0/sqrt(1.0+1.0/64.0) , int_word_length , isqrt_radix);
-    signal sign_input_value : sig := to_fixed(0.5                    , int_word_length , isqrt_radix);
-    signal fixed_result     : sig := to_fixed(1.0                    , int_word_length , isqrt_radix);
+    signal sign_input_value : sig := to_fixed(start_value , int_word_length , isqrt_radix);
+    signal fixed_result     : sig := to_fixed(1.0         , int_word_length , isqrt_radix);
 
     signal square_root_was_requested : boolean := false;
 
@@ -67,7 +67,7 @@ begin
 ------------------------------------------------------------------------
     stimulus : process(simulator_clock)
         variable hihii : sig;
-        constant stepsize : real := 1.0/512.0;
+        constant stepsize : real := 1.5/512.0;
 
         constant number_of_nr_iterations : natural := 1;
     begin
@@ -82,7 +82,7 @@ begin
 
                     request_isqrt(self            => isqrt,
                     input_number                  => to_fixed(input_value, sign_input_value'length, isqrt_radix),
-                                  guess           => initial_guess,
+                                  guess           => get_initial_guess(to_fixed(input_value, sign_input_value'length, isqrt_radix)),
                                   number_of_loops => number_of_nr_iterations);
 
                 WHEN others => --do nothing
