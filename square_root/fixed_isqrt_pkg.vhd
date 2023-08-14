@@ -187,6 +187,7 @@ package body fixed_isqrt_pkg is
         
     end get_isqrt_result;
 ------------------------------------------------------------------------
+    -- get initial guess
 ------------------------------------------------------------------------
     function get_table return testarray 
     is
@@ -200,9 +201,6 @@ package body fixed_isqrt_pkg is
         
     end get_table;
 
-    ------------------------------------------------------------------------
-
-    ------------------------------------------------------------------------
     ------------------------------------------------------------------------
     function get_signarray return signarray
     is
@@ -229,15 +227,15 @@ package body fixed_isqrt_pkg is
         variable retval : sig := (others => '0');
         variable table_index : natural := 0;
     begin
-        -- retval := testsignarray(to_integer('0' & number(number'high-1 downto number'high-table_pow2)));
+        table_index := to_integer('0' & number(number'high-2 downto number'high-1-table_pow2));
 
         if number(number'high-1) = '1' then
-            -- return to_fixed(0.836, sig'length, isqrt_radix);
-            return testsignarray(to_integer('0' & number(number'high-1 downto number'high-table_pow2)));
-        else
-            return to_fixed(1.16, sig'length, isqrt_radix);
+            retval := testsignarray(table_index);
+        elsif number(number'high-1) = '0' then
+            retval := to_fixed(1.16, sig'length, isqrt_radix);
         end if;
-        -- return retval;
+
+        return retval;
         
     end get_initial_guess;
 
