@@ -192,9 +192,11 @@ package body fixed_isqrt_pkg is
     function get_table return testarray 
     is
         variable retval : testarray := (others => 0.0);
+        variable bins : natural;
     begin
         for i in retval'range loop
-            retval(i) := (1.0/(sqrt(real(i*2+number_of_entries*2+1)/real(number_of_entries)/2.0)));
+            bins := i*2+number_of_entries*2+1;
+            retval(i) := 1.0/(sqrt(real(bins)/real(number_of_entries)/2.0));
         end loop;
 
         return retval;
