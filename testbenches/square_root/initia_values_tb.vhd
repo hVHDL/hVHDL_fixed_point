@@ -26,11 +26,11 @@ architecture vunit_simulation of initial_values_tb is
 
     signal testaa_arrayta : testarray := get_table;
 
-    signal test_input : real := 1.0;
+    signal test_input   : real := 1.0;
     signal input_number : signed(int_word_length-1 downto 0);
-    signal guess : signed(int_word_length-1 downto 0);
-    signal real_guess : real := 0.0;
-    signal number : natural := 99;
+    signal guess        : signed(int_word_length-1 downto 0);
+    signal real_guess   : real := 0.0;
+    signal number       : natural := 99;
 
 begin
 
@@ -48,7 +48,7 @@ begin
 
     stimulus : process(simulator_clock)
 
-        constant stepsize : real := 1.0/16.0;
+        constant stepsize : real := 0.5/16.0;
         variable v_input : signed(guess'range);
     begin
         if rising_edge(simulator_clock) then
@@ -61,7 +61,7 @@ begin
             input_number <= v_input;
             guess        <= get_initial_guess(v_input);
             real_guess   <= to_real(get_initial_guess(v_input),isqrt_radix);
-            number <= to_integer('0' & v_input(v_input'high-1 downto v_input'high-table_pow2));
+            number       <= to_integer('0' & v_input(v_input'high-1 downto v_input'high-table_pow2));
 
 
         end if; -- rising_edge

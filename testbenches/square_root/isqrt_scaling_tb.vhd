@@ -24,7 +24,7 @@ architecture vunit_simulation of isqrt_scaling_tb is
     -- simulation specific signals ----
 
     constant used_word_length       : natural := 54;
-    constant number_of_integer_bits : natural := 5;
+    constant number_of_integer_bits : natural := 10;
     constant used_radix : natural := used_word_length-number_of_integer_bits;
 
     type real_array is array (integer range 0 to 7) of real;
@@ -80,7 +80,7 @@ architecture vunit_simulation of isqrt_scaling_tb is
     return signed 
     is
     begin
-        return shift_by_2n(to_be_shifted,  get_number_of_leading_pairs_of_zeros(to_be_shifted) - 1);
+        return shift_by_2n(to_be_shifted,  (get_number_of_leading_zeros(to_be_shifted) - 1)/2);
     end scale_input;
 
     signal testi0 : long_signed := scale_input(fixed_input_values(0));
@@ -102,7 +102,7 @@ begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
         if run("correct shift was found") then
-            -- check(test_scaling);
+            check(test_scaling);
         end if;
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
@@ -113,12 +113,28 @@ begin
 
     stimulus : process(simulator_clock)
         variable testi : long_signed := (others => '0');
+        function one_or_two_leading_zeros
+        (
+            input : signed
+        )
+        return boolean
+        is
+            variable retval : boolean;
+            variable should_have_one_or_two_zeros : std_logic_vector(2 downto 0);
+        begin
+
+            should_have_one_or_two_zeros := std_logic_vector(input(input'left downto input'left-2));
+            retval := (should_have_one_or_two_zeros = "001") or 
+                      (should_have_one_or_two_zeros = "011") or
+                      (should_have_one_or_two_zeros = "010");
+            
+            return retval;
+        end one_or_two_leading_zeros;
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            -- testi := scale_input(fixed_input_values(7));
-            -- test_scaling <= (testi(testi'left downto testi'left-3) = "0001");
+            test_scaling <= one_or_two_leading_zeros(scale_input(fixed_input_values((simulation_counter mod 8))));
 
         end if; -- rising_edge
     end process stimulus;	
