@@ -58,7 +58,7 @@ architecture vunit_simulation of isqrt_scaling_tb is
     signal sqrt_was_calculated : boolean := false;
     signal result : real := 0.0;
 
-    signal test_scaling : boolean := false;
+    signal test_scaling : boolean := true;
 
 begin
 
@@ -67,7 +67,7 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
-        if run("correct shift was found") then
+        if run("all test values were scaled correctly") then
             check(test_scaling);
         end if;
         test_runner_cleanup(runner); -- Simulation ends here
@@ -78,7 +78,6 @@ begin
 ------------------------------------------------------------------------
 
     stimulus : process(simulator_clock)
-        variable testi : long_signed := (others => '0');
         function one_or_two_leading_zeros
         (
             input : signed
@@ -100,7 +99,7 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            test_scaling <= one_or_two_leading_zeros(scale_input(fixed_input_values((simulation_counter mod fixed_input_values'length))));
+            test_scaling <= test_scaling and one_or_two_leading_zeros(scale_input(fixed_input_values((simulation_counter mod fixed_input_values'length))));
 
         end if; -- rising_edge
     end process stimulus;	
