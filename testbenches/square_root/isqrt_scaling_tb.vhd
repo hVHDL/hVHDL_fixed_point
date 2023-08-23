@@ -58,40 +58,6 @@ architecture vunit_simulation of isqrt_scaling_tb is
     signal sqrt_was_calculated : boolean := false;
     signal result : real := 0.0;
 
-    function shift_by_2n
-    (
-        to_be_shifted : signed;
-        shift_amount : integer
-    )
-    return signed 
-    is
-    begin
-        if shift_amount > 0 then
-            return shift_left(to_be_shifted, 2*shift_amount);
-        else
-            return shift_right(to_be_shifted, abs(2*shift_amount));
-        end if;
-    end shift_by_2n;
-
-    function scale_input
-    (
-        to_be_shifted : signed 
-    )
-    return signed 
-    is
-    begin
-        return shift_by_2n(to_be_shifted,  (get_number_of_leading_zeros(to_be_shifted) - 1)/2);
-    end scale_input;
-
-    signal testi0 : long_signed := scale_input(fixed_input_values(0));
-    signal testi1 : long_signed := scale_input(fixed_input_values(1));
-    signal testi2 : long_signed := scale_input(fixed_input_values(2));
-    signal testi3 : long_signed := scale_input(fixed_input_values(3));
-    signal testi4 : long_signed := scale_input(fixed_input_values(4));
-    signal testi5 : long_signed := scale_input(fixed_input_values(5));
-    signal testi6 : long_signed := scale_input(fixed_input_values(6));
-    signal testi7 : long_signed := scale_input(fixed_input_values(7));
-
     signal test_scaling : boolean := false;
 
 begin
@@ -134,7 +100,7 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            test_scaling <= one_or_two_leading_zeros(scale_input(fixed_input_values((simulation_counter mod 8))));
+            test_scaling <= one_or_two_leading_zeros(scale_input(fixed_input_values((simulation_counter mod fixed_input_values'length))));
 
         end if; -- rising_edge
     end process stimulus;	

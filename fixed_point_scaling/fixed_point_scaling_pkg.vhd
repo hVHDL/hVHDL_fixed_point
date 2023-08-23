@@ -15,6 +15,14 @@ package fixed_point_scaling_pkg is
     function get_number_of_leading_pairs_of_zeros ( number : signed)
         return natural;
 ------------------------------------------------------------------------
+    function shift_by_2n (
+        to_be_shifted : signed;
+        shift_amount : integer)
+    return signed ;
+------------------------------------------------------------------------
+    function scale_input ( to_be_shifted : signed )
+        return signed ;
+------------------------------------------------------------------------
 end package fixed_point_scaling_pkg;
 
 package body fixed_point_scaling_pkg is
@@ -68,7 +76,31 @@ package body fixed_point_scaling_pkg is
         
     end get_number_of_leading_pairs_of_zeros;
 ------------------------------------------------------------------------
-end package body fixed_point_scaling_pkg;
+
+    function shift_by_2n
+    (
+        to_be_shifted : signed;
+        shift_amount : integer
+    )
+    return signed 
+    is
+    begin
+        if shift_amount > 0 then
+            return shift_left(to_be_shifted, 2*shift_amount);
+        else
+            return shift_right(to_be_shifted, abs(2*shift_amount));
+        end if;
+    end shift_by_2n;
+------------------------------------------------------------------------
+    function scale_input
+    (
+        to_be_shifted : signed 
+    )
+    return signed 
+    is
+    begin
+        return shift_by_2n(to_be_shifted,  (get_number_of_leading_zeros(to_be_shifted) - 1)/2);
+    end scale_input;
 
 ------------------------------------------------------------------------
-------------------------------------------------------------------------
+end package body fixed_point_scaling_pkg;
