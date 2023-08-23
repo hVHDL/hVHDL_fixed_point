@@ -8,12 +8,13 @@ context vunit_lib.vunit_context;
 
     use work.real_to_fixed_pkg.all;
     use work.fixed_point_scaling_pkg.all;
+    use work.multiplier_pkg.all;
 
-entity isqrt_scaling_tb is
+entity sqrt_tb is
   generic (runner_cfg : string);
 end;
 
-architecture vunit_simulation of isqrt_scaling_tb is
+architecture vunit_simulation of sqrt_tb is
 
     constant clock_period      : time    := 1 ns;
     constant simtime_in_clocks : integer := 500;
@@ -27,6 +28,7 @@ architecture vunit_simulation of isqrt_scaling_tb is
     constant number_of_integer_bits : natural := 10;
     constant used_radix : natural := used_word_length-number_of_integer_bits;
 
+    subtype fixed is signed(used_word_length-1 downto 0);
     type real_array is array (integer range <>) of real;
     type sign_array is array (integer range <>) of signed(used_word_length-1 downto 0);
 
@@ -58,6 +60,44 @@ architecture vunit_simulation of isqrt_scaling_tb is
     signal result : real := 0.0;
 
     signal test_scaling : boolean := true;
+------------------------------------------------------------------------
+    type fixed_sqrt_record is record
+        shift_width : natural;
+        input        : fixed;
+        scaled_input : fixed;
+        pipeline     : std_logic_vector(3 downto 0);
+    end record;
+
+    constant init_sqrt : fixed_sqrt_record := (0,(others => '0'), (others => '0'), (others => '0'));
+------------------------------------------------------------------------
+    procedure create_sqrt
+    (
+        signal self       : inout fixed_sqrt_record;
+        signal multiplier : inout multiplier_record
+    ) is
+    begin
+        self.pipeline     <= self.pipeline(self.pipeline'left-1 downto 0) & '0';
+        self.scaled_input <= scale_input(self.input);
+        self.shift_width  <= get_number_of_leading_pairs_of_zeros(self.input);
+    end create_sqrt;
+------------------------------------------------------------------------
+    procedure request_sqrt
+    (
+        signal self : inout fixed_sqrt_record;
+        number_to_be_squared : fixed
+    ) is
+    begin
+        self.input <= number_to_be_squared;
+        self.pipeline(0) <= '1';
+        
+    end request_sqrt;
+------------------------------------------------------------------------
+
+    signal sqrt       : fixed_sqrt_record := init_sqrt;
+    signal multiplier : multiplier_record := init_multiplier;
+
+    signal max_error : real := 0.0;
+    signal sqrt_was_ready : boolean := false;
 
 begin
 
@@ -66,8 +106,10 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
-        if run("all test values were scaled correctly") then
+        if run("maximum error was less than 1e-6") then
             check(test_scaling);
+        elsif run("square root was calculated") then
+            check(sqrt_was_ready);
         end if;
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
@@ -98,7 +140,9 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            test_scaling <= test_scaling and one_or_two_leading_zeros(scale_input(fixed_input_values((simulation_counter mod fixed_input_values'length))));
+            create_multiplier(multiplier);
+            create_sqrt(sqrt,multiplier);
+
 
         end if; -- rising_edge
     end process stimulus;	
