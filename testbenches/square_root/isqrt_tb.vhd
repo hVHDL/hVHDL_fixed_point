@@ -59,7 +59,7 @@ package body fixed_sqrt_pkg is
         self.shift_width  <= get_number_of_leading_pairs_of_zeros(self.input);
 
         if self.pipeline(self.pipeline'left) = '1' then
-            request_isqrt(self.isqrt, self.scaled_input, get_initial_guess(self.scaled_input),3);
+            request_isqrt(self.isqrt, self.scaled_input, get_initial_guess(self.scaled_input),4);
         end if;
 
         if isqrt_is_ready(self.isqrt) then
@@ -173,7 +173,7 @@ architecture vunit_simulation of sqrt_tb is
 
     signal test_scaling : boolean := true;
 
-    signal fixed_sqrt       : fixed_sqrt_record := init_sqrt;
+    signal fixed_sqrt : fixed_sqrt_record := init_sqrt;
     signal multiplier : multiplier_record := init_multiplier;
 
     signal max_error : real := 0.0;
@@ -193,8 +193,8 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
-        if run("maximum error was less than 1e-6") then
-            check(max_sqrt_error < 1.0e-6);
+        if run("maximum error was less than 1e-11") then
+            check(max_sqrt_error < 1.0e-11);
         elsif run("square root was calculated") then
             check(sqrt_was_ready);
         end if;
