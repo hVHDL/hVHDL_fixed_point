@@ -166,14 +166,14 @@ architecture vunit_simulation of sqrt_tb is
 
 ------------------------------------------------------------------------
 
-    constant input_values : real_array(0 to 7) := (1.5, 1.0, 15.35689, 17.1359, 32.153, 33.315, 0.4865513, 25.00);
+    constant input_values : real_array(0 to 7) := (1.29135620356203260, 1.0, 15.35689, 17.1359, 32.153, 33.315, 0.4865513, 25.00);
     constant fixed_input_values : sign_array(0 to 7) := to_fixed(input_values, 8);
 
     signal sqrt_was_calculated : boolean := false;
 
     signal test_scaling : boolean := true;
 
-    signal sqrt_calculator       : fixed_sqrt_record := init_sqrt;
+    signal fixed_sqrt       : fixed_sqrt_record := init_sqrt;
     signal multiplier : multiplier_record := init_multiplier;
 
     signal max_error : real := 0.0;
@@ -207,24 +207,43 @@ begin
 
     stimulus : process(simulator_clock)
         variable fixed_Result : signed(int_word_length-1 downto 0);
+
+        impure function output_radix return natural
+        is
+            variable retval : natural;
+        begin
+            case fixed_sqrt.shift_width is
+                WHEN 4 => retval := 44;
+                WHEN 5 => retval := 43;
+                WHEN 2 => retval := 46;
+                WHEN 1 => retval := 47;
+                WHEN others => retval := 39;
+            end CASE;
+            
+            return retval;
+            
+        end output_radix;
+
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
             create_multiplier(multiplier);
-            create_sqrt(sqrt_calculator,multiplier);
+            create_sqrt(fixed_sqrt,multiplier);
 
             CASE simulation_counter is
-                WHEN 10 => request_sqrt(sqrt_calculator, fixed_input_values(0));
+                WHEN 10 => request_sqrt(fixed_sqrt, fixed_input_values(0));
                 WHEN others =>
             end CASE;
 
-            if sqrt_is_ready(sqrt_calculator) then
-                fixed_Result   := get_multiplier_result(multiplier, 43);
-                result         <= to_real(fixed_result, 43);
+            if sqrt_is_ready(fixed_sqrt) then
                 sqrt_was_ready <= true;
-                fix_result     <= get_multiplier_result(multiplier, 43);
-                sqrt_error     <= sqrt(input_values(0)) - to_real(fixed_result, 43);
+
+                fix_result     <= get_multiplier_result(multiplier, output_radix);
+                fixed_Result   := get_multiplier_result(multiplier, output_radix);
+
+                result         <= to_real(fixed_result, 42);
+                sqrt_error     <= sqrt(input_values(result_counter)) - to_real(fixed_result, 42);
 
                 if sqrt_error > max_sqrt_error then
                     max_sqrt_error <= sqrt_error;
@@ -232,7 +251,7 @@ begin
 
                 if result_counter < input_values'high then
                     result_counter <= result_counter + 1;
-                    request_sqrt(sqrt_calculator, fixed_input_values(result_counter + 1));
+                    request_sqrt(fixed_sqrt, fixed_input_values(result_counter + 1));
                 end if;
             end if;
 
