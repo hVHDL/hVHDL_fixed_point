@@ -8,77 +8,10 @@ library ieee;
     use work.fixed_isqrt_pkg.all;
 
 package fixed_sqrt_pkg is
-
-end package fixed_sqrt_pkg;
-
-package body fixed_sqrt_pkg is
-
-end package body fixed_sqrt_pkg;
 ------------------------------------------------------------------------
-LIBRARY ieee  ; 
-    USE ieee.NUMERIC_STD.all  ; 
-    USE ieee.std_logic_1164.all  ; 
-    use ieee.math_real.all;
-
-library vunit_lib;
-context vunit_lib.vunit_context;
-
-    use work.real_to_fixed_pkg.all;
-    use work.fixed_point_scaling_pkg.all;
-    use work.multiplier_pkg.all;
-    use work.fixed_isqrt_pkg.all;
-    use work.fixed_sqrt_pkg.all;
-
-entity sqrt_tb is
-  generic (runner_cfg : string);
-end;
-
-architecture vunit_simulation of sqrt_tb is
-
-    constant clock_period      : time    := 1 ns;
-    constant simtime_in_clocks : integer := 500;
-    
-    signal simulator_clock     : std_logic := '0';
-    signal simulation_counter  : natural   := 0;
-    -----------------------------------
-    -- simulation specific signals ----
-
     constant used_word_length       : natural := int_word_length;
-    constant number_of_integer_bits : natural := 10;
-    constant used_radix : natural := used_word_length-number_of_integer_bits;
-
     subtype fixed is signed(used_word_length-1 downto 0);
-    type real_array is array (integer range <>) of real;
-    type sign_array is array (integer range <>) of signed(used_word_length-1 downto 0);
 
-------------------------------------------------------------------------
-    function to_fixed
-    (
-        number : real_array;
-        length : natural
-    )
-    return sign_array
-    is
-        variable return_value : sign_array(0 to length-1) := (others => (others => '0'));
-    begin
-
-        for i in return_value'range loop
-            return_value(i) := to_fixed(number(i), used_word_length, used_radix);
-        end loop;
-
-        return return_value;
-        
-    end to_fixed;
-
-------------------------------------------------------------------------
-
-    constant input_values : real_array(0 to 7) := (1.5, 1.0, 15.35689, 17.1359, 32.153, 33.315, 0.4865513, 25.00);
-    constant fixed_input_values : sign_array(0 to 7) := to_fixed(input_values, 8);
-
-    signal sqrt_was_calculated : boolean := false;
-
-    signal test_scaling : boolean := true;
-------------------------------------------------------------------------
     type fixed_sqrt_record is record
         isqrt        : isqrt_record;
         shift_width  : natural;
@@ -90,6 +23,28 @@ architecture vunit_simulation of sqrt_tb is
     end record;
 
     constant init_sqrt : fixed_sqrt_record := (init_isqrt, 0 , (others => '0'), (others => '0'), (others => '0'), false, false);
+------------------------------------------------------------------------
+    procedure create_sqrt (
+        signal self       : inout fixed_sqrt_record;
+        signal multiplier : inout multiplier_record);
+------------------------------------------------------------------------
+    function sqrt_is_ready ( self : fixed_sqrt_record)
+        return boolean;
+------------------------------------------------------------------------
+    function get_sqrt_result (
+        self : fixed_sqrt_record;
+        multiplier : multiplier_record;
+        radix : natural)
+    return signed;
+------------------------------------------------------------------------
+    procedure request_sqrt (
+        signal self : inout fixed_sqrt_record;
+        number_to_be_squared : fixed);
+------------------------------------------------------------------------
+
+end package fixed_sqrt_pkg;
+
+package body fixed_sqrt_pkg is
 ------------------------------------------------------------------------
     procedure create_sqrt
     (
@@ -153,6 +108,70 @@ architecture vunit_simulation of sqrt_tb is
         
     end request_sqrt;
 ------------------------------------------------------------------------
+
+end package body fixed_sqrt_pkg;
+------------------------------------------------------------------------
+LIBRARY ieee  ; 
+    USE ieee.NUMERIC_STD.all  ; 
+    USE ieee.std_logic_1164.all  ; 
+    use ieee.math_real.all;
+
+library vunit_lib;
+context vunit_lib.vunit_context;
+
+    use work.real_to_fixed_pkg.all;
+    use work.fixed_point_scaling_pkg.all;
+    use work.multiplier_pkg.all;
+    use work.fixed_isqrt_pkg.all;
+    use work.fixed_sqrt_pkg.all;
+
+entity sqrt_tb is
+  generic (runner_cfg : string);
+end;
+
+architecture vunit_simulation of sqrt_tb is
+
+    constant clock_period      : time    := 1 ns;
+    constant simtime_in_clocks : integer := 500;
+    
+    signal simulator_clock     : std_logic := '0';
+    signal simulation_counter  : natural   := 0;
+    -----------------------------------
+    -- simulation specific signals ----
+
+    constant number_of_integer_bits : natural := 10;
+    constant used_radix : natural := used_word_length-number_of_integer_bits;
+
+    type real_array is array (integer range <>) of real;
+    type sign_array is array (integer range <>) of signed(used_word_length-1 downto 0);
+
+------------------------------------------------------------------------
+    function to_fixed
+    (
+        number : real_array;
+        length : natural
+    )
+    return sign_array
+    is
+        variable return_value : sign_array(0 to length-1) := (others => (others => '0'));
+    begin
+
+        for i in return_value'range loop
+            return_value(i) := to_fixed(number(i), used_word_length, used_radix);
+        end loop;
+
+        return return_value;
+        
+    end to_fixed;
+
+------------------------------------------------------------------------
+
+    constant input_values : real_array(0 to 7) := (1.5, 1.0, 15.35689, 17.1359, 32.153, 33.315, 0.4865513, 25.00);
+    constant fixed_input_values : sign_array(0 to 7) := to_fixed(input_values, 8);
+
+    signal sqrt_was_calculated : boolean := false;
+
+    signal test_scaling : boolean := true;
 
     signal sqrt_calculator       : fixed_sqrt_record := init_sqrt;
     signal multiplier : multiplier_record := init_multiplier;
