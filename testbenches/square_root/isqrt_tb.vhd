@@ -9,6 +9,7 @@ context vunit_lib.vunit_context;
     use work.real_to_fixed_pkg.all;
     use work.fixed_point_scaling_pkg.all;
     use work.multiplier_pkg.all;
+    use work.fixed_isqrt_pkg.all;
 
 entity sqrt_tb is
   generic (runner_cfg : string);
@@ -24,7 +25,7 @@ architecture vunit_simulation of sqrt_tb is
     -----------------------------------
     -- simulation specific signals ----
 
-    constant used_word_length       : natural := 54;
+    constant used_word_length       : natural := int_word_length;
     constant number_of_integer_bits : natural := 10;
     constant used_radix : natural := used_word_length-number_of_integer_bits;
 
@@ -62,13 +63,16 @@ architecture vunit_simulation of sqrt_tb is
     signal test_scaling : boolean := true;
 ------------------------------------------------------------------------
     type fixed_sqrt_record is record
-        shift_width : natural;
+        isqrt        : isqrt_record;
+        shift_width  : natural;
         input        : fixed;
         scaled_input : fixed;
         pipeline     : std_logic_vector(3 downto 0);
+        multiply_isqrt_result : boolean;
+        sqrt_is_ready : boolean;
     end record;
 
-    constant init_sqrt : fixed_sqrt_record := (0,(others => '0'), (others => '0'), (others => '0'));
+    constant init_sqrt : fixed_sqrt_record := (init_isqrt, 0 , (others => '0'), (others => '0'), (others => '0'), false, false);
 ------------------------------------------------------------------------
     procedure create_sqrt
     (
@@ -76,10 +80,37 @@ architecture vunit_simulation of sqrt_tb is
         signal multiplier : inout multiplier_record
     ) is
     begin
-        self.pipeline     <= self.pipeline(self.pipeline'left-1 downto 0) & '0';
+        create_isqrt(self.isqrt, multiplier);
+
+        self.pipeline     <= self.pipeline(2 downto 0) & '0';
         self.scaled_input <= scale_input(self.input);
         self.shift_width  <= get_number_of_leading_pairs_of_zeros(self.input);
+
+        if self.pipeline(self.pipeline'left) = '1' then
+            request_isqrt(self.isqrt, self.scaled_input, get_initial_guess(self.scaled_input));
+        end if;
+
+        if isqrt_is_ready(self.isqrt) then
+            multiply(multiplier, get_isqrt_result(self.isqrt), self.input);
+            self.multiply_isqrt_result <= true;
+        end if;
+
+        if multiplier_is_ready(multiplier) and self.multiply_isqrt_result then
+            self.multiply_isqrt_result <= false;
+            self.sqrt_is_ready <= true;
+        end if;
+
     end create_sqrt;
+------------------------------------------------------------------------
+    function sqrt_is_ready
+    (
+        self : fixed_sqrt_record
+    )
+    return boolean
+    is
+    begin
+        return self.sqrt_is_ready;
+    end sqrt_is_ready;
 ------------------------------------------------------------------------
     procedure request_sqrt
     (
@@ -119,23 +150,6 @@ begin
 ------------------------------------------------------------------------
 
     stimulus : process(simulator_clock)
-        function one_or_two_leading_zeros
-        (
-            input : signed
-        )
-        return boolean
-        is
-            variable retval : boolean;
-            variable should_have_one_or_two_zeros : std_logic_vector(2 downto 0);
-        begin
-
-            should_have_one_or_two_zeros := std_logic_vector(input(input'left downto input'left-2));
-            retval := (should_have_one_or_two_zeros = "001") or 
-                      (should_have_one_or_two_zeros = "011") or
-                      (should_have_one_or_two_zeros = "010");
-            
-            return retval;
-        end one_or_two_leading_zeros;
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
@@ -143,6 +157,14 @@ begin
             create_multiplier(multiplier);
             create_sqrt(sqrt,multiplier);
 
+            CASE simulation_counter is
+                WHEN 10 => request_sqrt(sqrt, fixed_input_values(0));
+                WHEN others =>
+            end CASE;
+
+            if sqrt_is_ready(sqrt) then
+                sqrt_was_ready <= true;
+            end if;
 
         end if; -- rising_edge
     end process stimulus;	
