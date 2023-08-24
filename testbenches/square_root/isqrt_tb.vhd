@@ -58,7 +58,6 @@ architecture vunit_simulation of sqrt_tb is
     constant fixed_input_values : sign_array(0 to 7) := to_fixed(input_values, 8);
 
     signal sqrt_was_calculated : boolean := false;
-    signal result : real := 0.0;
 
     signal test_scaling : boolean := true;
 ------------------------------------------------------------------------
@@ -87,7 +86,7 @@ architecture vunit_simulation of sqrt_tb is
         self.shift_width  <= get_number_of_leading_pairs_of_zeros(self.input);
 
         if self.pipeline(self.pipeline'left) = '1' then
-            request_isqrt(self.isqrt, self.scaled_input, get_initial_guess(self.scaled_input));
+            request_isqrt(self.isqrt, self.scaled_input, get_initial_guess(self.scaled_input),3);
         end if;
 
         if isqrt_is_ready(self.isqrt) then
@@ -101,6 +100,18 @@ architecture vunit_simulation of sqrt_tb is
         end if;
 
     end create_sqrt;
+------------------------------------------------------------------------
+    function get_sqrt_result
+    (
+        self : fixed_sqrt_record;
+        multiplier : multiplier_record;
+        radix : natural
+    )
+    return signed 
+    is
+    begin
+        return get_multiplier_result(multiplier, int_word_length-2);
+    end get_sqrt_result;
 ------------------------------------------------------------------------
     function sqrt_is_ready
     (
@@ -124,11 +135,15 @@ architecture vunit_simulation of sqrt_tb is
     end request_sqrt;
 ------------------------------------------------------------------------
 
-    signal sqrt       : fixed_sqrt_record := init_sqrt;
+    signal sqrt_calculator       : fixed_sqrt_record := init_sqrt;
     signal multiplier : multiplier_record := init_multiplier;
 
     signal max_error : real := 0.0;
     signal sqrt_was_ready : boolean := false;
+
+    signal result : real := 0.0;
+    signal fix_result : signed(int_word_length-1 downto 0) := (others => '0');
+    signal sqrt_error : real := 0.0;
 
 begin
 
@@ -150,20 +165,25 @@ begin
 ------------------------------------------------------------------------
 
     stimulus : process(simulator_clock)
+        variable fixed_Result : signed(int_word_length-1 downto 0);
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
             create_multiplier(multiplier);
-            create_sqrt(sqrt,multiplier);
+            create_sqrt(sqrt_calculator,multiplier);
 
             CASE simulation_counter is
-                WHEN 10 => request_sqrt(sqrt, fixed_input_values(0));
+                WHEN 10 => request_sqrt(sqrt_calculator, fixed_input_values(0));
                 WHEN others =>
             end CASE;
 
-            if sqrt_is_ready(sqrt) then
+            if sqrt_is_ready(sqrt_calculator) then
                 sqrt_was_ready <= true;
+                fix_result <= get_multiplier_result(multiplier, 45);
+                fixed_Result := get_multiplier_result(multiplier, 45);
+                result <= to_real(fixed_result, 41);
+                sqrt_error <= sqrt(input_values(0)) - to_real(fixed_result, 41);
             end if;
 
         end if; -- rising_edge
