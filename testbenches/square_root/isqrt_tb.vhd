@@ -179,11 +179,11 @@ begin
             end CASE;
 
             if sqrt_is_ready(sqrt_calculator) then
+                fixed_Result   := get_multiplier_result(multiplier, 43);
+                result         <= to_real(fixed_result, 43);
                 sqrt_was_ready <= true;
-                fix_result <= get_multiplier_result(multiplier, 45);
-                fixed_Result := get_multiplier_result(multiplier, 45);
-                result <= to_real(fixed_result, 41);
-                sqrt_error <= sqrt(input_values(0)) - to_real(fixed_result, 41);
+                fix_result     <= get_multiplier_result(multiplier, 43);
+                sqrt_error     <= sqrt(input_values(0)) - to_real(fixed_result, 43);
             end if;
 
         end if; -- rising_edge
