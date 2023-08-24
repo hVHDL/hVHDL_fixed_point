@@ -59,7 +59,7 @@ package body fixed_sqrt_pkg is
         self.shift_width  <= get_number_of_leading_pairs_of_zeros(self.input);
 
         if self.pipeline(self.pipeline'left) = '1' then
-            request_isqrt(self.isqrt, self.scaled_input, get_initial_guess(self.scaled_input),4);
+            request_isqrt(self.isqrt, self.scaled_input, get_initial_guess(self.scaled_input),5);
         end if;
 
         if isqrt_is_ready(self.isqrt) then
@@ -132,7 +132,7 @@ end;
 architecture vunit_simulation of sqrt_tb is
 
     constant clock_period      : time    := 1 ns;
-    constant simtime_in_clocks : integer := 500;
+    constant simtime_in_clocks : integer := 1500;
     
     signal simulator_clock     : std_logic := '0';
     signal simulation_counter  : natural   := 0;
@@ -166,8 +166,8 @@ architecture vunit_simulation of sqrt_tb is
 
 ------------------------------------------------------------------------
 
-    constant input_values : real_array(0 to 7) := (1.29135620356203260, 1.0, 15.35689, 17.1359, 32.153, 33.315, 0.4865513, 25.00);
-    constant fixed_input_values : sign_array(0 to 7) := to_fixed(input_values, 8);
+    constant input_values : real_array(0 to 9) := (1.29135620356203260, 1.0, 15.35689, 0.00125, 32.153, 33.315, 0.4865513, 25.00, 31.02837520, 511.999);
+    constant fixed_input_values : sign_array(input_values'range) := to_fixed(input_values, input_values'length);
 
     signal sqrt_was_calculated : boolean := false;
 
@@ -183,7 +183,7 @@ architecture vunit_simulation of sqrt_tb is
     signal fix_result : signed(int_word_length-1 downto 0) := (others => '0');
     signal sqrt_error : real := 0.0;
 
-    signal result_counter : integer range 0 to 7 := 0;
+    signal result_counter : integer := 0;
     signal max_sqrt_error : real := 0.0;
 
 begin
@@ -212,15 +212,8 @@ begin
         is
             variable retval : natural;
         begin
-            case fixed_sqrt.shift_width is
-                WHEN 4 => retval := 44;
-                WHEN 5 => retval := 43;
-                WHEN 2 => retval := 46;
-                WHEN 1 => retval := 47;
-                WHEN others => retval := 39;
-            end CASE;
             
-            return retval;
+            return 48 - fixed_sqrt.shift_width;
             
         end output_radix;
 
@@ -245,14 +238,14 @@ begin
                 result         <= to_real(fixed_result, 42);
                 sqrt_error     <= sqrt(input_values(result_counter)) - to_real(fixed_result, 42);
 
-                if sqrt_error > max_sqrt_error then
-                    max_sqrt_error <= sqrt_error;
-                end if;
 
                 if result_counter < input_values'high then
                     result_counter <= result_counter + 1;
                     request_sqrt(fixed_sqrt, fixed_input_values(result_counter + 1));
                 end if;
+            end if;
+            if abs(sqrt_error) > max_sqrt_error then
+                max_sqrt_error <= abs(sqrt_error);
             end if;
 
         end if; -- rising_edge
