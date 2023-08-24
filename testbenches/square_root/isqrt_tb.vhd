@@ -142,8 +142,8 @@ architecture vunit_simulation of sqrt_tb is
     constant number_of_integer_bits : natural := 10;
     constant used_radix : natural := used_word_length-number_of_integer_bits;
 
-    type real_array is array (integer range <>) of real;
-    type sign_array is array (integer range <>) of signed(used_word_length-1 downto 0);
+    type real_array is array (natural range <>) of real;
+    type sign_array is array (natural range <>) of signed(used_word_length-1 downto 0);
 
 ------------------------------------------------------------------------
     function to_fixed
@@ -165,8 +165,12 @@ architecture vunit_simulation of sqrt_tb is
     end to_fixed;
 
 ------------------------------------------------------------------------
+    -- use some whatever numbers between 0.00125 and 511
+    constant input_values : real_array := (1.291356  , 1.0       , 15.35689       ,
+                                           0.00125   , 32.153    , 33.315         ,
+                                           0.4865513 , 25.00     , 55.02837520    ,
+                                           511.999   , 34.125116 , 111.135423642);
 
-    constant input_values : real_array(0 to 9) := (1.29135620356203260, 1.0, 15.35689, 0.00125, 32.153, 33.315, 0.4865513, 25.00, 31.02837520, 511.999);
     constant fixed_input_values : sign_array(input_values'range) := to_fixed(input_values, input_values'length);
 
     signal sqrt_was_calculated : boolean := false;
