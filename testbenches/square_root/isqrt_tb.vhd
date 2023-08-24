@@ -1,3 +1,20 @@
+library ieee;
+    use ieee.std_logic_1164.all;
+    use ieee.numeric_std.all;
+
+    use work.real_to_fixed_pkg.all;
+    use work.fixed_point_scaling_pkg.all;
+    use work.multiplier_pkg.all;
+    use work.fixed_isqrt_pkg.all;
+
+package fixed_sqrt_pkg is
+
+end package fixed_sqrt_pkg;
+
+package body fixed_sqrt_pkg is
+
+end package body fixed_sqrt_pkg;
+------------------------------------------------------------------------
 LIBRARY ieee  ; 
     USE ieee.NUMERIC_STD.all  ; 
     USE ieee.std_logic_1164.all  ; 
@@ -10,6 +27,7 @@ context vunit_lib.vunit_context;
     use work.fixed_point_scaling_pkg.all;
     use work.multiplier_pkg.all;
     use work.fixed_isqrt_pkg.all;
+    use work.fixed_sqrt_pkg.all;
 
 entity sqrt_tb is
   generic (runner_cfg : string);
@@ -94,6 +112,7 @@ architecture vunit_simulation of sqrt_tb is
             self.multiply_isqrt_result <= true;
         end if;
 
+        self.sqrt_is_ready <= false;
         if multiplier_is_ready(multiplier) and self.multiply_isqrt_result then
             self.multiply_isqrt_result <= false;
             self.sqrt_is_ready <= true;
@@ -145,6 +164,9 @@ architecture vunit_simulation of sqrt_tb is
     signal fix_result : signed(int_word_length-1 downto 0) := (others => '0');
     signal sqrt_error : real := 0.0;
 
+    signal result_counter : integer range 0 to 7 := 0;
+    signal max_sqrt_error : real := 0.0;
+
 begin
 
 ------------------------------------------------------------------------
@@ -153,7 +175,7 @@ begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
         if run("maximum error was less than 1e-6") then
-            check(test_scaling);
+            check(max_sqrt_error < 1.0e-6);
         elsif run("square root was calculated") then
             check(sqrt_was_ready);
         end if;
@@ -184,6 +206,15 @@ begin
                 sqrt_was_ready <= true;
                 fix_result     <= get_multiplier_result(multiplier, 43);
                 sqrt_error     <= sqrt(input_values(0)) - to_real(fixed_result, 43);
+
+                if sqrt_error > max_sqrt_error then
+                    max_sqrt_error <= sqrt_error;
+                end if;
+
+                if result_counter < input_values'high then
+                    result_counter <= result_counter + 1;
+                    request_sqrt(sqrt_calculator, fixed_input_values(result_counter + 1));
+                end if;
             end if;
 
         end if; -- rising_edge
