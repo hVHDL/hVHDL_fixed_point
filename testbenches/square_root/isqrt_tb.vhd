@@ -118,10 +118,9 @@ begin
             create_multiplier(multiplier);
             create_sqrt(fixed_sqrt,multiplier);
 
-            CASE simulation_counter is
-                WHEN 10 => request_sqrt(fixed_sqrt, fixed_input_values(0));
-                WHEN others =>
-            end CASE;
+            if simulation_counter = 10 then
+                request_sqrt(fixed_sqrt, fixed_input_values(0));
+            end if;
 
             if sqrt_is_ready(fixed_sqrt) then
                 sqrt_was_ready <= true;
