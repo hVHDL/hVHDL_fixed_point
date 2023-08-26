@@ -146,7 +146,7 @@ package body fixed_isqrt_pkg is
         self.state_counter    <= 0;
         self.state_counter2   <= 0;
         self.loop_value       <= 0;
-        self.x <= guess;
+        self.x                <= guess;
     end request_isqrt;
 
     procedure request_isqrt
@@ -160,7 +160,7 @@ package body fixed_isqrt_pkg is
         self.sign_input_value <= input_number;
         self.state_counter    <= 0;
         self.state_counter2   <= 0;
-        self.x <= guess;
+        self.x                <= guess;
         self.loop_value       <= number_of_loops-1;
     end request_isqrt;
 

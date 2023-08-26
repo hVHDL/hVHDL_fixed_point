@@ -31,3 +31,4 @@ ghdl -a --ieee=synopsys --std=08 %1/sos_filter/dsp_sos_filter_pkg.vhd
 
 ghdl -a --ieee=synopsys --std=08 %1/testbenches/square_root/square_root_pkg.vhd
 ghdl -a --ieee=synopsys --std=08 %1/square_root/fixed_isqrt_pkg.vhd
+ghdl -a --ieee=synopsys --std=08 %1/square_root/fixed_sqrt_pkg.vhd

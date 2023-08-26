@@ -5,10 +5,10 @@ library ieee;
 
     use work.multiplier_pipeline_registers_pkg;
 
-    -- 26 bit wordlength
+    -- lengths for sqrt
 package multiplier_base_types_pkg is
 
-    constant number_of_input_bits : integer := 49;
+    constant number_of_input_bits : integer := 35; -- odd lengths works if above 35 bits
     alias number_of_input_registers  is multiplier_pipeline_registers_pkg.input_registers;
     alias number_of_output_registers is multiplier_pipeline_registers_pkg.output_registers;
     subtype int is integer;

@@ -1,116 +1,3 @@
-library ieee;
-    use ieee.std_logic_1164.all;
-    use ieee.numeric_std.all;
-
-    use work.real_to_fixed_pkg.all;
-    use work.fixed_point_scaling_pkg.all;
-    use work.multiplier_pkg.all;
-    use work.fixed_isqrt_pkg.all;
-
-package fixed_sqrt_pkg is
-------------------------------------------------------------------------
-    constant used_word_length       : natural := int_word_length;
-    subtype fixed is signed(used_word_length-1 downto 0);
-
-    type fixed_sqrt_record is record
-        isqrt        : isqrt_record;
-        shift_width  : natural;
-        input        : fixed;
-        scaled_input : fixed;
-        pipeline     : std_logic_vector(3 downto 0);
-        multiply_isqrt_result : boolean;
-        sqrt_is_ready : boolean;
-    end record;
-
-    constant init_sqrt : fixed_sqrt_record := (init_isqrt, 0 , (others => '0'), (others => '0'), (others => '0'), false, false);
-------------------------------------------------------------------------
-    procedure create_sqrt (
-        signal self       : inout fixed_sqrt_record;
-        signal multiplier : inout multiplier_record);
-------------------------------------------------------------------------
-    function sqrt_is_ready ( self : fixed_sqrt_record)
-        return boolean;
-------------------------------------------------------------------------
-    function get_sqrt_result (
-        self : fixed_sqrt_record;
-        multiplier : multiplier_record;
-        radix : natural)
-    return signed;
-------------------------------------------------------------------------
-    procedure request_sqrt (
-        signal self : inout fixed_sqrt_record;
-        number_to_be_squared : fixed);
-------------------------------------------------------------------------
-
-end package fixed_sqrt_pkg;
-
-package body fixed_sqrt_pkg is
-------------------------------------------------------------------------
-    procedure create_sqrt
-    (
-        signal self       : inout fixed_sqrt_record;
-        signal multiplier : inout multiplier_record
-    ) is
-    begin
-        create_isqrt(self.isqrt, multiplier);
-
-        self.pipeline     <= self.pipeline(2 downto 0) & '0';
-        self.scaled_input <= scale_input(self.input);
-        self.shift_width  <= get_number_of_leading_pairs_of_zeros(self.input);
-
-        if self.pipeline(self.pipeline'left) = '1' then
-            request_isqrt(self.isqrt, self.scaled_input, get_initial_guess(self.scaled_input),5);
-        end if;
-
-        if isqrt_is_ready(self.isqrt) then
-            multiply(multiplier, get_isqrt_result(self.isqrt), self.input);
-            self.multiply_isqrt_result <= true;
-        end if;
-
-        self.sqrt_is_ready <= false;
-        if multiplier_is_ready(multiplier) and self.multiply_isqrt_result then
-            self.multiply_isqrt_result <= false;
-            self.sqrt_is_ready <= true;
-        end if;
-
-    end create_sqrt;
-------------------------------------------------------------------------
-    function get_sqrt_result
-    (
-        self : fixed_sqrt_record;
-        multiplier : multiplier_record;
-        radix : natural
-    )
-    return signed 
-    is
-    begin
-        return get_multiplier_result(multiplier, int_word_length-2);
-    end get_sqrt_result;
-------------------------------------------------------------------------
-    function sqrt_is_ready
-    (
-        self : fixed_sqrt_record
-    )
-    return boolean
-    is
-    begin
-        return self.sqrt_is_ready;
-    end sqrt_is_ready;
-------------------------------------------------------------------------
-    procedure request_sqrt
-    (
-        signal self : inout fixed_sqrt_record;
-        number_to_be_squared : fixed
-    ) is
-    begin
-        self.input <= number_to_be_squared;
-        self.pipeline(0) <= '1';
-        
-    end request_sqrt;
-------------------------------------------------------------------------
-
-end package body fixed_sqrt_pkg;
-------------------------------------------------------------------------
 LIBRARY ieee  ; 
     USE ieee.NUMERIC_STD.all  ; 
     USE ieee.std_logic_1164.all  ; 
@@ -197,8 +84,8 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
-        if run("maximum error was less than 1e-11") then
-            check(max_sqrt_error < 1.0e-11);
+        if run("maximum error was less than 1e-5") then
+            check(max_sqrt_error < 1.0e-7);
         elsif run("square root was calculated") then
             check(sqrt_was_ready);
         end if;
@@ -217,9 +104,12 @@ begin
             variable retval : natural;
         begin
             
-            return 48 - fixed_sqrt.shift_width;
+            return int_word_length-1 - fixed_sqrt.shift_width;
             
         end output_radix;
+
+
+        constant fix_to_real_radix : natural := int_word_length-7;
 
     begin
         if rising_edge(simulator_clock) then
@@ -239,8 +129,8 @@ begin
                 fix_result     <= get_multiplier_result(multiplier, output_radix);
                 fixed_Result   := get_multiplier_result(multiplier, output_radix);
 
-                result         <= to_real(fixed_result, 42);
-                sqrt_error     <= sqrt(input_values(result_counter)) - to_real(fixed_result, 42);
+                result         <= to_real(fixed_result, fix_to_real_radix);
+                sqrt_error     <= sqrt(input_values(result_counter)) - to_real(fixed_result, fix_to_real_radix);
 
 
                 if result_counter < input_values'high then
