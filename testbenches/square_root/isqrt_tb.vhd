@@ -26,8 +26,9 @@ architecture vunit_simulation of sqrt_tb is
     -----------------------------------
     -- simulation specific signals ----
 
-    constant number_of_integer_bits : natural := 10;
-    constant used_radix : natural := used_word_length-number_of_integer_bits;
+    constant number_of_integer_bits : natural := 8;
+    constant fix_to_real_radix      : natural := int_word_length - isqrt_integer_bits - number_of_integer_bits/2;
+    constant used_radix             : natural := used_word_length-number_of_integer_bits;
 
     type real_array is array (natural range <>) of real;
     type sign_array is array (natural range <>) of signed(used_word_length-1 downto 0);
@@ -56,7 +57,7 @@ architecture vunit_simulation of sqrt_tb is
     constant input_values : real_array := (1.291356  , 1.0       , 15.35689       ,
                                            0.00125   , 32.153    , 33.315         ,
                                            0.4865513 , 25.00     , 55.02837520    ,
-                                           511.999   , 34.125116 , 111.135423642);
+                                           122.999   , 34.125116 , 111.135423642);
 
     constant fixed_input_values : sign_array(input_values'range) := to_fixed(input_values, input_values'length);
 
@@ -107,9 +108,6 @@ begin
             return int_word_length-1 - fixed_sqrt.shift_width;
             
         end output_radix;
-
-
-        constant fix_to_real_radix : natural := int_word_length-7;
 
     begin
         if rising_edge(simulator_clock) then

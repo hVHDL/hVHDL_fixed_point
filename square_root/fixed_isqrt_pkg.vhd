@@ -8,7 +8,8 @@ library ieee;
     use work.multiplier_pkg.all;
 
 package fixed_isqrt_pkg is
-    constant isqrt_radix : natural := int_word_length-2;
+    constant isqrt_integer_bits : natural := 2;
+    constant isqrt_radix : natural := int_word_length-isqrt_integer_bits;
 ------------------------------------------------------------------------
     type isqrt_record is record
         x_squared        : signed(int_word_length-1 downto 0);
