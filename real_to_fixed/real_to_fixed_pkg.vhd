@@ -21,9 +21,20 @@ package real_to_fixed_pkg is
         bit_width : natural;
         number_of_fractional_bits : integer)
     return signed;
+----------
+    function to_fixed (
+        number : real;
+        bit_width : natural;
+        number_of_fractional_bits : integer)
+    return std_logic_vector;
 ------------------------------------------------------------------------
     function to_real (
         number : signed;
+        number_of_fractional_bits : integer)
+    return real;
+----------
+    function to_real (
+        number : std_logic_vector;
         number_of_fractional_bits : integer)
     return real;
 ------------------------------------------------------------------------
@@ -79,6 +90,15 @@ package body real_to_fixed_pkg is
         return retval/2.0**number_of_fractional_bits;
     end to_real;
 ------------------------------------------------------------------------
+    function to_real (
+        number : std_logic_vector;
+        number_of_fractional_bits : integer)
+    return real
+    is 
+    begin
+        return to_real(signed(number), number_of_fractional_bits);
+    end to_real;
+------------------------------------------------------------------------
     function to_fixed
     (
         number : real;
@@ -109,5 +129,17 @@ package body real_to_fixed_pkg is
         
     end to_fixed;
 ------------------------------------------------------------------------
+    function to_fixed
+    (
+        number : real;
+        bit_width : natural;
+        number_of_fractional_bits : integer
+    )
+    return std_logic_vector is
+        variable retval : signed(bit_width-1 downto 0) := (others => '0');
+    begin
+        retval := to_fixed(number,bit_width, number_of_fractional_bits);
+        return std_logic_vector(retval);
+    end to_fixed;
 
 end package body real_to_fixed_pkg;
