@@ -273,10 +273,10 @@ package body multiplier_pkg is
     ---------------------------------------------------
         function "+"
         (
-            left : integer;
+            left : signed;
             right : std_logic 
         )
-        return integer
+        return signed
         is
         begin
             if left > 0 then
@@ -294,7 +294,7 @@ package body multiplier_pkg is
     begin
         bit_vector_slice := multiplier_output((multiplier_output'left-output_word_bit_width + radix) downto radix); 
         if radix > 0 then
-            bit_vector_slice := (bit_vector_slice) + multiplier_output(radix - 1);
+            bit_vector_slice := bit_vector_slice + multiplier_output(radix - 1);
         end if;
 
         return bit_vector_slice;
