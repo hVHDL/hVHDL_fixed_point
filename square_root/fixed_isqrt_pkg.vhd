@@ -13,6 +13,7 @@ package fixed_isqrt_pkg is
 ------------------------------------------------------------------------
     type isqrt_record is record
         x_squared        : signed(int_word_length-1 downto 0);
+        threehalfs       : signed(int_word_length-1 downto 0);
         x                : signed(int_word_length-1 downto 0);
         result           : signed(int_word_length-1 downto 0);
         sign_input_value : signed(int_word_length-1 downto 0);
@@ -85,6 +86,7 @@ package body fixed_isqrt_pkg is
          (others => '0') ,
          (others => '0') ,
          (others => '0') ,
+         (others => '0') ,
          7               ,
          7               ,
          false           ,
@@ -102,6 +104,7 @@ package body fixed_isqrt_pkg is
     begin
         CASE self.state_counter is
             WHEN 0 => multiply_and_increment_counter(multiplier,self.state_counter, self.x, self.x);
+                      self.threehalfs <= self.x + self.x/2;
             WHEN 1 => multiply_and_increment_counter(multiplier,self.state_counter, self.x, self.sign_input_value);
             WHEN others => --do nothign
         end CASE;
@@ -121,7 +124,7 @@ package body fixed_isqrt_pkg is
             WHEN 2 => 
                 if multiplier_is_ready(multiplier) then
                     mult_result                := get_multiplier_result(multiplier,isqrt_radix+1);
-                    inverse_square_root_result := self.x + self.x/2 - mult_result;
+                    inverse_square_root_result := self.threehalfs - mult_result;
                     self.x              <= inverse_square_root_result;
                     self.state_counter2 <= self.state_counter2 + 1;
                     if self.loop_value > 0 then
