@@ -2,10 +2,12 @@
 library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
+    use ieee.math_real.all;
 
     use work.fixed_point_scaling_pkg.all;
     use work.multiplier_pkg.all;
     use work.fixed_isqrt_pkg.all;
+    use work.real_to_fixed_pkg.all;
 
 package fixed_sqrt_pkg is
 ------------------------------------------------------------------------
@@ -16,16 +18,17 @@ package fixed_sqrt_pkg is
 
     type fixed_sqrt_record is record
         isqrt                 : isqrt_record;
+        post_scaling          : fixed;
         shift_width           : natural;
-        number_of_iterations  : natural range 1 to 7;
+        number_of_iterations  : natural range 0 to 7;
+        state_counter         : natural range 0 to 3;
         input                 : fixed;
         scaled_input          : fixed;
         pipeline              : std_logic_vector(2 downto 0);
-        multiply_isqrt_result : boolean;
         sqrt_is_ready         : boolean;
     end record;
 
-    constant init_sqrt : fixed_sqrt_record := (init_isqrt, 0, default_number_of_iterations, (others => '0'), (others => '0'), (others => '0'), false, false);
+    constant init_sqrt : fixed_sqrt_record := (init_isqrt, (others => '0'),0, default_number_of_iterations, 3, (others => '0'), (others => '0'), (others => '0'), false);
 ------------------------------------------------------------------------
     procedure create_sqrt (
         signal self       : inout fixed_sqrt_record;
@@ -58,23 +61,39 @@ package body fixed_sqrt_pkg is
         create_isqrt(self.isqrt, multiplier);
 
         self.pipeline     <= self.pipeline(self.pipeline'high-1 downto 0) & '0';
-        self.scaled_input <= scale_input(self.input);
-        self.shift_width  <= get_number_of_leading_pairs_of_zeros(self.input);
+        self.scaled_input <= shift_left(self.input, get_number_of_leading_zeros(self.input));
+        self.shift_width  <= get_number_of_leading_zeros(self.input);
+
+        if get_number_of_leading_zeros(self.input) mod 2 = 0 then
+            self.post_scaling <= to_fixed(1.0, isqrt_radix, used_word_length);
+        else
+            self.post_scaling <= to_fixed(sqrt(2.0), isqrt_radix, used_word_length);
+        end if;
 
         if self.pipeline(self.pipeline'left) = '1' then
             request_isqrt(self.isqrt, self.scaled_input, get_initial_guess(self.scaled_input), self.number_of_iterations);
         end if;
 
-        if isqrt_is_ready(self.isqrt) then
-            multiply(multiplier, get_isqrt_result(self.isqrt), self.input);
-            self.multiply_isqrt_result <= true;
-        end if;
-
         self.sqrt_is_ready <= false;
-        if multiplier_is_ready(multiplier) and self.multiply_isqrt_result then
-            self.multiply_isqrt_result <= false;
-            self.sqrt_is_ready <= true;
-        end if;
+        CASE self.state_counter is
+            WHEN 0 =>
+                if isqrt_is_ready(self.isqrt) then
+                    multiply(multiplier, get_isqrt_result(self.isqrt), self.post_scaling);
+                    self.state_counter <= self.state_counter + 1;
+                end if;
+            WHEN 1 =>
+                if multiplier_is_ready(multiplier) then
+                    multiply(multiplier, get_multiplier_result(multiplier, isqrt_radix), self.input);
+                    self.state_counter <= self.state_counter + 1;
+                end if;
+            WHEN 2 =>
+                if multiplier_is_ready(multiplier) then
+                    self.sqrt_is_ready <= true;
+                    self.state_counter <= self.state_counter + 1;
+                end if;
+            WHEN others => --do nothing
+        end CASE;
+
 
     end create_sqrt;
 ------------------------------------------------------------------------
@@ -108,6 +127,7 @@ package body fixed_sqrt_pkg is
     begin
         self.input <= number_to_be_squared;
         self.pipeline(0) <= '1';
+        self.state_counter <= 0;
         
     end request_sqrt;
 ------------------------------------------------------------------------

@@ -25,7 +25,7 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
     -- simulation specific signals ----
 
 ------------------------------------------------------------------------
-    constant start_value : real := 0.5;
+    constant start_value : real := 1.0;
     signal input_value : real := start_value;
     signal output_value : real := 0.0;
 
@@ -39,12 +39,12 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
 
     signal multiplier : multiplier_record := init_multiplier;
 
-    signal isqrt : isqrt_record := init_isqrt;
-    signal result_error : real := 0.0;
-    signal result : real := 1.0;
+    signal isqrt        : isqrt_record := init_isqrt;
+    signal result_error : real         := 0.0;
+    signal result       : real         := 1.0;
 
     signal max_result_error : real := 0.0;
-    signal min_error : real := 1.0;
+    signal min_error        : real := 1.0;
 
 begin
 
@@ -66,9 +66,9 @@ begin
 ------------------------------------------------------------------------
     stimulus : process(simulator_clock)
         variable hihii : sig;
-        constant stepsize : real := 1.5/512.0;
+        constant stepsize : real := 1.0/512.0;
 
-        constant number_of_nr_iterations : natural := 1;
+        constant number_of_nr_iterations : natural := 2;
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
