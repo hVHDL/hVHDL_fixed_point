@@ -96,9 +96,6 @@ mathlib26.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
 mathlib26.add_source_files(ROOT / "testbenches/real_to_fixed/real_to_fixed_tb.vhd")
 
 mathlib26.add_source_files(ROOT / "square_root/fixed_isqrt_pkg.vhd")
-mathlib26.add_source_files(ROOT / "testbenches/square_root/square_root_pkg.vhd")
-mathlib26.add_source_files(ROOT / "testbenches/square_root/tb_square_root.vhd")
-
 mathlib26.add_source_files(ROOT / "testbenches/square_root/fixed_inv_square_root_tb.vhd")
 
 sqrt_lib = VU.add_library("sqrt_lib")
@@ -109,7 +106,6 @@ sqrt_lib.add_source_files(ROOT / "multiplier/multiplier_pkg.vhd")
 
 sqrt_lib.add_source_files(ROOT / "fixed_point_scaling/fixed_point_scaling_pkg.vhd")
 
-sqrt_lib.add_source_files(ROOT / "testbenches/square_root/square_root_pkg.vhd")
 sqrt_lib.add_source_files(ROOT / "square_root/fixed_isqrt_pkg.vhd")
 sqrt_lib.add_source_files(ROOT / "square_root/fixed_sqrt_pkg.vhd")
 

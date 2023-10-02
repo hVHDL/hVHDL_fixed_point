@@ -85,7 +85,7 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
-        if run("maximum error was less than 1e-5") then
+        if run("maximum error was less than 1e-7") then
             check(max_sqrt_error < 1.0e-7);
         elsif run("square root was calculated") then
             check(sqrt_was_ready);
@@ -123,8 +123,8 @@ begin
             if sqrt_is_ready(fixed_sqrt) then
                 sqrt_was_ready <= true;
 
-                fix_result     <= get_multiplier_result(multiplier, output_radix);
                 fixed_Result   := get_multiplier_result(multiplier, output_radix);
+                fix_result     <= fixed_Result;
 
                 result         <= to_real(fixed_result, fix_to_real_radix);
                 sqrt_error     <= sqrt(input_values(result_counter)) - to_real(fixed_result, fix_to_real_radix);

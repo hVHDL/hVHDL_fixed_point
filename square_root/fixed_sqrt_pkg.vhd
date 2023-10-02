@@ -13,13 +13,13 @@ package fixed_sqrt_pkg is
     subtype fixed is signed(used_word_length-1 downto 0);
 
     type fixed_sqrt_record is record
-        isqrt        : isqrt_record;
-        shift_width  : natural;
-        input        : fixed;
-        scaled_input : fixed;
-        pipeline     : std_logic_vector(2 downto 0);
+        isqrt                 : isqrt_record;
+        shift_width           : natural;
+        input                 : fixed;
+        scaled_input          : fixed;
+        pipeline              : std_logic_vector(2 downto 0);
         multiply_isqrt_result : boolean;
-        sqrt_is_ready : boolean;
+        sqrt_is_ready         : boolean;
     end record;
 
     constant init_sqrt : fixed_sqrt_record := (init_isqrt, 0 , (others => '0'), (others => '0'), (others => '0'), false, false);

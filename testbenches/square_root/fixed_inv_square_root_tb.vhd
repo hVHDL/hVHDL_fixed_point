@@ -6,7 +6,6 @@ LIBRARY ieee  ;
 library vunit_lib;
 context vunit_lib.vunit_context;
 
-    use work.square_root_pkg.all;
     use work.real_to_fixed_pkg.all;
     use work.multiplier_pkg.all;
     use work.fixed_isqrt_pkg.all;
