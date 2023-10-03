@@ -63,8 +63,6 @@ architecture vunit_simulation of sqrt_tb is
 
     signal sqrt_was_calculated : boolean := false;
 
-    signal test_scaling : boolean := true;
-
     signal fixed_sqrt : fixed_sqrt_record := init_sqrt;
     signal multiplier : multiplier_record := init_multiplier;
 
@@ -105,7 +103,7 @@ begin
             variable retval : natural;
         begin
             
-            return int_word_length-1 - fixed_sqrt.shift_width;
+            return int_word_length-1 - fixed_sqrt.shift_width/2;
             
         end output_radix;
 

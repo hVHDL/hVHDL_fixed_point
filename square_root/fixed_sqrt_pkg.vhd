@@ -61,13 +61,13 @@ package body fixed_sqrt_pkg is
         create_isqrt(self.isqrt, multiplier);
 
         self.pipeline     <= self.pipeline(self.pipeline'high-1 downto 0) & '0';
-        self.scaled_input <= shift_left(self.input, get_number_of_leading_zeros(self.input));
+        self.scaled_input <= shift_left(self.input, get_number_of_leading_zeros(self.input)-1);
         self.shift_width  <= get_number_of_leading_zeros(self.input);
 
         if get_number_of_leading_zeros(self.input) mod 2 = 0 then
-            self.post_scaling <= to_fixed(1.0, isqrt_radix, used_word_length);
+            self.post_scaling <= to_fixed(1.0/sqrt(2.0), used_word_length, isqrt_radix);
         else
-            self.post_scaling <= to_fixed(sqrt(2.0), isqrt_radix, used_word_length);
+            self.post_scaling <= to_fixed(1.0, used_word_length, isqrt_radix);
         end if;
 
         if self.pipeline(self.pipeline'left) = '1' then
@@ -78,12 +78,12 @@ package body fixed_sqrt_pkg is
         CASE self.state_counter is
             WHEN 0 =>
                 if isqrt_is_ready(self.isqrt) then
-                    multiply(multiplier, get_isqrt_result(self.isqrt), self.post_scaling);
+                    multiply(multiplier, get_isqrt_result(self.isqrt), self.input);
                     self.state_counter <= self.state_counter + 1;
                 end if;
             WHEN 1 =>
                 if multiplier_is_ready(multiplier) then
-                    multiply(multiplier, get_multiplier_result(multiplier, isqrt_radix), self.input);
+                    multiply(multiplier, get_multiplier_result(multiplier, isqrt_radix), self.post_scaling);
                     self.state_counter <= self.state_counter + 1;
                 end if;
             WHEN 2 =>
@@ -93,8 +93,6 @@ package body fixed_sqrt_pkg is
                 end if;
             WHEN others => --do nothing
         end CASE;
-
-
     end create_sqrt;
 ------------------------------------------------------------------------
     function get_sqrt_result
@@ -106,7 +104,7 @@ package body fixed_sqrt_pkg is
     return signed 
     is
     begin
-        return get_multiplier_result(multiplier, int_word_length-2);
+        return get_multiplier_result(multiplier, radix);
     end get_sqrt_result;
 ------------------------------------------------------------------------
     function sqrt_is_ready
@@ -125,8 +123,8 @@ package body fixed_sqrt_pkg is
         number_to_be_squared : fixed
     ) is
     begin
-        self.input <= number_to_be_squared;
-        self.pipeline(0) <= '1';
+        self.input         <= number_to_be_squared;
+        self.pipeline(0)   <= '1';
         self.state_counter <= 0;
         
     end request_sqrt;
