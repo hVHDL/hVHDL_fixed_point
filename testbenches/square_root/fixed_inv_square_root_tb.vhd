@@ -39,7 +39,7 @@ architecture vunit_simulation of fixed_inv_square_root_tb is
 
     signal multiplier : multiplier_record := init_multiplier;
 
-    signal isqrt        : isqrt_record := init_isqrt;
+    signal self        : isqrt_record := init_isqrt;
     signal result_error : real         := 0.0;
     signal result       : real         := 1.0;
 
@@ -74,37 +74,35 @@ begin
             simulation_counter <= simulation_counter + 1;
 
             create_multiplier(multiplier);
-            create_isqrt(isqrt, multiplier);
+            create_isqrt(self, multiplier);
 
-            CASE simulation_counter is
-                WHEN 10 =>
+            if simulation_counter = 10 then
+                request_isqrt(
+                    self            => self,
+                    input_number    => to_fixed(input_value, sign_input_value'length, isqrt_radix),
+                    guess           => get_initial_guess(to_fixed(input_value, sign_input_value'length, isqrt_radix)),
+                    number_of_loops => number_of_nr_iterations);
+            end if;
 
-                    request_isqrt(self            => isqrt,
-                    input_number                  => to_fixed(input_value, sign_input_value'length, isqrt_radix),
-                                  guess           => get_initial_guess(to_fixed(input_value, sign_input_value'length, isqrt_radix)),
-                                  number_of_loops => number_of_nr_iterations);
-
-                WHEN others => --do nothing
-            end CASE;
-
-            if isqrt_is_ready(isqrt) then
+            if isqrt_is_ready(self) then
                 if input_value < 2.0 then
                     input_value <= input_value + stepsize;
                     hihii := to_fixed(input_value + stepsize, sign_input_value'length, isqrt_radix);
 
-                    request_isqrt(self            => isqrt,
-                    input_number                  => to_fixed(input_value + stepsize, sign_input_value'length, isqrt_radix),
-                                  guess           => get_initial_guess(hihii),
-                                  number_of_loops => number_of_nr_iterations);
+                    request_isqrt(
+                        self            => self,
+                        input_number    => to_fixed(input_value + stepsize, sign_input_value'length, isqrt_radix),
+                        guess           => get_initial_guess(hihii),
+                        number_of_loops => number_of_nr_iterations);
 
                     square_root_was_requested <= true;
                 end if;
             end if;
 
-            if isqrt_is_ready(isqrt) then
-                result_error <= abs(1.0/sqrt(input_value) - to_real(get_isqrt_result(isqrt), isqrt_radix));
+            if isqrt_is_ready(self) then
+                result_error <= abs(1.0/sqrt(input_value) - to_real(get_isqrt_result(self), isqrt_radix));
                 result       <= 1.0/sqrt(input_value)*2.0**(isqrt_radix);
-                fixed_result <= get_isqrt_result(isqrt);
+                fixed_result <= get_isqrt_result(self);
             end if;
 
             if max_result_error < abs(result_error) then
