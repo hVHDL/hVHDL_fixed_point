@@ -27,7 +27,7 @@ architecture vunit_simulation of sqrt_tb is
     -- simulation specific signals ----
 
     constant number_of_integer_bits : natural := 8;
-    constant fix_to_real_radix      : natural := int_word_length - isqrt_integer_bits - number_of_integer_bits/2;
+    constant fix_to_real_radix      : natural := isqrt_radix - number_of_integer_bits/2;
     constant used_radix             : natural := used_word_length-number_of_integer_bits;
 
     type real_array is array (natural range <>) of real;
