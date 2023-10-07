@@ -46,7 +46,7 @@ package fixed_isqrt_pkg is
     function get_isqrt_result ( self : isqrt_record)
         return signed;
 ------------------------------------------------------------------------
-    constant table_pow2 : natural := 4;
+    constant table_pow2 : natural := 7;
     constant number_of_entries : natural := 2**table_pow2;
     type testarray is array (integer range 0 to number_of_entries-1) of real;
 
@@ -222,7 +222,7 @@ package body fixed_isqrt_pkg is
     end get_signarray;
 
     ------------------------------------------------------------------------
-    constant testsignarray : signarray := get_signarray;
+    constant isqrt_initial_value_array : signarray := get_signarray;
 
     function get_initial_guess
     (
@@ -235,10 +235,8 @@ package body fixed_isqrt_pkg is
     begin
         table_index := to_integer('0' & number(number'high-2 downto number'high-1-table_pow2));
 
-        if number(number'high-1) = '1' then
-            retval := testsignarray(table_index);
-            -- retval := to_fixed(0.826, sig'length, isqrt_radix);
-        end if;
+        retval := isqrt_initial_value_array(table_index);
+        -- retval := to_fixed(1.0/sqrt(1.465), sig'length, isqrt_radix);
 
         return retval;
         

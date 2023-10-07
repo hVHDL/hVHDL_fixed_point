@@ -39,13 +39,14 @@ package fixed_sqrt_pkg is
 ------------------------------------------------------------------------
     function get_sqrt_result (
         self : fixed_sqrt_record;
-        multiplier : multiplier_record;
-        radix : natural)
+        multiplier : multiplier_record)
     return signed;
 ------------------------------------------------------------------------
     procedure request_sqrt (
         signal self : inout fixed_sqrt_record;
         number_to_be_squared : fixed);
+------------------------------------------------------------------------
+    function output_radix(self : fixed_sqrt_record) return natural;
 ------------------------------------------------------------------------
 
 end package fixed_sqrt_pkg;
@@ -64,7 +65,7 @@ package body fixed_sqrt_pkg is
         self.scaled_input <= shift_left(self.input, get_number_of_leading_zeros(self.input)-1);
         self.shift_width  <= get_number_of_leading_zeros(self.input);
 
-        if get_number_of_leading_zeros(self.input) mod 2 = 0 then
+        if self.shift_width mod 2 = 0 then
             self.post_scaling <= to_fixed(1.0/sqrt(2.0), used_word_length, isqrt_radix);
         else
             self.post_scaling <= to_fixed(1.0, used_word_length, isqrt_radix);
@@ -98,13 +99,12 @@ package body fixed_sqrt_pkg is
     function get_sqrt_result
     (
         self : fixed_sqrt_record;
-        multiplier : multiplier_record;
-        radix : natural
+        multiplier : multiplier_record
     )
     return signed 
     is
     begin
-        return get_multiplier_result(multiplier, radix);
+        return get_multiplier_result(multiplier, output_radix(self));
     end get_sqrt_result;
 ------------------------------------------------------------------------
     function sqrt_is_ready
@@ -129,4 +129,12 @@ package body fixed_sqrt_pkg is
         
     end request_sqrt;
 ------------------------------------------------------------------------
+    function output_radix(self : fixed_sqrt_record) return natural
+    is
+        variable retval : natural;
+    begin
+        
+        return int_word_length-1 - self.shift_width/2;
+        
+    end output_radix;
 end package body fixed_sqrt_pkg;

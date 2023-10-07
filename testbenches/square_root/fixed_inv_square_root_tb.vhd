@@ -52,7 +52,7 @@ begin
     simtime : process
     begin
         test_runner_setup(runner, runner_cfg);
-        wait for simtime_in_clocks*clock_per;
+        wait until (input_value >= 2.0);
         if run("square root was requested") then
             check(square_root_was_requested);
         elsif run("max error was less than 0.05") then
@@ -66,9 +66,9 @@ begin
 ------------------------------------------------------------------------
     stimulus : process(simulator_clock)
         variable hihii : sig;
-        constant stepsize : real := 1.0/512.0;
+        constant stepsize : real := 1.0/2048.0;
 
-        constant number_of_nr_iterations : natural := 2;
+        constant number_of_nr_iterations : natural := 1;
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;

@@ -63,7 +63,7 @@ architecture vunit_simulation of sqrt_tb is
 
     signal sqrt_was_calculated : boolean := false;
 
-    signal fixed_sqrt : fixed_sqrt_record := init_sqrt;
+    signal self : fixed_sqrt_record := init_sqrt;
     signal multiplier : multiplier_record := init_multiplier;
 
     signal max_error : real := 0.0;
@@ -98,30 +98,21 @@ begin
     stimulus : process(simulator_clock)
         variable fixed_Result : signed(int_word_length-1 downto 0);
 
-        impure function output_radix return natural
-        is
-            variable retval : natural;
-        begin
-            
-            return int_word_length-1 - fixed_sqrt.shift_width/2;
-            
-        end output_radix;
-
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
             create_multiplier(multiplier);
-            create_sqrt(fixed_sqrt,multiplier);
+            create_sqrt(self,multiplier);
 
             if simulation_counter = 10 then
-                request_sqrt(fixed_sqrt, fixed_input_values(0));
+                request_sqrt(self, fixed_input_values(0));
             end if;
 
-            if sqrt_is_ready(fixed_sqrt) then
+            if sqrt_is_ready(self) then
                 sqrt_was_ready <= true;
 
-                fixed_Result   := get_multiplier_result(multiplier, output_radix);
+                fixed_Result   := get_sqrt_result(self, multiplier);
                 fix_result     <= fixed_Result;
 
                 result         <= to_real(fixed_result, fix_to_real_radix);
@@ -130,7 +121,7 @@ begin
 
                 if result_counter < input_values'high then
                     result_counter <= result_counter + 1;
-                    request_sqrt(fixed_sqrt, fixed_input_values(result_counter + 1));
+                    request_sqrt(self, fixed_input_values(result_counter + 1));
                 end if;
             end if;
             if abs(sqrt_error) > max_sqrt_error then
