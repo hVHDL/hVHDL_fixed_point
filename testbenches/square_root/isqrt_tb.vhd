@@ -27,8 +27,8 @@ architecture vunit_simulation of sqrt_tb is
     -- simulation specific signals ----
 
     constant number_of_integer_bits : natural := 8;
-    constant fix_to_real_radix      : natural := isqrt_radix - number_of_integer_bits/2;
-    constant used_radix             : natural := used_word_length-number_of_integer_bits;
+    constant used_radix             : natural := used_word_length   - number_of_integer_bits;
+    constant fix_to_real_radix      : natural := used_word_length-2 - number_of_integer_bits/2;
 
     type real_array is array (natural range <>) of real;
     type sign_array is array (natural range <>) of signed(used_word_length-1 downto 0);
@@ -110,10 +110,10 @@ begin
             if sqrt_is_ready(self) then
                 sqrt_was_ready <= true;
 
-                fix_result     <= get_sqrt_result(self, multiplier);
+                fix_result     <= get_sqrt_result(self, multiplier, used_radix);
 
-                result         <= to_real(get_sqrt_result(self, multiplier), fix_to_real_radix);
-                sqrt_error     <= sqrt(input_values(result_counter)) - to_real(get_sqrt_result(self, multiplier), fix_to_real_radix);
+                result         <= to_real(get_sqrt_result(self, multiplier, used_radix), fix_to_real_radix);
+                sqrt_error     <= sqrt(input_values(result_counter)) - to_real(get_sqrt_result(self, multiplier, used_radix), fix_to_real_radix);
 
 
                 if result_counter < input_values'high then
