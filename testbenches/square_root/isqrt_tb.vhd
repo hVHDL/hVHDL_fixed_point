@@ -96,8 +96,6 @@ begin
 ------------------------------------------------------------------------
 
     stimulus : process(simulator_clock)
-        variable fixed_Result : signed(int_word_length-1 downto 0);
-
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
@@ -112,11 +110,10 @@ begin
             if sqrt_is_ready(self) then
                 sqrt_was_ready <= true;
 
-                fixed_Result   := get_sqrt_result(self, multiplier);
-                fix_result     <= fixed_Result;
+                fix_result     <= get_sqrt_result(self, multiplier);
 
-                result         <= to_real(fixed_result, fix_to_real_radix);
-                sqrt_error     <= sqrt(input_values(result_counter)) - to_real(fixed_result, fix_to_real_radix);
+                result         <= to_real(get_sqrt_result(self, multiplier), fix_to_real_radix);
+                sqrt_error     <= sqrt(input_values(result_counter)) - to_real(get_sqrt_result(self, multiplier), fix_to_real_radix);
 
 
                 if result_counter < input_values'high then
