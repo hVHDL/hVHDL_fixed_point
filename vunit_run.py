@@ -79,6 +79,11 @@ mathlib.add_source_files(ROOT / "testbenches/ab_to_dq_simulation/tb_ab_to_dq_tra
 mathlib.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division.vhd")
 mathlib.add_source_files(ROOT / "testbenches/division_simulation/tb_divider_internal_pkg.vhd")
 
+mathlib.add_source_files(ROOT / "fixed_point_scaling/fixed_point_scaling_pkg.vhd")
+mathlib.add_source_files(ROOT / "square_root/fixed_isqrt_pkg.vhd")
+mathlib.add_source_files(ROOT / "square_root/fixed_sqrt_pkg.vhd")
+mathlib.add_source_files(ROOT / "testbenches/square_root/test_square_root_radix_tb.vhd")
+
 mathlib22.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier.vhd")
 mathlib22.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division.vhd")
 
@@ -115,11 +120,11 @@ sqrt_lib.add_source_files(ROOT / "testbenches/square_root/isqrt_scaling_tb.vhd")
 
 sqrt_lib.add_source_files(ROOT / "testbenches/square_root/initia_values_tb.vhd")
 sqrt_lib.add_source_files(ROOT / "testbenches/square_root/isqrt_tb.vhd")
+sqrt_lib.add_source_files(ROOT / "testbenches/square_root/test_square_root_radix_tb.vhd")
 
 # vhdl2008_math_library = VU.add_library("vhdl2008_math_library")
 # vhdl2008_math_library.add_source_files(ROOT / "testbenches/multiplier_simulation/multiplier_base_pkg_tb.vhd")
 
-test = VU.add_library("test")
 sqrt_lib.add_source_files(ROOT / "testbenches/division_simulation/goldsmith_tb.vhd")
 
 

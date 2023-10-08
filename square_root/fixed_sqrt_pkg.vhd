@@ -38,10 +38,17 @@ package fixed_sqrt_pkg is
         return boolean;
 ------------------------------------------------------------------------
     function get_sqrt_result (
-        self : fixed_sqrt_record;
-        multiplier : multiplier_record;
-        radix      : natural)
+        self         : fixed_sqrt_record;
+        multiplier   : multiplier_record;
+        input_radix  : natural;
+        target_radix : natural)
     return signed;
+
+    function get_sqrt_result (
+        self         : fixed_sqrt_record;
+        multiplier   : multiplier_record;
+        input_radix  : natural)
+    return signed ;
 ------------------------------------------------------------------------
     procedure request_sqrt (
         signal self : inout fixed_sqrt_record;
@@ -97,14 +104,27 @@ package body fixed_sqrt_pkg is
 ------------------------------------------------------------------------
     function get_sqrt_result
     (
-        self       : fixed_sqrt_record;
-        multiplier : multiplier_record;
-        radix      : natural
+        self         : fixed_sqrt_record;
+        multiplier   : multiplier_record;
+        input_radix  : natural;
+        target_radix : natural
     )
     return signed 
     is
     begin
-        return get_multiplier_result(multiplier, int_word_length-1 - self.shift_width/2);
+        return get_multiplier_result(multiplier, target_radix);
+    end get_sqrt_result;
+
+    function get_sqrt_result
+    (
+        self         : fixed_sqrt_record;
+        multiplier   : multiplier_record;
+        input_radix  : natural
+    )
+    return signed 
+    is
+    begin
+        return get_multiplier_result(multiplier, (int_word_length-1 - self.shift_width/2) - 0);
     end get_sqrt_result;
 ------------------------------------------------------------------------
     function sqrt_is_ready
