@@ -9,7 +9,6 @@ context vunit_lib.vunit_context;
     use work.real_to_fixed_pkg.all;
     use work.fixed_point_scaling_pkg.all;
     use work.multiplier_pkg.all;
-    use work.fixed_isqrt_pkg.all;
     use work.fixed_sqrt_pkg.all;
 
 entity sqrt_tb is
