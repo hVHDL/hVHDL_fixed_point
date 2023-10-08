@@ -107,22 +107,22 @@ begin
             end if;
 
             if sqrt_is_ready(self) then
-                sqrt_was_ready <= true;
 
                 fix_result     <= get_sqrt_result(self, multiplier, used_radix);
-
                 result         <= to_real(get_sqrt_result(self, multiplier, used_radix), fix_to_real_radix);
                 sqrt_error     <= sqrt(input_values(result_counter)) - to_real(get_sqrt_result(self, multiplier, used_radix), fix_to_real_radix);
-
 
                 if result_counter < input_values'high then
                     result_counter <= result_counter + 1;
                     request_sqrt(self, fixed_input_values(result_counter + 1));
                 end if;
+
             end if;
             if abs(sqrt_error) > max_sqrt_error then
                 max_sqrt_error <= abs(sqrt_error);
             end if;
+
+            sqrt_was_ready <= sqrt_was_ready or sqrt_is_ready(self);
 
         end if; -- rising_edge
     end process stimulus;	
