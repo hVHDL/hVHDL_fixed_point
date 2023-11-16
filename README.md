@@ -18,3 +18,7 @@ https://hardwaredescriptions.com/conquer-the-divide/
 Sine and cosine :
 
 https://hardwaredescriptions.com/category/vhdl-integer-arithmetic/sine-and-cosine/
+
+Square root :
+
+https://www.embeddedrelated.com/showarticle/1558.php
