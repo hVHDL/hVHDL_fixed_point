@@ -67,8 +67,6 @@ mathlib26.add_source_files(ROOT / "testbenches/division_simulation/division_tb.v
 
 mathlib26.add_source_files(ROOT / "first_order_filter/first_order_filter_pkg.vhd")
 
-mathlib26.add_source_files(ROOT / "example" / "*.vhd")
-
 mathlib.add_source_files(ROOT / "testbenches/pi_controller/tb_pi_control.vhd")
 mathlib.add_source_files(ROOT / "testbenches/pi_controller/pi_with_feedforward_tb.vhd")
 
