@@ -6,6 +6,9 @@ library ieee;
 
 package multiplier_pkg is
 
+    alias int_word_length is number_of_input_bits;
+    subtype int is work.multiplier_base_types_pkg.int;
+
     subtype s_int     is signed(number_of_input_bits-1 downto 0);
 
     type input_array  is array (integer range number_of_input_registers-1 downto 0) of s_int;
@@ -16,9 +19,6 @@ package multiplier_pkg is
 
     constant output_word_bit_width      : natural := init_input_array(0)'length;
     constant output_left_index          : natural := output_word_bit_width-1;
-
-    alias int_word_length is number_of_input_bits;
-    alias int is int;
 
     constant number_of_pipeline_cycles : integer := number_of_input_registers + number_of_output_registers-1;
 
