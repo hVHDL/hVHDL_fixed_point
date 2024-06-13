@@ -56,7 +56,7 @@ begin
             if multiplier_is_ready(multiplier) then
                 result_counter <= result_counter + 1;
                 CASE result_counter is
-                    /* WHEN 0 => check_equal(5.0*3.0   , to_real(get_multiplier_result(self => multiplier , input_a_radix => 6, input_b_radix => 12, target_radix => 11) , 11) , max_diff => 0.001); */
+                    WHEN 0 => check_equal(5.0*3.0   , to_real(get_multiplier_result(self => multiplier , input_a_radix => 6, input_b_radix => 12, target_radix => 11) , 11) , max_diff => 0.001);
                     WHEN 1 => check_equal(-5.0*3.0  , to_real(get_multiplier_result(multiplier , 11,17,21) , 21) , max_diff => 0.001);
                     WHEN 2 => check_equal(0.7*33.0  , to_real(get_multiplier_result(multiplier , 14,12,11) , 11) , max_diff => 0.001);
                     WHEN 3 => check_equal(-5.0*(-3.0) , to_real(get_multiplier_result(multiplier , 20,20,20) , 20) , max_diff => 0.001);
