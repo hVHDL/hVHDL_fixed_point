@@ -73,6 +73,14 @@ package multiplier_pkg is
         input_b_radix : natural;
         target_radix : natural)
     return signed;
+
+    function get_int_multiplier_result
+    (
+        self : multiplier_record;
+        input_a_radix : natural;
+        input_b_radix : natural;
+        target_radix : natural)
+    return integer;
 ------------------------------------------------------------------------
     function multiplier_is_ready (
         multiplier : multiplier_record)
@@ -345,6 +353,20 @@ package body multiplier_pkg is
         return get_multiplier_result(self, input_a_radix + input_b_radix - target_radix);
         
     end get_multiplier_result;
+------------------------------------------------------------------------ 
+    function get_int_multiplier_result
+    (
+        self : multiplier_record;
+        input_a_radix : natural;
+        input_b_radix : natural;
+        target_radix : natural
+    )
+    return integer
+    is
+    begin
+        return to_integer(get_multiplier_result(self, input_a_radix + input_b_radix - target_radix));
+        
+    end get_int_multiplier_result;
 ------------------------------------------------------------------------ 
     function multiplier_is_not_busy
     (
