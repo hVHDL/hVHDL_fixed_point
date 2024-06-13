@@ -60,6 +60,9 @@ begin
                 result      <= get_division_result(multiplier, divider, radix);
                 real_result <= to_real(get_division_result(multiplier, divider, radix), radix);
             end if;
+            if division_is_ready(multiplier, divider) then
+                check_equal(0.5/0.25, to_real(get_division_result(multiplier, divider, radix), radix), max_diff => 0.001);
+            end if;
 
         end if; -- rising_edge
     end process stimulus;	
