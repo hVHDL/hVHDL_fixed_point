@@ -66,6 +66,13 @@ package multiplier_pkg is
         multiplier : multiplier_record;
         radix : natural range 0 to output_word_bit_width) 
     return signed;
+
+    function get_multiplier_result (
+        self : multiplier_record;
+        input_a_radix : natural;
+        input_b_radix : natural;
+        target_radix : natural)
+    return signed;
 ------------------------------------------------------------------------
     function multiplier_is_ready (
         multiplier : multiplier_record)
@@ -324,6 +331,20 @@ package body multiplier_pkg is
         return get_multiplier_result(multiplier.multiplier_result(multiplier.multiplier_result'left), radix);
         
     end get_multiplier_result;
+------------------------------------------------------------------------
+    function get_multiplier_result
+    (
+        self : multiplier_record;
+        input_a_radix : natural;
+        input_b_radix : natural;
+        target_radix : natural
+    )
+    return signed
+    is
+    begin
+        return get_multiplier_result(self, input_a_radix + input_b_radix - target_radix);
+        
+    end get_multiplier_result;
 ------------------------------------------------------------------------ 
     function multiplier_is_not_busy
     (
@@ -430,5 +451,6 @@ package body multiplier_pkg is
     begin
         return int_word_length-number-1;
     end set_number_if_integer_bits;
+------------------------------------------------------------------------
 
 end package body multiplier_pkg; 
