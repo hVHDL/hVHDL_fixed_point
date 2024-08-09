@@ -3,6 +3,8 @@ library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
+    use ieee.fixed_pkg.all;
+
 package multiplier_generic_pkg is
     generic(g_number_of_input_bits : natural;
             g_input_registers    : natural;
@@ -30,6 +32,9 @@ package multiplier_generic_pkg is
 
     constant init_multiplier : multiplier_record := (init_input_array, init_input_array, init_output_array, (others => '0'));
 
+    function to_signed ( left : unresolved_sfixed)
+        return signed;
+
 ------------------------------------------------------------------------
     procedure create_multiplier (
         signal self : inout multiplier_record);
@@ -49,6 +54,13 @@ package multiplier_generic_pkg is
         input_a_radix : natural;
         input_b_radix : natural;
         target_radix : natural)
+    return signed;
+
+    function get_multiplier_result (
+        self : multiplier_record;
+        input_a : sfixed;
+        input_b : sfixed;
+        target : sfixed)
     return signed;
 
     /* function get_multiplier_result ( */
@@ -104,6 +116,30 @@ package multiplier_generic_pkg is
 end package multiplier_generic_pkg;
 
 package body multiplier_generic_pkg is
+
+------------------------------------------------------------------------
+    function to_signed
+    (
+        left : unresolved_sfixed
+    )
+    return signed 
+    is
+        variable retval : mpy_signed := (others => '0');
+
+    begin
+        if left'length > retval'length then
+            for i in retval'range loop
+                retval(i) := left(left'high - (retval'high-i));
+            end loop;
+        else
+            for i in left'length-1 downto 0 loop
+                retval(i) := left(left'high - (left'length-1-i));
+            end loop;
+        end if;
+
+        return retval;
+
+    end to_signed;
 
 ------------------------------------------------------------------------
     procedure create_multiplier
@@ -193,6 +229,24 @@ package body multiplier_generic_pkg is
     is
     begin
         return get_multiplier_result(self.multiplier_result(self.multiplier_result'left), input_a_radix + input_b_radix - target_radix);
+        
+    end get_multiplier_result;
+
+------------------------------------------------------------------------
+    function get_multiplier_result
+    (
+        self    : multiplier_record;
+        input_a : sfixed;
+        input_b : sfixed;
+        target  : sfixed
+    )
+    return signed
+    is
+        variable signed_result : signed(multiplier_word_length-1 downto 0) := (others => '0');
+    begin
+        signed_result := get_multiplier_result(self.multiplier_result(self.multiplier_result'left), abs(input_a'low) + abs(input_b'low) - abs(target'low));
+        /* return to_sfixed(signed_result,target); */
+        return signed_result;
         
     end get_multiplier_result;
 ------------------------------------------------------------------------
