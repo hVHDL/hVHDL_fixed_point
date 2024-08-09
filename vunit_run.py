@@ -30,7 +30,6 @@ fixed_point_library.add_source_files(ROOT / "testbenches/multiply_add/fixed_poin
 fixed_point_library.add_source_files(ROOT / "testbenches/multiply_add/multiply_add_tb.vhd")
 
 mathlib = VU.add_library("math_library_18x18")
-# mathlib.add_source_files(ROOT / "testbenches/adder/adder_tb.vhd")
 
 mathlib.add_source_files(ROOT / "multiplier/configuration/multiply_with_2_input_and_output_registers_pkg.vhd")
 mathlib.add_source_files(ROOT / "multiplier" /"multiplier_base_types_18bit_pkg.vhd") 
@@ -59,7 +58,6 @@ mathlib26.add_source_files(ROOT / "multiplier" /"multiplier_base_types_26bit_pkg
 mathlib26.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
 mathlib26.add_source_files(ROOT / "division" / "*.vhd") 
 
-# mathlib26.add_source_files(ROOT / "testbenches/division_simulation/division_tb.vhd")
 
 mathlib26.add_source_files(ROOT / "first_order_filter/first_order_filter_pkg.vhd")
 
@@ -71,7 +69,6 @@ mathlib.add_source_files(ROOT / "testbenches/multiplier_simulation/tb_multiplier
 mathlib.add_source_files(ROOT / "testbenches/abc_to_ab_transform_simulation/tb_abc_to_ab_transform.vhd")
 mathlib.add_source_files(ROOT / "testbenches/ab_to_dq_simulation/tb_ab_to_dq_transforms.vhd")
 mathlib.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division.vhd")
-# mathlib.add_source_files(ROOT / "testbenches/division_simulation/tb_divider_internal_pkg.vhd")
 
 mathlib.add_source_files(ROOT / "fixed_point_scaling/fixed_point_scaling_pkg.vhd")
 mathlib.add_source_files(ROOT / "square_root/fixed_isqrt_pkg.vhd")
@@ -86,13 +83,10 @@ mathlib26.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_di
 mathlib26.add_source_files(ROOT / "testbenches/first_order_filter_simulation/tb_first_order_filter.vhd")
 
 mathlib.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
-# mathlib.add_source_files(ROOT / "testbenches/real_to_fixed/real_to_fixed_tb.vhd")
 
 mathlib22.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
-# mathlib22.add_source_files(ROOT / "testbenches/real_to_fixed/real_to_fixed_tb.vhd")
 
 mathlib26.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
-# mathlib26.add_source_files(ROOT / "testbenches/real_to_fixed/real_to_fixed_tb.vhd")
 
 mathlib26.add_source_files(ROOT / "square_root/fixed_isqrt_pkg.vhd")
 mathlib26.add_source_files(ROOT / "testbenches/square_root/fixed_inv_square_root_tb.vhd")
@@ -110,7 +104,6 @@ sqrt_lib.add_source_files(ROOT / "fixed_point_scaling/fixed_point_scaling_pkg.vh
 sqrt_lib.add_source_files(ROOT / "square_root/fixed_isqrt_pkg.vhd")
 sqrt_lib.add_source_files(ROOT / "square_root/fixed_sqrt_pkg.vhd")
 
-# sqrt_lib.add_source_files(ROOT / "testbenches/square_root/fixed_inv_square_root_tb.vhd")
 sqrt_lib.add_source_files(ROOT / "testbenches/fixed_point_scaling/fixed_point_scaling_tb.vhd")
 sqrt_lib.add_source_files(ROOT / "testbenches/square_root/isqrt_scaling_tb.vhd")
 
@@ -118,11 +111,19 @@ sqrt_lib.add_source_files(ROOT / "testbenches/square_root/initia_values_tb.vhd")
 sqrt_lib.add_source_files(ROOT / "testbenches/square_root/isqrt_tb.vhd")
 sqrt_lib.add_source_files(ROOT / "testbenches/square_root/test_square_root_radix_tb.vhd")
 
-# sqrt_lib.add_source_files(ROOT / "testbenches/division_simulation/goldsmith_tb.vhd")
-
 multiplier_generic_lib = VU.add_library("multiplier_generic_lib")
 multiplier_generic_lib.add_source_files(ROOT / "multiplier/multiplier_generic_pkg.vhd")
 
 multiplier_generic_lib.add_source_files(ROOT / "testbenches/multiplier_simulation/multiplier_generic_tb.vhd")
+
+# these use initial values of signals as initial values of other signals, fix them
+# mathlib.add_source_files(ROOT / "testbenches/adder/adder_tb.vhd")
+# mathlib26.add_source_files(ROOT / "testbenches/division_simulation/division_tb.vhd")
+# mathlib.add_source_files(ROOT / "testbenches/division_simulation/tb_divider_internal_pkg.vhd")
+# mathlib.add_source_files(ROOT / "testbenches/real_to_fixed/real_to_fixed_tb.vhd")
+# mathlib22.add_source_files(ROOT / "testbenches/real_to_fixed/real_to_fixed_tb.vhd")
+# mathlib26.add_source_files(ROOT / "testbenches/real_to_fixed/real_to_fixed_tb.vhd")
+# sqrt_lib.add_source_files(ROOT / "testbenches/square_root/fixed_inv_square_root_tb.vhd")
+# sqrt_lib.add_source_files(ROOT / "testbenches/division_simulation/goldsmith_tb.vhd")
 
 VU.main()

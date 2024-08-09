@@ -2,6 +2,7 @@ LIBRARY ieee  ;
     USE ieee.NUMERIC_STD.all  ; 
     USE ieee.std_logic_1164.all  ; 
     use ieee.math_real.all;
+    use ieee.fixed_pkg.all;
 
 library vunit_lib;
 context vunit_lib.vunit_context;
@@ -12,7 +13,7 @@ end;
 
 architecture vunit_simulation of multiplier_generic_tb is
 
-    package multiplier_pkg is new work.multiplier_generic_pkg generic map(number_of_input_bits => 18, g_input_registers => 1, g_output_registers => 1);
+    package multiplier_pkg is new work.multiplier_generic_pkg generic map(24, 2, 2);
     use multiplier_pkg.all;
 
     constant clock_period      : time    := 1 ns;
@@ -22,6 +23,7 @@ architecture vunit_simulation of multiplier_generic_tb is
     signal simulation_counter  : natural   := 0;
     -----------------------------------
     -- simulation specific signals ----
+    signal multiplier : multiplier_record := init_multiplier;
 
 begin
 
@@ -42,6 +44,7 @@ begin
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
+            create_multiplier(multiplier);
 
 
         end if; -- rising_edge
