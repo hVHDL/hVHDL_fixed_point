@@ -9,8 +9,9 @@ package multiplier_generic_pkg is
             g_output_registers   : natural);
 
     subtype int is integer range -2**(g_number_of_input_bits-1) to 2**(g_number_of_input_bits-1)-1;
+    subtype mpy_signed is signed(g_number_of_input_bits-1 downto 0);
 
-    alias int_word_length is g_number_of_input_bits;
+    alias multiplier_word_length is g_number_of_input_bits;
     
     type input_array is array (integer range g_input_registers-1 downto 0) of signed(g_number_of_input_bits-1 downto 0);
     constant init_input_array  : input_array  := (others => (others => '0'));
