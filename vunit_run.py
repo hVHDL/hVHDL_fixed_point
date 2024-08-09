@@ -126,4 +126,5 @@ multiplier_generic_lib.add_source_files(ROOT / "testbenches/multiplier_simulatio
 # sqrt_lib.add_source_files(ROOT / "testbenches/square_root/fixed_inv_square_root_tb.vhd")
 # sqrt_lib.add_source_files(ROOT / "testbenches/division_simulation/goldsmith_tb.vhd")
 
+VU.set_sim_option("nvc.sim_flags", ["-w"])
 VU.main()

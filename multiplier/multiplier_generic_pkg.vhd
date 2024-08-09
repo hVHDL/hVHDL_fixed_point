@@ -8,8 +8,8 @@ package multiplier_generic_pkg is
             g_input_registers    : natural;
             g_output_registers   : natural);
 
-    subtype int is integer range -2**(g_number_of_input_bits-1) to 2**(g_number_of_input_bits-1)-1;
     subtype mpy_signed is signed(g_number_of_input_bits-1 downto 0);
+    constant output_word_bit_width : natural := g_number_of_input_bits;
 
     alias multiplier_word_length is g_number_of_input_bits;
     
@@ -44,21 +44,16 @@ package multiplier_generic_pkg is
         multiplier : multiplier_record)
     return boolean;
 ------------------------------------------------------------------------
-    /* function get_multiplier_result ( */
-    /*     multiplier : multiplier_record; */
-    /*     radix : natural range 0 to output_word_bit_width) */ 
-    /* return integer ; */
+    function get_multiplier_result (
+        self : multiplier_record;
+        input_a_radix : natural;
+        input_b_radix : natural;
+        target_radix : natural)
+    return signed;
 
     /* function get_multiplier_result ( */
     /*     multiplier : multiplier_record; */
     /*     radix : natural range 0 to output_word_bit_width) */ 
-    /* return signed; */
-
-    /* function get_multiplier_result ( */
-    /*     self : multiplier_record; */
-    /*     input_a_radix : natural; */
-    /*     input_b_radix : natural; */
-    /*     target_radix : natural) */
     /* return signed; */
 
     /* function get_int_multiplier_result */
@@ -149,7 +144,58 @@ package body multiplier_generic_pkg is
 
     end multiply;
 
-/* ------------------------------------------------------------------------ */
+------------------------------------------------------------------------
+    function get_multiplier_result
+    (
+        multiplier_output : signed(init_output_array(0)'range);
+        radix : natural range 0 to output_word_bit_width
+    ) return signed 
+    is
+    ---------------------------------------------------
+        function "+"
+        (
+            left : signed;
+            right : std_logic 
+        )
+        return signed
+        is
+        begin
+            if left > 0 then
+                if right = '1' then
+                    return left + 1;
+                else
+                    return left;
+                end if;
+            else
+                return left;
+            end if;
+        end "+";
+    --------------------------------------------------         
+        variable bit_vector_slice : signed(init_input_array(0)'range);
+    begin
+        bit_vector_slice := multiplier_output((multiplier_output'left-output_word_bit_width + radix) downto radix); 
+        if radix > 0 then
+            bit_vector_slice := bit_vector_slice + multiplier_output(radix - 1);
+        end if;
+
+        return bit_vector_slice;
+        
+    end get_multiplier_result;
+------------------------------------------------------------------------
+    function get_multiplier_result
+    (
+        self : multiplier_record;
+        input_a_radix : natural;
+        input_b_radix : natural;
+        target_radix : natural
+    )
+    return signed
+    is
+    begin
+        return get_multiplier_result(self.multiplier_result(self.multiplier_result'left), input_a_radix + input_b_radix - target_radix);
+        
+    end get_multiplier_result;
+------------------------------------------------------------------------
     /* -- get rounded result */
     /* function get_multiplier_result */
     /* ( */
@@ -189,42 +235,6 @@ package body multiplier_generic_pkg is
         
     /* end get_multiplier_result; */
 /* ------------------------------ */
-    /* function get_multiplier_result */
-    /* ( */
-    /*     multiplier_output : signed(initialize_multiplier_base.multiplier_result(0)'range); */
-    /*     radix : natural range 0 to output_word_bit_width */
-    /* ) return signed */ 
-    /* is */
-    /* --------------------------------------------------- */
-    /*     function "+" */
-    /*     ( */
-    /*         left : signed; */
-    /*         right : std_logic */ 
-    /*     ) */
-    /*     return signed */
-    /*     is */
-    /*     begin */
-    /*         if left > 0 then */
-    /*             if right = '1' then */
-    /*                 return left + 1; */
-    /*             else */
-    /*                 return left; */
-    /*             end if; */
-    /*         else */
-    /*             return left; */
-    /*         end if; */
-    /*     end "+"; */
-    /* -------------------------------------------------- */         
-    /*     variable bit_vector_slice : signed(output_left_index downto 0); */
-    /* begin */
-    /*     bit_vector_slice := multiplier_output((multiplier_output'left-output_word_bit_width + radix) downto radix); */ 
-    /*     if radix > 0 then */
-    /*         bit_vector_slice := bit_vector_slice + multiplier_output(radix - 1); */
-    /*     end if; */
-
-    /*     return bit_vector_slice; */
-        
-    /* end get_multiplier_result; */
 /* -------------------------------------------------- */
     /* function get_multiplier_result */
     /* ( */
@@ -250,19 +260,6 @@ package body multiplier_generic_pkg is
         
     /* end get_multiplier_result; */
 /* ------------------------------------------------------------------------ */
-    /* function get_multiplier_result */
-    /* ( */
-    /*     self : multiplier_record; */
-    /*     input_a_radix : natural; */
-    /*     input_b_radix : natural; */
-    /*     target_radix : natural */
-    /* ) */
-    /* return signed */
-    /* is */
-    /* begin */
-    /*     return get_multiplier_result(self, input_a_radix + input_b_radix - target_radix); */
-        
-    /* end get_multiplier_result; */
 /* ------------------------------------------------------------------------ */ 
     /* function get_int_multiplier_result */
     /* ( */

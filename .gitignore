@@ -9,3 +9,5 @@
 vunit_out
 *.o
 temp
+*.fst
+*.fst.*

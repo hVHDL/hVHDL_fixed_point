@@ -13,7 +13,7 @@ end;
 
 architecture vunit_simulation of multiplier_generic_tb is
 
-    package multiplier_pkg is new work.multiplier_generic_pkg generic map(24, 2, 2);
+    package multiplier_pkg is new work.multiplier_generic_pkg generic map(37, 2, 2);
     use multiplier_pkg.all;
 
     constant clock_period      : time    := 1 ns;
@@ -56,6 +56,10 @@ architecture vunit_simulation of multiplier_generic_tb is
     end to_signed;
 
     constant test1 : signed(multiplier_word_length -1 downto 0) := (others => '0');
+    signal multiplier_was_called : boolean := false;
+
+    signal multiplier_result : test1'subtype := (others => '0');
+    signal multiplier_test_result : real := 0.0;
 
 begin
 
@@ -64,6 +68,7 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
+        check(multiplier_was_called, "multiplier did not complete");
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
     end process simtime;	
@@ -85,6 +90,12 @@ begin
                 WHEN others => -- do nothing
             end CASE;
 
+
+            if multiplier_is_ready(multiplier) then
+                multiplier_result      <= get_multiplier_result(multiplier, abs(integer_bits-word_length), abs(integer_bits-word_length), 10);
+                multiplier_test_result <= 3.135 * 3.135;
+                multiplier_was_called  <= true;
+            end if;
 
         end if; -- rising_edge
     end process stimulus;	
