@@ -10,10 +10,10 @@ package multiplier_generic_pkg is
             g_input_registers    : natural;
             g_output_registers   : natural);
 
-    subtype mpy_signed is signed(g_number_of_input_bits-1 downto 0);
     constant output_word_bit_width : natural := g_number_of_input_bits;
+    constant multiplier_word_length : natural := g_number_of_input_bits;
 
-    alias multiplier_word_length is g_number_of_input_bits;
+    subtype mpy_signed is signed(multiplier_word_length-1 downto 0);
     
     type input_array is array (integer range g_input_registers-1 downto 0) of signed(g_number_of_input_bits-1 downto 0);
     constant init_input_array  : input_array  := (others => (others => '0'));

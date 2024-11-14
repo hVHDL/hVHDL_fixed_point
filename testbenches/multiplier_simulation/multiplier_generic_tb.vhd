@@ -13,6 +13,7 @@ end;
 
 architecture vunit_simulation of multiplier_generic_tb is
 
+    constant multiplier_word_length : integer := 37;
     package multiplier_pkg is new work.multiplier_generic_pkg generic map(37, 2, 2);
     use multiplier_pkg.all;
 
