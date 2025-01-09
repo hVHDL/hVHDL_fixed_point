@@ -80,10 +80,10 @@ package multiplier_generic_pkg is
     /*     multiplier : multiplier_record) */
     /* return boolean; */
 /* ------------------------------------------------------------------------ */
-    /* procedure sequential_multiply ( */
-    /*     signal self : inout multiplier_record; */
-    /*     data_a : in integer; */
-    /*     data_b : in integer); */
+    -- procedure sequential_multiply (
+    --      signal self : inout multiplier_record;
+    --      data_a : in integer;
+    --      data_b : in integer);
 /* ------------------------------------------------------------------------ */
     /* procedure increment_counter_when_ready ( */
     /*     multiplier : multiplier_record; */
