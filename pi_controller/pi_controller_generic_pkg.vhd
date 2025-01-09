@@ -47,8 +47,8 @@ package pi_controller_generic_pkg is
         integrator_gain      : in mpy_signed);
 
 -- ------------------------------------------------------------------------
-    -- function get_pi_control_output ( pi_controller : pi_controller_record)
-    --     return mpy_signed;
+    function get_pi_control_output ( pi_controller : pi_controller_record)
+        return mpy_signed;
 --
 --     function init_pi_controller return pi_controller_record;
 --
@@ -70,8 +70,8 @@ package pi_controller_generic_pkg is
 --     function pi_control_calculation_is_ready ( pi_controller : pi_controller_record)
 --         return boolean;
 --
---     function pi_control_is_ready ( pi_controller : pi_controller_record)
---         return boolean;
+    function pi_control_is_ready ( pi_controller : pi_controller_record)
+        return boolean;
 --
 --     function pi_control_result_is_ready ( pi_controller : pi_controller_record)
 --         return boolean;
@@ -98,7 +98,7 @@ package body pi_controller_generic_pkg is
         return pi_controller_init;
     end init_pi_controller;
 
---
+---
     function pi_controller_init
     (
         radix : natural
@@ -216,15 +216,15 @@ package body pi_controller_generic_pkg is
 --
 --     end request_pi_control;
 -- ------------------------------------------------------------------------ 
---     function get_pi_control_output
---     (
---         pi_controller : pi_controller_record
---     )
---     return integer
---     is
---     begin
---         return pi_controller.pi_out;
---     end get_pi_control_output;
+    function get_pi_control_output
+    (
+        pi_controller : pi_controller_record
+    )
+    return mpy_signed
+    is
+    begin
+        return pi_controller.pi_out;
+    end get_pi_control_output;
 -- ------------------------------------------------------------------------ 
 --     function pi_control_calculation_is_ready
 --     (
@@ -249,15 +249,15 @@ package body pi_controller_generic_pkg is
 --         create_pi_controller(self, multiplier, proportional_gain, integrator_gain);
 --     end create_pi_control_and_multiplier;
 -- ------------------------------------------------------------------------ 
---     function pi_control_is_ready
---     (
---         pi_controller : pi_controller_record
---     )
---     return boolean
---     is
---     begin
---         return pi_controller.is_ready;
---     end pi_control_is_ready;
+    function pi_control_is_ready
+    (
+        pi_controller : pi_controller_record
+    )
+    return boolean
+    is
+    begin
+        return pi_controller.is_ready;
+    end pi_control_is_ready;
 -- ------------------------------------------------------------------------ 
 --     function pi_control_result_is_ready
 --     (
