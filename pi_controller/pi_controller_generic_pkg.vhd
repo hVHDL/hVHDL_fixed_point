@@ -157,6 +157,7 @@ package body pi_controller_generic_pkg is
 
                     output_with_feedforward := self.integrator + get_multiplier_result(hw_multiplier, self.pi_controller_radix, self.pi_controller_radix, self.pi_controller_radix) + feedforward;
                     self.pi_out <= output_with_feedforward;
+
                     if output_with_feedforward >= self.pi_high_limit then
                         self.pi_out          <= self.pi_high_limit;
                         self.integrator      <= self.pi_high_limit - get_multiplier_result(hw_multiplier, self.pi_controller_radix, self.pi_controller_radix, self.pi_controller_radix) - feedforward;
@@ -206,16 +207,6 @@ package body pi_controller_generic_pkg is
 
     end request_pi_control;
 ------------------------------------------------------------------------ 
---     procedure request_pi_control
---     (
---         signal pi_controller : out pi_controller_record;
---         pi_control_input : in integer
---     ) is
---     begin
---         calculate_pi_control(pi_controller, pi_control_input);
---
---     end request_pi_control;
--- ------------------------------------------------------------------------ 
     function get_pi_control_output
     (
         pi_controller : pi_controller_record
@@ -225,30 +216,7 @@ package body pi_controller_generic_pkg is
     begin
         return pi_controller.pi_out;
     end get_pi_control_output;
--- ------------------------------------------------------------------------ 
---     function pi_control_calculation_is_ready
---     (
---         pi_controller : pi_controller_record
---     )
---     return boolean
---     is
---     begin
---         return pi_controller.is_ready;
---
---     end pi_control_calculation_is_ready;
--- ------------------------------------------------------------------------ 
---     procedure create_pi_control_and_multiplier
---     (
---         signal self       : inout pi_controller_record;
---         signal multiplier : inout multiplier_record;
---         proportional_gain : in natural;
---         integrator_gain   : in natural
---     ) is
---     begin
---         create_multiplier(multiplier);
---         create_pi_controller(self, multiplier, proportional_gain, integrator_gain);
---     end create_pi_control_and_multiplier;
--- ------------------------------------------------------------------------ 
+------------------------------------------------------------------------ 
     function pi_control_is_ready
     (
         pi_controller : pi_controller_record
@@ -258,15 +226,16 @@ package body pi_controller_generic_pkg is
     begin
         return pi_controller.is_ready;
     end pi_control_is_ready;
--- ------------------------------------------------------------------------ 
---     function pi_control_result_is_ready
---     (
---         pi_controller : pi_controller_record
---     )
---     return boolean
---     is
---     begin
---         return pi_controller.result_is_ready;
---     end pi_control_result_is_ready;
--- ------------------------------------------------------------------------ 
+------------------------------------------------------------------------ 
+    -- pi control result is ready one cycle before integrator calculation
+    function pi_control_result_is_ready
+    (
+        pi_controller : pi_controller_record
+    )
+    return boolean
+    is
+    begin
+        return pi_controller.result_is_ready;
+    end pi_control_result_is_ready;
+------------------------------------------------------------------------ 
 end package body pi_controller_generic_pkg;
