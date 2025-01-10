@@ -6,9 +6,12 @@ library ieee;
     use work.real_to_fixed_pkg.all;
 
 package pi_controller_generic_pkg is
-    generic (package multiplier_pkg is new work.multiplier_generic_pkg generic map(<>));
+    generic (package multiplier_pkg is new work.multiplier_generic_pkg generic map(<>)
+            ;g_pi_controller_radix : natural := 12
+            );
 
     use multiplier_pkg.all;
+    constant pi_controller_radix : natural := g_pi_controller_radix;
 
 ------------------------------------------------------------------------
     type pi_controller_record is record
@@ -21,13 +24,9 @@ package pi_controller_generic_pkg is
         pi_low_limit                  : mpy_signed;
         result_is_ready               : boolean;
         is_ready                      : boolean;
-        pi_controller_radix           : natural;
     end record;
 
     function pi_controller_init return pi_controller_record;
-
-    function pi_controller_init ( radix : natural)
-        return pi_controller_record;
 
     procedure request_pi_control (
         signal pi_controller : out pi_controller_record;
@@ -46,44 +45,24 @@ package pi_controller_generic_pkg is
         proportional_gain    : in mpy_signed;
         integrator_gain      : in mpy_signed);
 
--- ------------------------------------------------------------------------
+------------------------------------------------------------------------
     function get_pi_control_output ( pi_controller : pi_controller_record)
         return mpy_signed;
---
---     function init_pi_controller return pi_controller_record;
---
---     function init_pi_controller ( symmetric_limit : integer)
---         return pi_controller_record;
---
--- ------------------------------------------------------------------------
---
--- ------------------------------------------------------------------------
---     procedure calculate_pi_control (
---         signal pi_controller : out pi_controller_record;
---         pi_control_input : in integer);
---
---     procedure request_pi_control (
---         signal pi_controller : out pi_controller_record;
---         pi_control_input : in integer);
---
--- ------------------------------------------------------------------------
---     function pi_control_calculation_is_ready ( pi_controller : pi_controller_record)
---         return boolean;
---
+------------------------------------------------------------------------
     function pi_control_is_ready ( pi_controller : pi_controller_record)
         return boolean;
---
---     function pi_control_result_is_ready ( pi_controller : pi_controller_record)
---         return boolean;
---
--- ------------------------------------------------------------------------
+------------------------------------------------------------------------
+    -- pi control result is ready one cycle before integrator calculation
+    function pi_control_result_is_ready ( pi_controller : pi_controller_record)
+        return boolean;
+------------------------------------------------------------------------
 end package pi_controller_generic_pkg;
---
---
+
+
 package body pi_controller_generic_pkg is
 
 ------------------------------------------------------------------------
-    constant pi_controller_initial_values : pi_controller_record := ((others => '0'), (others => '0'), 7, 7, (others => '0'), to_fixed(1.0,mpy_signed'length,15), to_fixed(-1.0,mpy_signed'length,mpy_signed'length), false, false, 12);
+    constant pi_controller_initial_values : pi_controller_record := ((others => '0'), (others => '0'), 7, 7, (others => '0'), to_fixed(1.0,mpy_signed'length,15), to_fixed(-1.0,mpy_signed'length,mpy_signed'length), false, false);
 
     function pi_controller_init return pi_controller_record
     is
@@ -97,20 +76,6 @@ package body pi_controller_generic_pkg is
     begin
         return pi_controller_init;
     end init_pi_controller;
-
----
-    function pi_controller_init
-    (
-        radix : natural
-    )
-    return pi_controller_record
-    is
-        variable returned_value : pi_controller_record := pi_controller_initial_values;
-    begin
-        returned_value.pi_controller_radix := radix;
-        return returned_value;
-
-    end pi_controller_init;
 
 ---
     function init_pi_controller
@@ -155,19 +120,26 @@ package body pi_controller_generic_pkg is
                 if multiplier_is_ready(hw_multiplier) then
                     self.pi_control_process_counter <= self.pi_control_process_counter + 1;
 
-                    output_with_feedforward := self.integrator + get_multiplier_result(hw_multiplier, self.pi_controller_radix, self.pi_controller_radix, self.pi_controller_radix) + feedforward;
+                    output_with_feedforward := self.integrator 
+                        + get_multiplier_result(hw_multiplier, pi_controller_radix, pi_controller_radix, pi_controller_radix)
+                        + feedforward;
+
                     self.pi_out <= output_with_feedforward;
 
                     if output_with_feedforward >= self.pi_high_limit then
                         self.pi_out          <= self.pi_high_limit;
-                        self.integrator      <= self.pi_high_limit - get_multiplier_result(hw_multiplier, self.pi_controller_radix, self.pi_controller_radix, self.pi_controller_radix) - feedforward;
+                        self.integrator      <= self.pi_high_limit 
+                                                - get_multiplier_result(hw_multiplier, pi_controller_radix, pi_controller_radix, pi_controller_radix) 
+                                                - feedforward;
                         self.pi_control_process_counter <= self.pi_control_process_counter + 2;
                         self.is_ready <= true;
                     end if;
 
                     if output_with_feedforward <= self.pi_low_limit then
                         self.pi_out          <= self.pi_low_limit;
-                        self.integrator      <= self.pi_low_limit - get_multiplier_result(hw_multiplier, self.pi_controller_radix, self.pi_controller_radix, self.pi_controller_radix) - feedforward;
+                        self.integrator      <= self.pi_low_limit 
+                                                - get_multiplier_result(hw_multiplier, pi_controller_radix, pi_controller_radix, pi_controller_radix) 
+                                                - feedforward;
                         self.pi_control_process_counter <= self.pi_control_process_counter + 2;
                         self.is_ready <= true;
                     end if;
@@ -175,7 +147,8 @@ package body pi_controller_generic_pkg is
                     self.result_is_ready <= true;
                 end if;
             WHEN 1 =>
-                self.integrator <= self.integrator + get_multiplier_result(hw_multiplier, self.pi_controller_radix, self.pi_controller_radix, self.pi_controller_radix);
+                self.integrator <= self.integrator 
+                                   + get_multiplier_result(hw_multiplier, pi_controller_radix, pi_controller_radix, pi_controller_radix);
                 self.pi_control_process_counter <= self.pi_control_process_counter + 1;
                 self.is_ready <= true;
             WHEN others => -- wait for restart
@@ -191,7 +164,11 @@ package body pi_controller_generic_pkg is
         integrator_gain      : in mpy_signed
     ) is
     begin
-        create_pi_controller(self, hw_multiplier, proportional_gain, integrator_gain, (others => '0'));
+        create_pi_controller(self
+            , hw_multiplier
+            , proportional_gain
+            , integrator_gain
+            , (others => '0'));
     end create_pi_controller;
 ------------------------------------------------------------------------
     procedure request_pi_control
