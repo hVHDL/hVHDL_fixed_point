@@ -56,6 +56,9 @@ package pi_controller_generic_pkg is
     function pi_control_result_is_ready ( pi_controller : pi_controller_record)
         return boolean;
 ------------------------------------------------------------------------
+    function init_pi_controller ( symmetric_limit : integer)
+    return pi_controller_record;
+------------------------------------------------------------------------
 end package pi_controller_generic_pkg;
 
 
