@@ -63,6 +63,12 @@ package multiplier_generic_pkg is
         target : sfixed)
     return signed;
 
+    function get_multiplier_result (
+        multiplier : multiplier_record;
+        radix : natural range 0 to output_word_bit_width) 
+    return integer ;
+
+
     /* function get_multiplier_result ( */
     /*     multiplier : multiplier_record; */
     /*     radix : natural range 0 to output_word_bit_width) */ 
@@ -290,17 +296,17 @@ package body multiplier_generic_pkg is
     /* end get_multiplier_result; */
 /* ------------------------------ */
 /* -------------------------------------------------- */
-    /* function get_multiplier_result */
-    /* ( */
-    /*     multiplier : multiplier_record; */
-    /*     radix : natural range 0 to output_word_bit_width */
-    /* ) */
-    /* return integer */
-    /* is */
-    /* begin */
-    /*     return get_multiplier_result(multiplier.multiplier_result(multiplier.multiplier_result'left), radix); */
+    function get_multiplier_result
+    (
+    multiplier : multiplier_record;
+    radix : natural range 0 to output_word_bit_width
+    )
+    return integer
+    is 
+    begin 
+        return to_integer(get_multiplier_result(multiplier.multiplier_result(multiplier.multiplier_result'left), radix));
         
-    /* end get_multiplier_result; */
+    end get_multiplier_result;
 
     /* function get_multiplier_result */
     /* ( */
@@ -311,7 +317,7 @@ package body multiplier_generic_pkg is
     /* is */
     /* begin */
     /*     return get_multiplier_result(multiplier.multiplier_result(multiplier.multiplier_result'left), radix); */
-        
+
     /* end get_multiplier_result; */
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */ 

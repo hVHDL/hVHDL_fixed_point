@@ -115,11 +115,7 @@ package body division_pkg is
     return integer
     is
         variable multiplier_result : integer;
-        variable multiplier_result2 : integer;
         variable used_radix : integer;
-
-        variable uint_number : unsigned(int_word_length-2 downto 0);
-        variable zeroes : natural;
 
         variable returned_value : integer;
     begin

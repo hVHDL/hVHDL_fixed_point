@@ -37,7 +37,9 @@ mathlib.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd")
 
 mathlib.add_source_files(ROOT / "pi_controller/pi_controller_pkg.vhd")
 
-mathlib.add_source_files(ROOT / "division" / "*.vhd") 
+mathlib.add_source_files(ROOT / "division" / "division_pkg.vhd") 
+mathlib.add_source_files(ROOT / "division" / "division_pkg_body.vhd") 
+mathlib.add_source_files(ROOT / "division" / "division_internal_pkg.vhd") 
 
 mathlib.add_source_files(ROOT / "sincos/sincos_pkg.vhd") 
 mathlib.add_source_files(ROOT / "coordinate_transforms/abc_to_ab_transform/abc_to_ab_transform_pkg.vhd") 
@@ -50,13 +52,17 @@ mathlib22 = VU.add_library("math_library_22x22")
 mathlib22.add_source_files(ROOT / "multiplier/configuration/multiply_with_1_input_and_output_registers_pkg.vhd")
 mathlib22.add_source_files(ROOT / "multiplier" /"multiplier_base_types_22bit_pkg.vhd") 
 mathlib22.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
-mathlib22.add_source_files(ROOT / "division" / "*.vhd") 
+mathlib22.add_source_files(ROOT / "division" / "division_pkg.vhd") 
+mathlib22.add_source_files(ROOT / "division" / "division_pkg_body.vhd") 
+mathlib22.add_source_files(ROOT / "division" / "division_internal_pkg.vhd") 
 
 mathlib26 = VU.add_library("math_library_26x26")
 mathlib26.add_source_files(ROOT / "multiplier/configuration/multiply_with_1_input_and_output_registers_pkg.vhd")
 mathlib26.add_source_files(ROOT / "multiplier" /"multiplier_base_types_26bit_pkg.vhd") 
 mathlib26.add_source_files(ROOT / "multiplier" /"multiplier_pkg.vhd") 
-mathlib26.add_source_files(ROOT / "division" / "*.vhd") 
+mathlib26.add_source_files(ROOT / "division" / "division_pkg.vhd") 
+mathlib26.add_source_files(ROOT / "division" / "division_pkg_body.vhd") 
+mathlib26.add_source_files(ROOT / "division" / "division_internal_pkg.vhd") 
 
 
 mathlib26.add_source_files(ROOT / "first_order_filter/first_order_filter_pkg.vhd")
@@ -115,7 +121,12 @@ multiplier_generic_lib = VU.add_library("multiplier_generic_lib")
 multiplier_generic_lib.add_source_files(ROOT / "multiplier/multiplier_generic_pkg.vhd")
 multiplier_generic_lib.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
 
+multiplier_generic_lib.add_source_files(ROOT / "division/division_generic_pkg.vhd")
+multiplier_generic_lib.add_source_files(ROOT / "division/division_generic_pkg_body.vhd")
+
 multiplier_generic_lib.add_source_files(ROOT / "testbenches/multiplier_simulation/multiplier_generic_tb.vhd")
+multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/division_generic_tb.vhd")
+# multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division_generic.vhd")
 
 # these use initial values of signals as initial values of other signals, fix them
 # mathlib.add_source_files(ROOT / "testbenches/adder/adder_tb.vhd")
