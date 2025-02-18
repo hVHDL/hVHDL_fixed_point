@@ -247,8 +247,8 @@ package body division_generic_pkg is
         variable returned_value : integer;
     begin
 
-        used_radix := nr_radix + nr_radix-radix;
-        multiplier_result  := get_multiplier_result(multiplier,used_radix);
+        used_radix        := nr_radix + nr_radix-radix;
+        multiplier_result := get_multiplier_result(multiplier,used_radix);
 
         for i in integer range int_word_length-2 downto 0 loop
             if divisor < 2**i then

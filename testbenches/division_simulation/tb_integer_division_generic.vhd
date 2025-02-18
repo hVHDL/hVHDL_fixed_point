@@ -10,13 +10,16 @@ entity tb_integer_division_generic is
   generic (runner_cfg : string);
 end;
 
-architecture vunit_simulation of divider_tb is
+architecture vunit_simulation of tb_integer_division_generic is
 
-    package multiplier_pkg is new work.multiplier_generic_pkg generic map(18, 2, 2);
+    constant int_word_length : integer := 25;
+
+    package multiplier_pkg is new work.multiplier_generic_pkg generic map(int_word_length, 2, 2);
     use multiplier_pkg.all;
 
     package division_pkg is new work.division_generic_pkg generic map(multiplier_pkg);
     use division_pkg.all;
+
     use work.real_to_fixed_pkg.all;
 
     constant clock_period      : time    := 1 ns;

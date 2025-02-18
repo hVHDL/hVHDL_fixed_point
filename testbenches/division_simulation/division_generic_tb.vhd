@@ -13,14 +13,13 @@ entity division_generic_tb is
 end;
 
 architecture vunit_simulation of division_generic_tb is
+    constant int_word_length : integer := 32;
 
-    package multiplier_pkg is new work.multiplier_generic_pkg generic map(28, 1, 1);
+    package multiplier_pkg is new work.multiplier_generic_pkg generic map(int_word_length, 1, 1);
     use multiplier_pkg.all;
 
     package division_pkg is new work.division_generic_pkg generic map(multiplier_pkg);
     use division_pkg.all;
-
-    constant int_word_length : integer := 28;
 
     constant clock_period      : time    := 1 ns;
     constant simtime_in_clocks : integer := 500;
@@ -32,8 +31,11 @@ architecture vunit_simulation of division_generic_tb is
 
     signal radix : integer := int_word_length-4;
 
-    signal test1  : int := to_fixed(0.5  , radix);
-    signal test2  : int := to_fixed(0.25 , radix);
+    constant left : real := 0.5;
+    constant right : real := 0.25;
+
+    signal test1  : int := to_fixed(left, radix);
+    signal test2  : int := to_fixed(right, radix);
     signal result : int := to_fixed(0.0  , radix);
 
     signal real_result : real := 0.0;
@@ -70,7 +72,7 @@ begin
             if division_is_ready(multiplier, divider) then
 
                 check_equal(
-                0.5/0.25
+                left/right
                 , to_real(get_division_result(multiplier, divider, radix), radix)
                 , max_diff => 0.001);
 
