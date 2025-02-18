@@ -11,3 +11,5 @@ vunit_out
 temp
 *.fst
 *.fst.*
+*.toml
+*.json

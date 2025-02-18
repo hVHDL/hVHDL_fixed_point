@@ -12,7 +12,7 @@ end;
 
 architecture vunit_simulation of tb_integer_division_generic is
 
-    constant int_word_length : integer := 25;
+    constant int_word_length : integer := 29;
 
     package multiplier_pkg is new work.multiplier_generic_pkg generic map(int_word_length, 2, 2);
     use multiplier_pkg.all;
