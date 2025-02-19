@@ -124,6 +124,8 @@ multiplier_generic_lib.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.
 multiplier_generic_lib.add_source_files(ROOT / "division/division_generic_pkg.vhd")
 multiplier_generic_lib.add_source_files(ROOT / "division/division_generic_pkg_body.vhd")
 
+multiplier_generic_lib.add_source_files(ROOT / "pi_controller/pi_controller_generic_pkg.vhd")
+
 multiplier_generic_lib.add_source_files(ROOT / "testbenches/multiplier_simulation/multiplier_generic_tb.vhd")
 multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/division_generic_tb.vhd")
 multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division_generic.vhd")

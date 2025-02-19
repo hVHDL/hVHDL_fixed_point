@@ -65,7 +65,16 @@ end package pi_controller_generic_pkg;
 package body pi_controller_generic_pkg is
 
 ------------------------------------------------------------------------
-    constant pi_controller_initial_values : pi_controller_record := ((others => '0'), (others => '0'), 7, 7, (others => '0'), to_fixed(1.0,mpy_signed'length,15), to_fixed(-1.0,mpy_signed'length,mpy_signed'length), false, false);
+    constant pi_controller_initial_values : pi_controller_record := (
+    (others => '0')
+     , (others => '0')
+     , 7
+     , 7
+     , (others => '0')
+     , to_fixed(1.0    , mpy_signed'length , g_pi_controller_radix)
+     , to_fixed(-1.0   , mpy_signed'length , g_pi_controller_radix)
+     , false
+     , false);
 
     function pi_controller_init return pi_controller_record
     is
