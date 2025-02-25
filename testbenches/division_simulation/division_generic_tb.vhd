@@ -6,14 +6,14 @@ LIBRARY ieee  ;
 library vunit_lib;
 context vunit_lib.vunit_context;
 
-    use work.real_to_fixed_pkg.all;
-
 entity division_generic_tb is
   generic (runner_cfg : string);
 end;
 
 architecture vunit_simulation of division_generic_tb is
     constant int_word_length : integer := 32;
+
+    use work.real_to_fixed_pkg.all;
 
     package multiplier_pkg is new work.multiplier_generic_pkg generic map(int_word_length, 1, 1);
     use multiplier_pkg.all;

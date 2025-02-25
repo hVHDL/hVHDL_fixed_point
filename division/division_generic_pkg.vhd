@@ -10,6 +10,7 @@ package division_generic_pkg is
     subtype range_of_nr_iteration is natural range 0 to 4;
     subtype int is integer range -2**(multiplier_word_length-1) to 2**(multiplier_word_length-1)-1;
     type division_record is record
+        leading_zero_count                 : natural;
         shift_counter                      : natural range 0 to 3;
         division_process_counter           : natural range 0 to 3;
         x                                  : int;
@@ -20,7 +21,7 @@ package division_generic_pkg is
         check_division_to_be_ready         : boolean;
     end record;
 
-    constant init_division : division_record := (0, 3, 0, 0, 0, 0, 0, false);
+    constant init_division : division_record := (0, 0, 3, 0, 0, 0, 0, 0, false);
 ------------------------------------------------------------------------
     procedure create_division (
         signal multiplier : inout multiplier_record;
@@ -32,12 +33,12 @@ package division_generic_pkg is
 
 ------------------------------------------------------------------------
     procedure request_division (
-        signal self           : out division_record;
+        signal self               : out division_record;
         number_to_be_divided      : int;
         number_to_be_reciprocated : int);
 ------------------------------------------------------------------------
     procedure request_division (
-        signal self           : out division_record;
+        signal self               : out division_record;
         number_to_be_divided      : int;
         number_to_be_reciprocated : int;
         iterations                : range_of_nr_iteration);
@@ -64,6 +65,13 @@ package division_generic_pkg is
         signal self    : inout division_record;
         signal multiplier : inout multiplier_record);
 ------------------------------------------------------------------------
+    function remove_leading_zeros ( number : int) return int;
+------------------------------------------------------------------------
+    function number_of_leading_zeroes (
+        data        : unsigned
+        ; max_shift : integer)
+    return integer ;
+------------------------------------------------------------------------
 end package division_generic_pkg;
 
 -------------------------------------------------
@@ -71,7 +79,7 @@ end package division_generic_pkg;
 
 package body division_generic_pkg is
 
-    constant nr_radix        : integer := multiplier_word_length-2;
+    constant c_nr_radix        : integer := multiplier_word_length-2;
     constant int_word_length : integer := multiplier_word_length;
 
     function to_signed(input : integer) return signed is
@@ -83,8 +91,8 @@ package body division_generic_pkg is
 --------------------------------------------------
     function number_of_leading_zeroes
     (
-        data : unsigned;
-        max_shift : integer
+        data        : unsigned
+        ; max_shift : integer
     )
     return integer 
     is
@@ -202,6 +210,10 @@ package body division_generic_pkg is
         signal self : inout division_record
     ) is
     begin
+            -- add shifter logic here
+            CASE self.shift_counter is
+                WHEN others => --do nothing
+            end CASE;
         
             CASE self.division_process_counter is
                 WHEN 0 =>
@@ -215,17 +227,17 @@ package body division_generic_pkg is
                         self.division_process_counter <= self.division_process_counter + 1;
                         multiply(multiplier
                         , to_signed(self.x), 
-                        invert_bits(get_multiplier_result(multiplier,int_word_length-2, int_word_length-2, nr_radix)));
+                        invert_bits(get_multiplier_result(multiplier,int_word_length-2, int_word_length-2, c_nr_radix)));
                     end if;
                 WHEN 2 =>
                     if multiplier_is_ready(multiplier) then
-                        self.x <= get_multiplier_result(multiplier, nr_radix);
+                        self.x <= get_multiplier_result(multiplier, c_nr_radix);
                         if self.number_of_newton_raphson_iteration /= 0 then
                             self.number_of_newton_raphson_iteration <= self.number_of_newton_raphson_iteration - 1;
                             self.division_process_counter <= 0;
                         else
                             self.division_process_counter <= self.division_process_counter + 1;
-                            multiply(multiplier, to_signed(get_multiplier_result(multiplier, nr_radix), multiplier_word_length), to_signed(self.dividend, multiplier_word_length));
+                            multiply(multiplier, to_signed(get_multiplier_result(multiplier, c_nr_radix), multiplier_word_length), to_signed(self.dividend, multiplier_word_length));
                             self.check_division_to_be_ready <= true;
                         end if;
                     end if;
@@ -250,6 +262,7 @@ package body division_generic_pkg is
         self.dividend                           <= number_to_be_divided;
         self.divisor                            <= number_to_be_reciprocated;
         self.division_process_counter           <= 0;
+        self.shift_counter                      <= 0;
         self.number_of_newton_raphson_iteration <= iterations - 1;
     end request_division;
 ------------------------------------------------------------------------
@@ -312,13 +325,11 @@ package body division_generic_pkg is
     )
     return integer
     is
+        constant used_radix        : integer := c_nr_radix + c_nr_radix-radix;
         variable multiplier_result : integer;
-        variable used_radix : integer;
-
-        variable returned_value : integer;
+        variable returned_value    : integer;
     begin
 
-        used_radix        := nr_radix + nr_radix-radix;
         multiplier_result := get_multiplier_result(multiplier,used_radix);
 
         for i in integer range int_word_length-2 downto 0 loop
@@ -344,7 +355,7 @@ package body division_generic_pkg is
         variable returned_value    : integer;
     begin
             multiplier_result := get_multiplier_result(multiplier,radix);
-            returned_value := get_division_result(multiplier, abs(self.divisor), radix);
+            returned_value    := get_division_result(multiplier, abs(self.divisor), radix);
             if self.divisor < 0 then
                 returned_value := -returned_value;
             end if;

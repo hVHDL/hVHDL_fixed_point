@@ -130,6 +130,8 @@ multiplier_generic_lib.add_source_files(ROOT / "testbenches/multiplier_simulatio
 multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/division_generic_tb.vhd")
 multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division_generic.vhd")
 
+multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/zero_shifter_tb.vhd")
+
 # these use initial values of signals as initial values of other signals, fix them
 # mathlib.add_source_files(ROOT / "testbenches/adder/adder_tb.vhd")
 # mathlib26.add_source_files(ROOT / "testbenches/division_simulation/division_tb.vhd")
