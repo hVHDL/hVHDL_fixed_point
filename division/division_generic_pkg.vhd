@@ -3,7 +3,8 @@ library ieee;
     use ieee.numeric_std.all;
 
 package division_generic_pkg is
-    generic(package mult_div_pkg is new work.multiplier_generic_pkg generic map(<>));
+    generic(package mult_div_pkg is new work.multiplier_generic_pkg generic map(<>)
+           ;g_max_shift : natural := mult_div_pkg.multiplier_word_length-2);
 
     use mult_div_pkg.all;
 --------------------------------------------------
@@ -189,14 +190,13 @@ package body division_generic_pkg is
     )
     return int
     is
-        variable abs_number : natural;
+        variable abs_number  : natural;
         variable uint_number : unsigned(int_word_length-2 downto 0);
-        variable zeroes : natural;
-
+        variable zeroes      : natural;
     begin
             abs_number := abs(number);
             uint_number := to_unsigned(abs_number, int_word_length-1);
-            zeroes := number_of_leading_zeroes(uint_number, int_word_length-2);
+            zeroes := number_of_leading_zeroes(uint_number, g_max_shift);
 
             return to_integer(shift_left(uint_number, zeroes-1));
 
@@ -257,6 +257,8 @@ package body division_generic_pkg is
         iterations : range_of_nr_iteration
     ) is
     begin
+        self.leading_zero_count                 <= number_of_leading_zeroes(
+                                                   to_unsigned(abs(number_to_be_reciprocated), int_word_length-2), 3);
         self.x                                  <= get_initial_value_for_division(remove_leading_zeros(number_to_be_reciprocated));
         self.number_to_be_reciprocated          <= remove_leading_zeros(number_to_be_reciprocated);
         self.dividend                           <= number_to_be_divided;

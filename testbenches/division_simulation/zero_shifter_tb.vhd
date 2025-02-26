@@ -41,7 +41,7 @@ architecture vunit_simulation of zero_shifter_tb is
     constant test4 : integer := remove_leading_zeros(2**15);
 
     signal div_multiplier : multiplier_record := init_multiplier;
-    signal self : division_record := init_division;
+    signal self           : division_record   := init_division;
 
 begin
 
@@ -74,9 +74,19 @@ begin
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
-            check(testin_nollat = 17-5, integer'image(testin_nollat));
+
+            check(testin_nollat     = 17-5, integer'image(testin_nollat));
             check(test2(test2'left) = '1', "left most bit was not zero");
-            check(test3 = test4, "leading zeroes failed");
+            check(test3             = test4, "leading zeroes failed");
+
+            CASE simulation_counter is
+                WHEN 10 => 
+                    request_division(
+                    self
+                    , to_integer(to_fixed( 0.01, mpy_signed'length-1, mpy_signed'length-1))
+                    , to_integer(to_fixed( 0.01, mpy_signed'length-1, mpy_signed'length-1)));
+                WHEN others => --do nothing
+            end CASE;
 
         end if; -- rising_edge
     end process stimulus;	
