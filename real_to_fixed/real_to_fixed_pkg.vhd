@@ -38,6 +38,12 @@ package real_to_fixed_pkg is
         number_of_fractional_bits : integer)
     return real;
 ------------------------------------------------------------------------
+    function generic_to_fixed
+        generic ( word_length : natural := 32
+                  ;used_radix : natural := 20
+                ) 
+        (a : real)
+        return std_logic_vector;
 
 end package real_to_fixed_pkg;
 
@@ -141,5 +147,17 @@ package body real_to_fixed_pkg is
         retval := to_fixed(number,bit_width, number_of_fractional_bits);
         return std_logic_vector(retval);
     end to_fixed;
+
+------------------------------------------------------------------------
+    function generic_to_fixed
+        generic ( word_length : natural := 32
+                  ;used_radix : natural := 20
+                ) 
+        (a : real)
+        return std_logic_vector is
+    begin
+        return to_fixed(a, word_length, used_radix); 
+    end generic_to_fixed;
+------------------------------------------------------------------------
 
 end package body real_to_fixed_pkg;
