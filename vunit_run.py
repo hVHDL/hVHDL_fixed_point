@@ -131,6 +131,7 @@ multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/
 multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division_generic.vhd")
 
 multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/zero_shifter_tb.vhd")
+multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/sequential_zero_shift_tb.vhd")
 
 # these use initial values of signals as initial values of other signals, fix them
 # mathlib.add_source_files(ROOT / "testbenches/adder/adder_tb.vhd")
@@ -143,5 +144,5 @@ multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/
 # sqrt_lib.add_source_files(ROOT / "testbenches/division_simulation/goldsmith_tb.vhd")
 
 
-# VU.set_sim_option("nvc.sim_flags", ["-w"])
+VU.set_sim_option("nvc.sim_flags", ["-w"])
 VU.main()

@@ -8,14 +8,13 @@ package division_generic_pkg is
 
     use mult_div_pkg.all;
 --------------------------------------------------
-    subtype range_of_nr_iteration is natural range 0 to 4;
+    subtype range_of_nr_iteration is natural range 0 to 7;
     subtype int is integer range -2**(multiplier_word_length-1) to 2**(multiplier_word_length-1)-1;
     type division_record is record
         leading_zero_count                 : natural;
-        zero_count                   : natural;
+        zero_count                         : natural;
         shift_register                     : unsigned(mpy_signed'range);
-        shift_counter                      : natural range 0 to 3;
-        division_process_counter           : natural range 0 to 3;
+        division_process_counter           : natural range 0 to 5;
         x                                  : int;
         number_to_be_reciprocated          : int;
         number_of_newton_raphson_iteration : range_of_nr_iteration;
@@ -24,7 +23,7 @@ package division_generic_pkg is
         check_division_to_be_ready         : boolean;
     end record;
 
-    constant init_division : division_record := (0,0,(others => '1'), 0, 3, 0, 0, 0, 0, 0, false);
+    constant init_division : division_record := (0,0,(others => '1'), 5, 0, 0, 0, 0, 0, false);
 ------------------------------------------------------------------------
     procedure create_division (
         signal multiplier : inout multiplier_record;
@@ -217,24 +216,36 @@ package body division_generic_pkg is
     
         CASE self.division_process_counter is
             WHEN 0 =>
+                self.shift_register <= to_unsigned(abs(self.divisor), mpy_signed'length-1) & '0';
+                self.division_process_counter <= self.division_process_counter + 1;
+                
+            WHEN 1 =>
+                if zeroes = 0 
+                then
+                    self.division_process_counter <= self.division_process_counter + 1;
+                    self.x <= get_initial_value_for_division(to_integer(self.shift_register));
+
+                    self.leading_zero_count <= self.zero_count;
+                end if;
+            WHEN 2 =>
                 multiply(multiplier
                 , to_signed(self.x, mpy_signed'length)
                 , to_signed(self.number_to_be_reciprocated, mpy_signed'length));
 
                 self.division_process_counter <= self.division_process_counter + 1;
-            WHEN 1 =>
+            WHEN 3 =>
                 if multiplier_is_ready(multiplier) then
                     self.division_process_counter <= self.division_process_counter + 1;
                     multiply(multiplier
                     , to_signed(self.x, mpy_signed'length), 
                     invert_bits(get_multiplier_result(multiplier,int_word_length-2, int_word_length-2, c_nr_radix)));
                 end if;
-            WHEN 2 =>
+            WHEN 4 =>
                 if multiplier_is_ready(multiplier) then
                     self.x <= get_multiplier_result(multiplier, c_nr_radix);
                     if self.number_of_newton_raphson_iteration /= 0 then
                         self.number_of_newton_raphson_iteration <= self.number_of_newton_raphson_iteration - 1;
-                        self.division_process_counter <= 0;
+                        self.division_process_counter <= 2;
                     else
                         self.division_process_counter <= self.division_process_counter + 1;
                         multiply(multiplier, to_signed(get_multiplier_result(multiplier, c_nr_radix), multiplier_word_length), to_signed(self.dividend, multiplier_word_length));
@@ -257,14 +268,11 @@ package body division_generic_pkg is
         iterations : range_of_nr_iteration
     ) is
     begin
-        self.leading_zero_count                 <= number_of_leading_zeroes(
-                                                   to_unsigned(abs(number_to_be_reciprocated), int_word_length-2), 3);
-        self.x                                  <= get_initial_value_for_division(remove_leading_zeros(number_to_be_reciprocated));
-        self.number_to_be_reciprocated          <= remove_leading_zeros(number_to_be_reciprocated);
         self.dividend                           <= number_to_be_divided;
         self.divisor                            <= number_to_be_reciprocated;
+        self.number_to_be_reciprocated          <= number_to_be_reciprocated;
         self.division_process_counter           <= 0;
-        self.shift_counter                      <= 0;
+        self.zero_count                         <= 0;
         self.number_of_newton_raphson_iteration <= iterations - 1;
     end request_division;
 ------------------------------------------------------------------------

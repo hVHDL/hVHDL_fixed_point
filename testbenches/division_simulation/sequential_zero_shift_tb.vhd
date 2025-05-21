@@ -14,7 +14,7 @@ end;
 
 architecture vunit_simulation of seq_zero_shift_tb is
 
-    constant int_word_length : integer := 24;
+    constant int_word_length : integer := 20;
 
     use work.real_to_fixed_pkg.all;
 
@@ -40,6 +40,8 @@ architecture vunit_simulation of seq_zero_shift_tb is
 
     signal shift_register : test1'subtype := (0 => '1' , others => '0');
     signal zero_count : natural := 0;
+
+    signal test2 : mpy_signed := (18 => '1', others => '0');
 
 begin
 
@@ -73,52 +75,16 @@ begin
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
-
-            zero_count     <= zero_count + number_of_leading_zeroes(shift_register, max_shift => 4);
-            -- self.shift_register <= shift_left(self.shift_register, number_of_leading_zeroes(self.shift_register, max_shift => 4));
-
-
-            -- add shifter logic here
-            -- CASE self.shift_counter is
-            --     WHEN 0 => 
-            --     WHEN others => --do nothing
-            -- end CASE;
-            --
-            -- CASE self.division_process_counter is
-            --     WHEN 0 =>
-            --         multiply(multiplier
-            --         , to_signed(self.x, mpy_signed'length)
-            --         , to_signed(self.number_to_be_reciprocated, mpy_signed'length));
-            --
-            --         self.division_process_counter <= self.division_process_counter + 1;
-            --     WHEN 1 =>
-            --         if multiplier_is_ready(multiplier) then
-            --             self.division_process_counter <= self.division_process_counter + 1;
-            --             multiply(multiplier
-            --             , to_signed(self.x, mpy_signed'length), 
-            --             invert_bits(get_multiplier_result(multiplier,int_word_length-2, int_word_length-2, c_nr_radix)));
-            --         end if;
-            --     WHEN 2 =>
-            --         if multiplier_is_ready(multiplier) then
-            --             self.x <= get_multiplier_result(multiplier, c_nr_radix);
-            --             if self.number_of_newton_raphson_iteration /= 0 then
-            --                 self.number_of_newton_raphson_iteration <= self.number_of_newton_raphson_iteration - 1;
-            --                 self.division_process_counter <= 0;
-            --             else
-            --                 self.division_process_counter <= self.division_process_counter + 1;
-            --                 multiply(multiplier, to_signed(get_multiplier_result(multiplier, c_nr_radix), multiplier_word_length), to_signed(self.dividend, multiplier_word_length));
-            --                 self.check_division_to_be_ready <= true;
-            --             end if;
-            --         end if;
-            --     WHEN others => -- wait for start
-            --         if multiplier_is_ready(multiplier) then
-            --             self.check_division_to_be_ready <= false;
-            --         end if;
-            -- end CASE;
-
+            create_multiplier(multiplier);
+            create_division(multiplier, self);
 
             CASE simulation_counter is
                 WHEN 6 =>
+                    request_division(self
+                    ,to_integer(test2)
+                    ,to_integer(test2)
+                    ,7
+                    );
                     -- zero_count <= 0;
                     -- shift_register <= (10 => '1', others => '0');
                 WHEN others => -- do nothing
