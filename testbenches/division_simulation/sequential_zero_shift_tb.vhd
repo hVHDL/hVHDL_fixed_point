@@ -45,18 +45,19 @@ architecture vunit_simulation of seq_zero_shift_tb is
 
     signal xi : signed(wordlength-1 downto 0) := to_fixed(1.0/1.7, wordlength, radix);
 
-    signal a  : signed(wordlength-1 downto 0) := to_fixed(1.7*1.1, wordlength, radix-20);
+    signal a  : signed(wordlength-1 downto 0) := to_fixed(8.0 * 1.7*1.1, wordlength, radix-5);
     signal b  : signed(wordlength-1 downto 0) := to_fixed(1.7, wordlength, radix);
 
     signal b_div_a : signed(wordlength-1 downto 0) := to_fixed(0.0, wordlength, radix);
 
     signal result : real := 0.0;
+    signal inv_a : real := 0.0;
 
     signal input_shift_register : unsigned(wordlength-2 downto 0) := (others => '1');
     signal input_zero_count     : natural   := 5;
 
     signal output_shift_register : a'subtype := (0 => '1' , others => '0');
-    signal output_zero_count     : natural   := 0;
+    signal output_shift_count     : natural   := 0;
 
     signal seq_count   : natural := 3;
     constant max_shift : natural := 8;
@@ -114,10 +115,15 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            input_zero_count     <= number_of_leading_zeroes(input_shift_register, max_shift => max_shift);
+            input_zero_count     <= input_zero_count + number_of_leading_zeroes(input_shift_register, max_shift => max_shift);
             input_shift_register <= shift_left(
                                     input_shift_register
                                     ,(number_of_leading_zeroes(input_shift_register, max_shift => max_shift)));
+
+            if output_shift_count > 0
+            then
+                -- output_shift_count <= 
+            end if;
 
             CASE seq_count is
                 WHEN 0 => 
@@ -146,6 +152,7 @@ begin
                 WHEN others => -- do nothing
             end CASE;
 
+            inv_a <= to_real(xi/2**input_zero_count , radix);
 
             if a > 0 then
                 result <= to_real(b_div_a, radix);
