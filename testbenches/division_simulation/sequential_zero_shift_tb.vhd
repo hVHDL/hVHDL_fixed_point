@@ -40,16 +40,19 @@ architecture vunit_simulation of seq_zero_shift_tb is
     constant wordlength : natural := 36;
     constant radix : natural := wordlength-3;
 
-    signal xi : signed(wordlength-1 downto 0) := to_fixed(0.7, wordlength, radix);
-    signal a  : signed(wordlength-1 downto 0) := to_fixed(1.7, wordlength, radix);
+    signal xi : signed(wordlength-1 downto 0) := to_fixed(0.5, wordlength, radix);
+    signal a  : signed(wordlength-1 downto 0) := to_fixed(1.7*1.1, wordlength, radix-7);
     signal b  : signed(wordlength-1 downto 0) := to_fixed(1.7, wordlength, radix);
 
     signal b_div_a : signed(wordlength-1 downto 0) := to_fixed(0.0, wordlength, radix);
 
     signal result : real := 0.0;
 
-    signal shift_register : a'subtype := (0 => '1' , others => '0');
-    signal zero_count     : natural   := 0;
+    signal input_shift_register : unsigned(wordlength-2 downto 0) := (others => '1');
+    signal input_zero_count     : natural   := 0;
+
+    signal output_shift_register : a'subtype := (0 => '1' , others => '0');
+    signal output_zero_count     : natural   := 0;
 
 begin
 
@@ -91,17 +94,23 @@ begin
 
         end function;
 
+        -------------
         function inv_mantissa(a : signed) return signed is
             variable retval : signed(a'range) := a;
         begin
             return "00" & (not retval(retval'left-2 downto 0));
         end inv_mantissa;
-
+        -------------
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            xi <= mpy(xi, (inv_mantissa( mpy(xi,abs(a)) )));
+            input_zero_count     <= number_of_leading_zeroes(input_shift_register, max_shift => 3);
+            input_shift_register <= shift_left(
+                                    input_shift_register
+                                    ,(number_of_leading_zeroes(input_shift_register, max_shift => 3)));
+
+            xi <= mpy(xi, (inv_mantissa( mpy(xi,signed("00" & input_shift_register(input_shift_register'left downto 1) )))));
             b_div_a <= mpy(b,xi);
 
             if a > 0 then
@@ -112,13 +121,8 @@ begin
 
             CASE simulation_counter is
                 WHEN 6 =>
-                    request_division(self
-                    ,to_integer(test2)
-                    ,to_integer(test2)
-                    ,7
-                    );
-                    -- zero_count <= 0;
-                    -- shift_register <= (10 => '1', others => '0');
+                    input_shift_register <= unsigned(a(input_shift_register'range));
+                    input_zero_count <= 0;
                 WHEN others => -- do nothing
             end CASE;
 
