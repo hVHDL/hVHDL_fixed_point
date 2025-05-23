@@ -9,6 +9,7 @@ package reciproc_pkg is
 
     constant wordlength : natural := 36;
     constant radix : natural := wordlength-3;
+    constant max_shift : natural := 8;
 
     type reciprocal_record is record
         seq_count            : natural range 0 to 7;
@@ -18,6 +19,7 @@ package reciproc_pkg is
         input_zero_count     : natural range 0 to wordlength;
         input_shift_register : unsigned(wordlength-2 downto 0);
         is_negative : boolean;
+        inv_a_out : signed(wordlength-1 downto 0);
     end record;
 
     constant init_reciproc : reciprocal_record := (
@@ -28,10 +30,98 @@ package reciproc_pkg is
         , input_zero_count => 0
         , input_shift_register => (others => '1')
         , is_negative => false
+        , inv_a_out => (others => '0')
     );
+
+        function mpy (left : signed; right : signed) return signed;
+        function inv_mantissa(a : signed) return signed;
+        procedure create_reciproc(signal self : inout reciprocal_record);
 
 end package reciproc_pkg;
 ------------------
+
+package body reciproc_pkg is
+        function mpy (left : signed; right : signed) return signed is
+            variable res : signed(2*left'length-1 downto 0);
+            variable retval : signed(left'range);
+        begin
+
+            res := left*right;
+            retval := res(left'high+radix downto radix);
+
+            return retval;
+
+        end function;
+
+        -------------
+        function inv_mantissa(a : signed) return signed is
+            variable retval : signed(a'range) := a;
+        begin
+            return "00" & (not retval(retval'left-2 downto 0));
+        end inv_mantissa;
+        -------------
+
+
+    function number_of_leading_zeroes
+    (
+        data        : unsigned
+        ; max_shift : integer
+    )
+    return integer 
+    is
+        variable number_of_zeroes : integer := 0;
+    begin
+        for i in data'high - max_shift to data'high loop
+            if data(i) = '0' then
+                number_of_zeroes := number_of_zeroes + 1;
+            else
+                number_of_zeroes := 0;
+            end if;
+        end loop;
+
+        return number_of_zeroes;
+        
+    end number_of_leading_zeroes;
+
+        procedure create_reciproc(signal self : inout reciprocal_record) is
+        begin
+            self.input_zero_count     <= self.input_zero_count + number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift);
+            self.input_shift_register <= shift_left(
+                                    self.input_shift_register
+                                    ,(number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift)));
+
+            CASE self.seq_count is
+                WHEN 0 => 
+                    if number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift) = 0
+                    then
+                        self.seq_count <= self.seq_count + 1;
+                    end if;
+                WHEN 1 => 
+                    self.x1 <= inv_mantissa(mpy(self.xi ,signed("00" & self.input_shift_register(self.input_shift_register'left downto 1) )));
+
+                    self.seq_count <= self.seq_count + 1;
+                WHEN 2 => 
+                    self.xi <= mpy(self.xi, self.x1);
+
+                    if self.iteration_count > 0
+                    then
+                        self.iteration_count <= self.iteration_count -1;
+                        self.seq_count <= 1;
+                    else
+                        self.seq_count <= self.seq_count + 1;
+                        -- get from dsp output register
+                        self.inv_a_out <= signed(resize(shift_right(self.xi,6), self.inv_a_out'length));
+                    end if;
+
+                WHEN 3 => 
+                    self.seq_count <= self.seq_count + 1;
+                WHEN others => -- do nothing
+
+            end CASE;
+        end procedure;
+
+
+end package body;
 
 LIBRARY ieee  ; 
     USE ieee.NUMERIC_STD.all  ; 
@@ -49,17 +139,6 @@ entity seq_zero_shift_tb is
 end;
 
 architecture vunit_simulation of seq_zero_shift_tb is
-
-    constant int_word_length : integer := 20;
-
-    use work.real_to_fixed_pkg.all;
-
-    package multiplier_pkg is new work.multiplier_generic_pkg generic map(int_word_length, 1, 1);
-    use multiplier_pkg.all;
-
-    package division_pkg is new work.division_generic_pkg generic map(multiplier_pkg);
-    use division_pkg.all;
-
     signal simulation_running : boolean;
     signal simulator_clock : std_logic;
     constant clock_per : time := 1 ns;
@@ -69,9 +148,7 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal simulation_counter : natural := 0;
     -----------------------------------
     -- simulation specific signals ----
-    signal multiplier : multiplier_record := init_multiplier;
-
-
+    use work.real_to_fixed_pkg.all;
 
     signal q  : signed(wordlength-1 downto 0) := to_fixed(88.95, wordlength, radix-5);
     signal b  : signed(wordlength-1 downto 0) := to_fixed(1.7, wordlength, radix);
@@ -82,12 +159,10 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal inv_a : real := 0.0;
     signal ref_a : real := 0.0;
 
-    signal inv_a_out : signed(wordlength-1 downto 0) := (others => '0');
 
     signal output_shift_register : signed(wordlength-1 downto 0) := (0 => '1' , others => '0');
     signal output_shift_count     : natural   := 0;
 
-    constant max_shift : natural := 8;
 
     signal self : reciprocal_record := init_reciproc;
 
@@ -119,25 +194,8 @@ begin
 
     stimulus : process(simulator_clock)
 
-        function mpy (left : signed; right : signed) return signed is
-            variable res : signed(2*left'length-1 downto 0);
-            variable retval : signed(left'range);
-        begin
 
-            res := left*right;
-            retval := res(left'high+radix downto radix);
 
-            return retval;
-
-        end function;
-
-        -------------
-        function inv_mantissa(a : signed) return signed is
-            variable retval : signed(a'range) := a;
-        begin
-            return "00" & (not retval(retval'left-2 downto 0));
-        end inv_mantissa;
-        -------------
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
@@ -156,44 +214,14 @@ begin
             end if;
             ----
 
-            self.input_zero_count     <= self.input_zero_count + number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift);
-            self.input_shift_register <= shift_left(
-                                    self.input_shift_register
-                                    ,(number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift)));
-
+            create_reciproc(self);
             CASE self.seq_count is
-                WHEN 0 => 
-                    if number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift) = 0
-                    then
-                        self.seq_count <= self.seq_count + 1;
-                    end if;
-                WHEN 1 => 
-                    self.x1 <= inv_mantissa(mpy(self.xi ,signed("00" & self.input_shift_register(self.input_shift_register'left downto 1) )));
-
-                    self.seq_count <= self.seq_count + 1;
-                WHEN 2 => 
-                    self.xi <= mpy(self.xi, self.x1);
-
-                    if self.iteration_count > 0
-                    then
-                        self.iteration_count <= self.iteration_count -1;
-                        self.seq_count <= 1;
-                    else
-                        self.seq_count <= self.seq_count + 1;
-                        output_shift_count <= self.input_zero_count;
-                        output_shift_register <= self.x1;
-                        -- get from dsp output register
-                        inv_a_out <= signed(resize(shift_right(self.xi,6), inv_a_out'length));
-                    end if;
-
-                WHEN 3 => 
+                WHEN 3 =>
                     b_div_a <= mpy(b,self.xi);
-                    self.seq_count <= self.seq_count + 1;
-                WHEN others => -- do nothing
-
+                WHEN others => --do nothing
             end CASE;
 
-            inv_a <= to_real(inv_a_out, radix);
+            inv_a <= to_real(self.inv_a_out, radix);
 
             if inv_a /= 0.0
             then
