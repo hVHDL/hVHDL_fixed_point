@@ -40,7 +40,11 @@ architecture vunit_simulation of seq_zero_shift_tb is
     constant wordlength : natural := 36;
     constant radix : natural := wordlength-3;
 
+    signal x1 : signed(wordlength-1 downto 0) := to_fixed(0.5, wordlength, radix);
+    signal x2 : signed(wordlength-1 downto 0) := to_fixed(0.5, wordlength, radix);
+
     signal xi : signed(wordlength-1 downto 0) := to_fixed(0.5, wordlength, radix);
+
     signal a  : signed(wordlength-1 downto 0) := to_fixed(1.7*1.1, wordlength, radix-7);
     signal b  : signed(wordlength-1 downto 0) := to_fixed(1.7, wordlength, radix);
 
@@ -53,6 +57,8 @@ architecture vunit_simulation of seq_zero_shift_tb is
 
     signal output_shift_register : a'subtype := (0 => '1' , others => '0');
     signal output_zero_count     : natural   := 0;
+
+    signal seq_count : natural := 0;
 
 begin
 
@@ -110,7 +116,18 @@ begin
                                     input_shift_register
                                     ,(number_of_leading_zeroes(input_shift_register, max_shift => 3)));
 
-            xi <= mpy(xi, (inv_mantissa( mpy(xi,signed("00" & input_shift_register(input_shift_register'left downto 1) )))));
+            CASE seq_count is
+                WHEN 0 => 
+                    x1 <= (inv_mantissa( mpy(xi,signed("00" & input_shift_register(input_shift_register'left downto 1) ))));
+
+                    seq_count <= seq_count + 1;
+                WHEN 1 => 
+                    xi <= mpy(xi, x1);
+
+                    seq_count <= seq_count + 1;
+                WHEN others => -- do nothing
+                    seq_count <= 0;
+            end CASE;
             b_div_a <= mpy(b,xi);
 
             if a > 0 then
@@ -123,6 +140,7 @@ begin
                 WHEN 6 =>
                     input_shift_register <= unsigned(a(input_shift_register'range));
                     input_zero_count <= 0;
+                    seq_count <= 0;
                 WHEN others => -- do nothing
             end CASE;
 
