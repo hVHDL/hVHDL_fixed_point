@@ -144,6 +144,7 @@ begin
                         seq_count <= 1;
                     else
                         seq_count <= seq_count + 1;
+                        output_shift_count <= input_zero_count;
                     end if;
 
                 WHEN 3 => 
@@ -152,7 +153,7 @@ begin
                 WHEN others => -- do nothing
             end CASE;
 
-            inv_a <= to_real(xi/2**input_zero_count , radix);
+            inv_a <= to_real(shift_right(xi,output_shift_count) , radix);
 
             if a > 0 then
                 result <= to_real(b_div_a, radix);
