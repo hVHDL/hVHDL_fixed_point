@@ -43,9 +43,9 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal x1 : signed(wordlength-1 downto 0) := to_fixed(0.5, wordlength, radix);
     signal x2 : signed(wordlength-1 downto 0) := to_fixed(0.5, wordlength, radix);
 
-    signal xi : signed(wordlength-1 downto 0) := to_fixed(0.5, wordlength, radix);
+    signal xi : signed(wordlength-1 downto 0) := to_fixed(1.0/1.7, wordlength, radix);
 
-    signal a  : signed(wordlength-1 downto 0) := to_fixed(1.7*1.1, wordlength, radix-7);
+    signal a  : signed(wordlength-1 downto 0) := to_fixed(1.7*1.1, wordlength, radix-20);
     signal b  : signed(wordlength-1 downto 0) := to_fixed(1.7, wordlength, radix);
 
     signal b_div_a : signed(wordlength-1 downto 0) := to_fixed(0.0, wordlength, radix);
@@ -53,12 +53,15 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal result : real := 0.0;
 
     signal input_shift_register : unsigned(wordlength-2 downto 0) := (others => '1');
-    signal input_zero_count     : natural   := 0;
+    signal input_zero_count     : natural   := 5;
 
     signal output_shift_register : a'subtype := (0 => '1' , others => '0');
     signal output_zero_count     : natural   := 0;
 
-    signal seq_count : natural := 0;
+    signal seq_count   : natural := 3;
+    constant max_shift : natural := 8;
+
+    signal iteration_count : natural := 4;
 
 begin
 
@@ -111,24 +114,38 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            input_zero_count     <= number_of_leading_zeroes(input_shift_register, max_shift => 3);
+            input_zero_count     <= number_of_leading_zeroes(input_shift_register, max_shift => max_shift);
             input_shift_register <= shift_left(
                                     input_shift_register
-                                    ,(number_of_leading_zeroes(input_shift_register, max_shift => 3)));
+                                    ,(number_of_leading_zeroes(input_shift_register, max_shift => max_shift)));
 
             CASE seq_count is
                 WHEN 0 => 
-                    x1 <= (inv_mantissa( mpy(xi,signed("00" & input_shift_register(input_shift_register'left downto 1) ))));
+                    if number_of_leading_zeroes(input_shift_register, max_shift => max_shift) = 0
+                    then
+                        seq_count <= seq_count + 1;
+                    end if;
+                WHEN 1 => 
+                    x1 <= inv_mantissa(mpy(xi,signed("00" & input_shift_register(input_shift_register'left downto 1) )));
 
                     seq_count <= seq_count + 1;
-                WHEN 1 => 
+                WHEN 2 => 
                     xi <= mpy(xi, x1);
 
+                    if iteration_count > 0
+                    then
+                        iteration_count <= iteration_count -1;
+                        seq_count <= 1;
+                    else
+                        seq_count <= seq_count + 1;
+                    end if;
+
+                WHEN 3 => 
+                    b_div_a <= mpy(b,xi);
                     seq_count <= seq_count + 1;
                 WHEN others => -- do nothing
-                    seq_count <= 0;
             end CASE;
-            b_div_a <= mpy(b,xi);
+
 
             if a > 0 then
                 result <= to_real(b_div_a, radix);
@@ -137,9 +154,10 @@ begin
             end if;
 
             CASE simulation_counter is
-                WHEN 6 =>
+                WHEN 0 =>
                     input_shift_register <= unsigned(a(input_shift_register'range));
                     input_zero_count <= 0;
+                    iteration_count <= 5;
                     seq_count <= 0;
                 WHEN others => -- do nothing
             end CASE;
