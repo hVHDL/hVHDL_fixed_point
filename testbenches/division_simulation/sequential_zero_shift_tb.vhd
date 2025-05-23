@@ -36,12 +36,20 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal multiplier : multiplier_record := init_multiplier;
     signal self       : division_record   := init_division;
 
-    signal test1 : unsigned(25 downto 0) := (15 => '1', others => '0');
 
-    signal shift_register : test1'subtype := (0 => '1' , others => '0');
-    signal zero_count : natural := 0;
+    constant wordlength : natural := 36;
+    constant radix : natural := wordlength-3;
 
-    signal test2 : mpy_signed := (18 => '1', others => '0');
+    signal xi : signed(wordlength-1 downto 0) := to_fixed(0.7, wordlength, radix);
+    signal a  : signed(wordlength-1 downto 0) := to_fixed(1.7, wordlength, radix);
+    signal b  : signed(wordlength-1 downto 0) := to_fixed(1.7, wordlength, radix);
+
+    signal b_div_a : signed(wordlength-1 downto 0) := to_fixed(0.0, wordlength, radix);
+
+    signal result : real := 0.0;
+
+    signal shift_register : a'subtype := (0 => '1' , others => '0');
+    signal zero_count     : natural   := 0;
 
 begin
 
@@ -68,15 +76,39 @@ begin
         wait;
     end process;
 ------------------------------------------------------------------------
-    -- shift_register <= self.shift_register;
 
     stimulus : process(simulator_clock)
+
+        function mpy (left : signed; right : signed) return signed is
+            variable res : signed(2*left'length-1 downto 0);
+            variable retval : signed(left'range);
+        begin
+
+            res := left*right;
+            retval := res(left'high+radix downto radix);
+
+            return retval;
+
+        end function;
+
+        function inv_mantissa(a : signed) return signed is
+            variable retval : signed(a'range) := a;
+        begin
+            return "00" & (not retval(retval'left-2 downto 0));
+        end inv_mantissa;
 
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
-            create_multiplier(multiplier);
-            create_division(multiplier, self);
+
+            xi <= mpy(xi, (inv_mantissa( mpy(xi,abs(a)) )));
+            b_div_a <= mpy(b,xi);
+
+            if a > 0 then
+                result <= to_real(b_div_a, radix);
+            else
+                result <= -to_real(b_div_a, radix);
+            end if;
 
             CASE simulation_counter is
                 WHEN 6 =>
