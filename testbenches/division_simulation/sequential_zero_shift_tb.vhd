@@ -1,9 +1,45 @@
+LIBRARY ieee  ; 
+    USE ieee.NUMERIC_STD.all  ; 
+    USE ieee.std_logic_1164.all  ; 
+    use ieee.numeric_std.all;
+
+    use work.real_to_fixed_pkg.all;
+
+package reciproc_pkg is
+
+    constant wordlength : natural := 36;
+    constant radix : natural := wordlength-3;
+
+    type reciprocal_record is record
+        seq_count            : natural range 0 to 7;
+        iteration_count      : natural range 0 to 7;
+        x1                   : signed(wordlength-1 downto 0);
+        xi                   : signed(wordlength-1 downto 0);
+        input_zero_count     : natural range 0 to wordlength;
+        input_shift_register : unsigned(wordlength-2 downto 0);
+        is_negative : boolean;
+    end record;
+
+    constant init_reciproc : reciprocal_record := (
+        seq_count         => 3
+        , iteration_count => 7
+        , x1              => to_fixed(0.5, wordlength, radix)
+        , xi              => to_fixed(1.0/1.7, wordlength, radix)
+        , input_zero_count => 0
+        , input_shift_register => (others => '1')
+        , is_negative => false
+    );
+
+end package reciproc_pkg;
+------------------
 
 LIBRARY ieee  ; 
     USE ieee.NUMERIC_STD.all  ; 
     USE ieee.std_logic_1164.all  ; 
     use ieee.numeric_std.all;
     use ieee.math_real.all;
+
+    use work.reciproc_pkg.all;
 
 library vunit_lib;
     context vunit_lib.vunit_context;
@@ -35,10 +71,9 @@ architecture vunit_simulation of seq_zero_shift_tb is
     -- simulation specific signals ----
     signal multiplier : multiplier_record := init_multiplier;
 
-    constant wordlength : natural := 36;
-    constant radix : natural := wordlength-3;
 
-    signal a  : signed(wordlength-1 downto 0) := to_fixed(88.95, wordlength, radix-5);
+
+    signal q  : signed(wordlength-1 downto 0) := to_fixed(88.95, wordlength, radix-5);
     signal b  : signed(wordlength-1 downto 0) := to_fixed(1.7, wordlength, radix);
 
     signal b_div_a : signed(wordlength-1 downto 0) := to_fixed(0.0, wordlength, radix);
@@ -47,30 +82,12 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal inv_a : real := 0.0;
     signal ref_a : real := 0.0;
 
-    signal inv_a_out : a'subtype := (others => '0');
+    signal inv_a_out : signed(wordlength-1 downto 0) := (others => '0');
 
-    signal output_shift_register : a'subtype := (0 => '1' , others => '0');
+    signal output_shift_register : signed(wordlength-1 downto 0) := (0 => '1' , others => '0');
     signal output_shift_count     : natural   := 0;
 
     constant max_shift : natural := 8;
-
-    type reciprocal_record is record
-        seq_count        : natural range 0 to 7;
-        iteration_count  : natural range 0 to 7;
-        x1               : signed(wordlength-1 downto 0);
-        xi               : signed(wordlength-1 downto 0);
-        input_zero_count : natural range 0 to wordlength;
-        input_shift_register : unsigned(wordlength-2 downto 0);
-    end record;
-
-    constant init_reciproc : reciprocal_record := (
-        seq_count         => 3
-        , iteration_count => 7
-        , x1              => to_fixed(0.5, wordlength, radix)
-        , xi              => to_fixed(1.0/1.7, wordlength, radix)
-        , input_zero_count => 0
-        , input_shift_register => (others => '1')
-    );
 
     signal self : reciprocal_record := init_reciproc;
 
@@ -151,7 +168,7 @@ begin
                         self.seq_count <= self.seq_count + 1;
                     end if;
                 WHEN 1 => 
-                    self.x1 <= inv_mantissa(mpy(self.xi,signed("00" & self.input_shift_register(self.input_shift_register'left downto 1) )));
+                    self.x1 <= inv_mantissa(mpy(self.xi ,signed("00" & self.input_shift_register(self.input_shift_register'left downto 1) )));
 
                     self.seq_count <= self.seq_count + 1;
                 WHEN 2 => 
@@ -183,7 +200,7 @@ begin
                 ref_a <= 1.0/inv_a;
             end if;
 
-            if a > 0 then
+            if self.is_negative then
                 result <= to_real(b_div_a, radix);
             else
                 result <= -to_real(b_div_a, radix);
@@ -191,7 +208,8 @@ begin
 
             CASE simulation_counter is
                 WHEN 0 =>
-                    self.input_shift_register <= unsigned(a(self.input_shift_register'range));
+                    self.input_shift_register <= unsigned(q(self.input_shift_register'range));
+                    self.is_negative <= q < 0;
                     self.input_zero_count <= 0;
                     self.iteration_count <= 5;
                     self.seq_count <= 0;
