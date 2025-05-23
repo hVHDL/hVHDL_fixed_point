@@ -38,10 +38,6 @@ architecture vunit_simulation of seq_zero_shift_tb is
     constant wordlength : natural := 36;
     constant radix : natural := wordlength-3;
 
-    signal x1 : signed(wordlength-1 downto 0) := to_fixed(0.5, wordlength, radix);
-    signal x2 : signed(wordlength-1 downto 0) := to_fixed(0.5, wordlength, radix);
-    signal xi : signed(wordlength-1 downto 0) := to_fixed(1.0/1.7, wordlength, radix);
-
     signal a  : signed(wordlength-1 downto 0) := to_fixed(88.95, wordlength, radix-5);
     signal b  : signed(wordlength-1 downto 0) := to_fixed(1.7, wordlength, radix);
 
@@ -51,9 +47,6 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal inv_a : real := 0.0;
     signal ref_a : real := 0.0;
 
-    signal input_shift_register : unsigned(wordlength-2 downto 0) := (others => '1');
-    signal input_zero_count     : natural   := 5;
-
     signal inv_a_out : a'subtype := (others => '0');
 
     signal output_shift_register : a'subtype := (0 => '1' , others => '0');
@@ -62,10 +55,12 @@ architecture vunit_simulation of seq_zero_shift_tb is
     constant max_shift : natural := 8;
 
     type reciprocal_record is record
-        seq_count       : natural range 0 to 7;
-        iteration_count : natural range 0 to 7;
-        x1              : signed(wordlength-1 downto 0);
-        xi              : signed(wordlength-1 downto 0);
+        seq_count        : natural range 0 to 7;
+        iteration_count  : natural range 0 to 7;
+        x1               : signed(wordlength-1 downto 0);
+        xi               : signed(wordlength-1 downto 0);
+        input_zero_count : natural range 0 to wordlength;
+        input_shift_register : unsigned(wordlength-2 downto 0);
     end record;
 
     constant init_reciproc : reciprocal_record := (
@@ -73,6 +68,8 @@ architecture vunit_simulation of seq_zero_shift_tb is
         , iteration_count => 7
         , x1              => to_fixed(0.5, wordlength, radix)
         , xi              => to_fixed(1.0/1.7, wordlength, radix)
+        , input_zero_count => 0
+        , input_shift_register => (others => '1')
     );
 
     signal self : reciprocal_record := init_reciproc;
@@ -142,19 +139,19 @@ begin
             end if;
             ----
 
-            input_zero_count     <= input_zero_count + number_of_leading_zeroes(input_shift_register, max_shift => max_shift);
-            input_shift_register <= shift_left(
-                                    input_shift_register
-                                    ,(number_of_leading_zeroes(input_shift_register, max_shift => max_shift)));
+            self.input_zero_count     <= self.input_zero_count + number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift);
+            self.input_shift_register <= shift_left(
+                                    self.input_shift_register
+                                    ,(number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift)));
 
             CASE self.seq_count is
                 WHEN 0 => 
-                    if number_of_leading_zeroes(input_shift_register, max_shift => max_shift) = 0
+                    if number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift) = 0
                     then
                         self.seq_count <= self.seq_count + 1;
                     end if;
                 WHEN 1 => 
-                    self.x1 <= inv_mantissa(mpy(self.xi,signed("00" & input_shift_register(input_shift_register'left downto 1) )));
+                    self.x1 <= inv_mantissa(mpy(self.xi,signed("00" & self.input_shift_register(self.input_shift_register'left downto 1) )));
 
                     self.seq_count <= self.seq_count + 1;
                 WHEN 2 => 
@@ -166,7 +163,7 @@ begin
                         self.seq_count <= 1;
                     else
                         self.seq_count <= self.seq_count + 1;
-                        output_shift_count <= input_zero_count;
+                        output_shift_count <= self.input_zero_count;
                         output_shift_register <= self.x1;
                         -- get from dsp output register
                         inv_a_out <= signed(resize(shift_right(self.xi,6), inv_a_out'length));
@@ -194,8 +191,8 @@ begin
 
             CASE simulation_counter is
                 WHEN 0 =>
-                    input_shift_register <= unsigned(a(input_shift_register'range));
-                    input_zero_count <= 0;
+                    self.input_shift_register <= unsigned(a(self.input_shift_register'range));
+                    self.input_zero_count <= 0;
                     self.iteration_count <= 5;
                     self.seq_count <= 0;
                 WHEN others => -- do nothing
