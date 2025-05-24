@@ -16,9 +16,9 @@ package reciproc_pkg is
         x1                   : signed;
         xi                   : signed;
         input_zero_count     : natural range 0 to wordlength;
-        input_shift_register : unsigned(wordlength-2 downto 0);
+        input_shift_register : unsigned;
         is_negative          : boolean;
-        inv_a_out            : signed(wordlength-1 downto 0);
+        inv_a_out            : signed;
     end record;
 
     constant init_reciproc : reciprocal_record := (
@@ -27,9 +27,9 @@ package reciproc_pkg is
         , x1                   => to_fixed(0.5, wordlength, radix)
         , xi                   => to_fixed(1.0/1.7, wordlength, radix)
         , input_zero_count     => 0
-        , input_shift_register => (wordlength-2 downto 0 => '1')
+        , input_shift_register => unsigned(std_logic_vector'(to_fixed(0.0, wordlength-1, radix)))
         , is_negative          => false
-        , inv_a_out            => (wordlength-1 downto 0 => '0')
+        , inv_a_out            => to_fixed(0.0, wordlength, radix)
     );
 
     function mpy (left : signed; right : signed) return signed;
@@ -44,7 +44,7 @@ end package reciproc_pkg;
 
 package body reciproc_pkg is
 
-    -- function reciproc_ref(word_length
+    -- function cre(word_length
 
     -------------
     function mpy (left : signed; right : signed) return signed is
