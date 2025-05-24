@@ -28,10 +28,7 @@ package reciproc_pkg is
     function inv_mantissa(a : signed) return signed;
 
     -------
-    procedure create_reciproc(
-         signal self : inout reciprocal_record
-        ; constant max_shift : natural := 8
-    );
+    procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8 ; return_radix : natural := 7);
     -------
 
 end package reciproc_pkg;
@@ -162,7 +159,7 @@ architecture vunit_simulation of seq_zero_shift_tb is
     -----------------------------------
     -- simulation specific signals ----
     use work.reciproc_pkg.all;
-    constant wordlength : natural := 21;
+    constant wordlength : natural := 51;
     constant radix : natural := wordlength-3;
 
     constant init_reciproc : reciprocal_record := create_reciproc_typeref(wordlength);
