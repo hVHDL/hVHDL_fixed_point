@@ -7,49 +7,61 @@ LIBRARY ieee  ;
 
 package reciproc_pkg is
 
-    constant wordlength : natural := 36;
-    constant radix : natural := wordlength-3;
-
     type reciprocal_record is record
         seq_count            : natural range 0 to 7;
         iteration_count      : natural range 0 to 7;
         x1                   : signed;
         xi                   : signed;
-        input_zero_count     : natural range 0 to wordlength;
+        input_zero_count     : natural range 0 to 127;
         input_shift_register : unsigned;
         is_negative          : boolean;
         inv_a_out            : signed;
     end record;
 
-    constant init_reciproc : reciprocal_record := (
-        seq_count              => 3
-        , iteration_count      => 7
-        , x1                   => to_fixed(0.5, wordlength, radix)
-        , xi                   => to_fixed(1.0/1.7, wordlength, radix)
-        , input_zero_count     => 0
-        , input_shift_register => unsigned(std_logic_vector'(to_fixed(0.0, wordlength-1, radix)))
-        , is_negative          => false
-        , inv_a_out            => to_fixed(0.0, wordlength, radix)
-    );
+    -------
+    function create_reciproc_typeref(wordlength : natural) return reciprocal_record;
 
+    -------
     function mpy (left : signed; right : signed) return signed;
+
+    -------
     function inv_mantissa(a : signed) return signed;
+
+    -------
     procedure create_reciproc(
          signal self : inout reciprocal_record
         ; constant max_shift : natural := 8
     );
+    -------
 
 end package reciproc_pkg;
 ------------------
 
 package body reciproc_pkg is
 
-    -- function cre(word_length
+    function create_reciproc_typeref(wordlength : natural) return reciprocal_record is
+
+        constant radix  : natural := wordlength-3;
+        constant retval : reciprocal_record := (
+            seq_count              => 3
+            , iteration_count      => 7
+            , x1                   => to_fixed(0.5, wordlength, radix)
+            , xi                   => to_fixed(1.0/1.7, wordlength, radix)
+            , input_zero_count     => 0
+            , input_shift_register => unsigned(std_logic_vector'(to_fixed(0.0, wordlength-1, radix)))
+            , is_negative          => false
+            , inv_a_out            => to_fixed(0.0, wordlength, radix)
+        );
+
+    begin
+        return retval;
+    end create_reciproc_typeref;
 
     -------------
     function mpy (left : signed; right : signed) return signed is
         variable res : signed(2*left'length-1 downto 0);
         variable retval : signed(left'range);
+        constant radix : natural := left'length-3;
     begin
 
         res := left*right;
@@ -88,7 +100,7 @@ package body reciproc_pkg is
     -------------
 
     ------------------------------------------
-    procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8) is
+    procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8 ; return_radix : natural := 7) is
     begin
         self.input_zero_count     <= self.input_zero_count + number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift);
         self.input_shift_register <= shift_left(
@@ -115,7 +127,7 @@ package body reciproc_pkg is
                 else
                     self.seq_count <= self.seq_count + 1;
                     -- get from dsp output register
-                    self.inv_a_out <= signed(resize(shift_right(self.xi,6), self.inv_a_out'length));
+                    self.inv_a_out <= signed(resize(shift_right(self.xi , return_radix-1) , self.inv_a_out'length));
                 end if;
             WHEN others => -- do nothing
 
@@ -150,6 +162,11 @@ architecture vunit_simulation of seq_zero_shift_tb is
     -----------------------------------
     -- simulation specific signals ----
     use work.reciproc_pkg.all;
+    constant wordlength : natural := 21;
+    constant radix : natural := wordlength-3;
+
+    constant init_reciproc : reciprocal_record := create_reciproc_typeref(wordlength);
+
     signal self : init_reciproc'subtype := init_reciproc;
 
     use work.real_to_fixed_pkg.all;
