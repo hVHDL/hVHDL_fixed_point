@@ -52,7 +52,7 @@ package body reciproc_pkg is
             , iteration_count       => 7
             , number_to_be_inverted => to_fixed(0.5, wordlength, radix)
             , x1                    => to_fixed(0.5, wordlength, radix)
-            , xi                    => to_fixed(1.0/1.7, wordlength, radix)
+            , xi                    => to_fixed(0.0, wordlength, radix)
             , input_zero_count      => 0
             , input_shift_register  => unsigned(std_logic_vector'(to_fixed(0.0, wordlength-1, radix)))
             , is_negative           => false
@@ -130,6 +130,7 @@ package body reciproc_pkg is
                 if number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift) = 0
                 then
                     self.seq_count <= self.seq_count + 1;
+                    self.xi <= to_fixed(1.0/1.7, self.xi'length, radix);
                 end if;
 
             WHEN 1 => 
@@ -147,29 +148,29 @@ package body reciproc_pkg is
                     self.mpya <= self.xi;
                     self.mpyb <= inv_mantissa(vxi);
                     self.mpy_pipeline(0) <= '1';
+                    self.seq_count <= self.seq_count + 1;
 
+                end if;
+            WHEN 3 => 
+                if self.mpy_pipeline(self.mpy_pipeline'left) = '1' 
+                then
                     if self.iteration_count > 0
                     then
                         self.iteration_count <= self.iteration_count -1;
-                        self.seq_count <= 3;
+                        self.seq_count <= 2;
+                        vxi := self.mpyres(self.xi'high+radix downto radix);
+                        self.xi <= vxi;
+
+                        self.mpya <= vxi;
+                        self.mpyb <= signed("00" & self.input_shift_register(self.input_shift_register'left downto 1));
+                        self.mpy_pipeline(0) <= '1';
+
                     else
-                        self.seq_count <= self.seq_count + 2;
+                        self.seq_count <= self.seq_count + 1;
                         -- get from dsp output register
-                        self.inv_a_out <= signed(resize(shift_right(self.xi , return_radix-1) , self.inv_a_out'length));
+                        vxi := self.mpyres(self.xi'high+radix downto radix);
+                        self.inv_a_out <= shift_right(vxi , return_radix-1);
                     end if;
-                end if;
-            WHEN 3 => 
-
-                if self.mpy_pipeline(self.mpy_pipeline'left) = '1' 
-                then
-                    vxi := self.mpyres(self.xi'high+radix downto radix);
-                    self.xi <= vxi;
-
-                    self.mpya <= vxi;
-                    self.mpyb <= signed("00" & self.input_shift_register(self.input_shift_register'left downto 1));
-                    self.mpy_pipeline(0) <= '1';
-
-                    self.seq_count <= 2;
                 end if;
             WHEN others => -- do nothing
 
@@ -212,11 +213,13 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal self : init_reciproc'subtype := init_reciproc;
 
     use work.real_to_fixed_pkg.all;
-    signal q  : signed(wordlength-1 downto 0) := to_fixed(98.95, wordlength, radix-5);
+    constant test_input : real := 98.95;
+    signal q  : signed(wordlength-1 downto 0) := to_fixed(test_input, wordlength, radix-5);
 
     signal result : real := 0.0;
     signal inv_a  : real := 0.0;
     signal ref_a  : real := 0.0;
+    signal err_a  : real := 0.0;
 
     constant max_shift : natural := 8;
 
@@ -260,6 +263,7 @@ begin
             if inv_a /= 0.0
             then
                 ref_a <= 1.0/inv_a;
+                err_a <= test_input - 1.0/inv_a;
             end if;
 
             CASE simulation_counter is
@@ -267,7 +271,7 @@ begin
                     self.input_shift_register <= unsigned(q(self.input_shift_register'range));
                     self.is_negative <= q < 0;
                     self.input_zero_count <= 0;
-                    self.iteration_count <= 5;
+                    self.iteration_count <= 3;
                     self.seq_count <= 0;
                 WHEN others => -- do nothing
             end CASE;
