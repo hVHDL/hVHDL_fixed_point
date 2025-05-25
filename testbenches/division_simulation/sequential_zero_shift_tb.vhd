@@ -8,14 +8,21 @@ LIBRARY ieee  ;
 package reciproc_pkg is
 
     type reciprocal_record is record
-        seq_count            : natural range 0 to 7;
-        iteration_count      : natural range 0 to 7;
-        x1                   : signed;
-        xi                   : signed;
-        input_zero_count     : natural range 0 to 127;
-        input_shift_register : unsigned;
-        is_negative          : boolean;
-        inv_a_out            : signed;
+        seq_count             : natural range 0 to 7;
+        rec_count             : natural range 0 to 7;
+        iteration_count       : natural range 0 to 7;
+        number_to_be_inverted : signed;
+        x1                    : signed;
+        xi                    : signed;
+        input_zero_count      : natural range 0 to 127;
+        input_shift_register  : unsigned;
+        is_negative           : boolean;
+        inv_a_out             : signed;
+
+        mpya         : signed;
+        mpyb         : signed;
+        mpyres       : signed;
+        mpy_pipeline : std_logic_vector(1 downto 0);
     end record;
 
     -------
@@ -40,14 +47,22 @@ package body reciproc_pkg is
 
         constant radix  : natural := wordlength-3;
         constant retval : reciprocal_record := (
-            seq_count              => 3
-            , iteration_count      => 7
-            , x1                   => to_fixed(0.5, wordlength, radix)
-            , xi                   => to_fixed(1.0/1.7, wordlength, radix)
-            , input_zero_count     => 0
-            , input_shift_register => unsigned(std_logic_vector'(to_fixed(0.0, wordlength-1, radix)))
-            , is_negative          => false
-            , inv_a_out            => to_fixed(0.0, wordlength, radix)
+            seq_count               => 3
+            , rec_count             => 3
+            , iteration_count       => 7
+            , number_to_be_inverted => to_fixed(0.5, wordlength, radix)
+            , x1                    => to_fixed(0.5, wordlength, radix)
+            , xi                    => to_fixed(1.0/1.7, wordlength, radix)
+            , input_zero_count      => 0
+            , input_shift_register  => unsigned(std_logic_vector'(to_fixed(0.0, wordlength-1, radix)))
+            , is_negative           => false
+            , inv_a_out             => to_fixed(0.0, wordlength, radix)
+
+            -- refactor to use a module
+            , mpya                  => to_fixed(0.0, wordlength, radix)
+            , mpyb                  => to_fixed(0.0, wordlength, radix)
+            , mpyres                => to_fixed(0.0, wordlength*2, radix)
+            , mpy_pipeline          => (others => '0')
         );
 
     begin
@@ -98,11 +113,16 @@ package body reciproc_pkg is
 
     ------------------------------------------
     procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8 ; return_radix : natural := 7) is
+        constant radix : natural := self.xi'length-3;
+        variable vxi : signed(self.xi'range);
     begin
         self.input_zero_count     <= self.input_zero_count + number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift);
         self.input_shift_register <= shift_left(
                                 self.input_shift_register
                                 ,(number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift)));
+
+        self.mpyres <= self.mpya * self.mpyb;
+        self.mpy_pipeline <= self.mpy_pipeline(self.mpy_pipeline'left-1 downto 0) & '0';
 
         CASE self.seq_count is
             WHEN 0 => 
@@ -111,20 +131,26 @@ package body reciproc_pkg is
                     self.seq_count <= self.seq_count + 1;
                 end if;
             WHEN 1 => 
-                self.x1 <= inv_mantissa(mpy(self.xi ,signed("00" & self.input_shift_register(self.input_shift_register'left downto 1) )));
+                self.mpya <= self.xi;
+                self.mpyb <= signed("00" & self.input_shift_register(self.input_shift_register'left downto 1));
+                self.mpy_pipeline(0) <= '1';
 
                 self.seq_count <= self.seq_count + 1;
             WHEN 2 => 
-                self.xi <= mpy(self.xi, self.x1);
-
-                if self.iteration_count > 0
+                if self.mpy_pipeline(self.mpy_pipeline'left) = '1' 
                 then
-                    self.iteration_count <= self.iteration_count -1;
-                    self.seq_count <= 1;
-                else
-                    self.seq_count <= self.seq_count + 1;
-                    -- get from dsp output register
-                    self.inv_a_out <= signed(resize(shift_right(self.xi , return_radix-1) , self.inv_a_out'length));
+                    vxi := self.mpyres(self.xi'high+radix downto radix);
+                    self.xi <= mpy(self.xi, inv_mantissa(vxi));
+
+                    if self.iteration_count > 0
+                    then
+                        self.iteration_count <= self.iteration_count -1;
+                        self.seq_count <= 1;
+                    else
+                        self.seq_count <= self.seq_count + 1;
+                        -- get from dsp output register
+                        self.inv_a_out <= signed(resize(shift_right(self.xi , return_radix-1) , self.inv_a_out'length));
+                    end if;
                 end if;
             WHEN others => -- do nothing
 
@@ -167,7 +193,7 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal self : init_reciproc'subtype := init_reciproc;
 
     use work.real_to_fixed_pkg.all;
-    signal q  : signed(wordlength-1 downto 0) := to_fixed(88.95, wordlength, radix-5);
+    signal q  : signed(wordlength-1 downto 0) := to_fixed(98.95, wordlength, radix-5);
 
     signal result : real := 0.0;
     signal inv_a  : real := 0.0;
