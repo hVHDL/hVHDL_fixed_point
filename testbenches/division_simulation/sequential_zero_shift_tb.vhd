@@ -18,6 +18,7 @@ package reciproc_pkg is
         input_shift_register  : unsigned;
         is_negative           : boolean;
         inv_a_out             : signed;
+        is_ready              : boolean;
 
         mpya         : signed;
         mpyb         : signed;
@@ -57,6 +58,7 @@ package body reciproc_pkg is
             , input_shift_register  => unsigned(std_logic_vector'(to_fixed(0.0, wordlength-1, radix)))
             , is_negative           => false
             , inv_a_out             => to_fixed(0.0, wordlength, radix)
+            , is_ready              => false
 
             -- refactor to use a module
             , mpya                  => to_fixed(0.0, wordlength, radix)
@@ -125,12 +127,13 @@ package body reciproc_pkg is
         self.mpyres <= self.mpya * self.mpyb;
         self.mpy_pipeline <= self.mpy_pipeline(self.mpy_pipeline'left-1 downto 0) & '0';
 
+        self.is_ready <= false;
         CASE self.seq_count is
             WHEN 0 => 
                 if number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift) = 0
                 then
                     self.seq_count <= self.seq_count + 1;
-                    self.xi <= to_fixed(1.0/1.7, self.xi'length, radix);
+                    self.xi <= to_fixed(0.6666666, self.xi'length, radix);
                 end if;
 
             WHEN 1 => 
@@ -167,9 +170,10 @@ package body reciproc_pkg is
 
                     else
                         self.seq_count <= self.seq_count + 1;
-                        -- get from dsp output register
+                        -- TODO, minimize zeros in output
                         vxi := self.mpyres(self.xi'high+radix downto radix);
-                        self.inv_a_out <= shift_right(vxi , return_radix-1);
+                        self.inv_a_out <= shift_right(vxi , return_radix-1 - self.input_zero_count);
+                        self.is_ready <= true;
                     end if;
                 end if;
             WHEN others => -- do nothing
@@ -199,13 +203,13 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal simulator_clock : std_logic;
     constant clock_per : time := 1 ns;
     constant clock_half_per : time := 0.5 ns;
-    constant simtime_in_clocks : integer := 500;
+    constant simtime_in_clocks : integer := 1500;
 
     signal simulation_counter : natural := 0;
     -----------------------------------
     -- simulation specific signals ----
     use work.reciproc_pkg.all;
-    constant wordlength : natural := 51;
+    constant wordlength : natural := 24;
     constant radix : natural := wordlength-3;
 
     constant init_reciproc : reciprocal_record := create_reciproc_typeref(wordlength);
@@ -213,8 +217,7 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal self : init_reciproc'subtype := init_reciproc;
 
     use work.real_to_fixed_pkg.all;
-    constant test_input : real := 98.95;
-    signal q  : signed(wordlength-1 downto 0) := to_fixed(test_input, wordlength, radix-5);
+    signal test_input : real := 125.5686;
 
     signal result : real := 0.0;
     signal inv_a  : real := 0.0;
@@ -252,6 +255,16 @@ begin
     stimulus : process(simulator_clock)
 
 
+        procedure request_inv(a : signed ; iterations : natural) is
+        begin
+            self.input_shift_register <= unsigned(a(self.input_shift_register'range));
+            self.input_zero_count <= 0;
+            self.iteration_count <= iterations;
+            self.seq_count <= 0;
+            self.is_negative <= a < 0;
+        end request_inv;
+
+        variable used_test_input : real := 0.0;
 
     begin
         if rising_edge(simulator_clock) then
@@ -260,21 +273,22 @@ begin
             create_reciproc(self, max_shift => max_shift);
             inv_a <= to_real(self.inv_a_out, radix);
 
-            if inv_a /= 0.0
+            if self.is_ready 
             then
-                ref_a <= 1.0/inv_a;
-                err_a <= test_input - 1.0/inv_a;
+                ref_a <= 1.0/to_real(self.inv_a_out, radix);
+                err_a <= 1.0/to_real(self.inv_a_out, radix) - test_input;
             end if;
+            check(err_a < 1.0e-2);
 
-            CASE simulation_counter is
-                WHEN 0 =>
-                    self.input_shift_register <= unsigned(q(self.input_shift_register'range));
-                    self.is_negative <= q < 0;
-                    self.input_zero_count <= 0;
-                    self.iteration_count <= 3;
-                    self.seq_count <= 0;
-                WHEN others => -- do nothing
-            end CASE;
+            if self.is_ready or simulation_counter = 0
+            then
+                used_test_input := test_input*0.85;
+                if (used_test_input < 127.9) and (used_test_input > 1.0)
+                then
+                    test_input <= test_input*0.85;
+                    request_inv(to_fixed(test_input*0.85, wordlength, radix-5), iterations => 5);
+                end if;
+            end if;
 
         end if; -- rising_edge
     end process stimulus;	
