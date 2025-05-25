@@ -47,7 +47,7 @@ package body reciproc_pkg is
 
         constant radix  : natural := wordlength-3;
         constant retval : reciprocal_record := (
-            seq_count               => 3
+            seq_count               => 4
             , rec_count             => 3
             , iteration_count       => 7
             , number_to_be_inverted => to_fixed(0.5, wordlength, radix)
@@ -115,6 +115,7 @@ package body reciproc_pkg is
     procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8 ; return_radix : natural := 7) is
         constant radix : natural := self.xi'length-3;
         variable vxi : signed(self.xi'range);
+
     begin
         self.input_zero_count     <= self.input_zero_count + number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift);
         self.input_shift_register <= shift_left(
@@ -130,7 +131,9 @@ package body reciproc_pkg is
                 then
                     self.seq_count <= self.seq_count + 1;
                 end if;
+
             WHEN 1 => 
+
                 self.mpya <= self.xi;
                 self.mpyb <= signed("00" & self.input_shift_register(self.input_shift_register'left downto 1));
                 self.mpy_pipeline(0) <= '1';
@@ -139,18 +142,34 @@ package body reciproc_pkg is
             WHEN 2 => 
                 if self.mpy_pipeline(self.mpy_pipeline'left) = '1' 
                 then
+
                     vxi := self.mpyres(self.xi'high+radix downto radix);
-                    self.xi <= mpy(self.xi, inv_mantissa(vxi));
+                    self.mpya <= self.xi;
+                    self.mpyb <= inv_mantissa(vxi);
+                    self.mpy_pipeline(0) <= '1';
 
                     if self.iteration_count > 0
                     then
                         self.iteration_count <= self.iteration_count -1;
-                        self.seq_count <= 1;
+                        self.seq_count <= 3;
                     else
-                        self.seq_count <= self.seq_count + 1;
+                        self.seq_count <= self.seq_count + 2;
                         -- get from dsp output register
                         self.inv_a_out <= signed(resize(shift_right(self.xi , return_radix-1) , self.inv_a_out'length));
                     end if;
+                end if;
+            WHEN 3 => 
+
+                if self.mpy_pipeline(self.mpy_pipeline'left) = '1' 
+                then
+                    vxi := self.mpyres(self.xi'high+radix downto radix);
+                    self.xi <= vxi;
+
+                    self.mpya <= vxi;
+                    self.mpyb <= signed("00" & self.input_shift_register(self.input_shift_register'left downto 1));
+                    self.mpy_pipeline(0) <= '1';
+
+                    self.seq_count <= 2;
                 end if;
             WHEN others => -- do nothing
 
