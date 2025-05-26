@@ -9,8 +9,7 @@ package reciproc_pkg is
 
     type reciprocal_record is record
         seq_count             : natural range 0 to 7;
-        rec_count             : natural range 0 to 7;
-        iteration_count       : natural range 0 to 7;
+        iteration_count       : natural range 0 to 15;
         number_to_be_inverted : signed;
         x1                    : signed;
         xi                    : signed;
@@ -38,7 +37,7 @@ package reciproc_pkg is
     -------
     function inv_mantissa(a : signed) return signed;
     -------
-    procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8 ; output_int_length : natural := 7);
+    procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8 ; output_int_length : natural := 8);
     -------
     procedure request_inv(signal self : inout reciprocal_record ;a : signed ; iterations : natural);
     -------
@@ -68,7 +67,6 @@ package body reciproc_pkg is
         constant radix  : natural := wordlength-3;
         constant retval : reciprocal_record := (
             seq_count               => 4
-            , rec_count             => 3
             , iteration_count       => 7
             , number_to_be_inverted => to_fixed(0.5, wordlength, radix)
             , x1                    => to_fixed(0.5, wordlength, radix)
@@ -136,7 +134,12 @@ package body reciproc_pkg is
     -------------
 
     ------------------------------------------
-    procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8 ; output_int_length : natural := 7) is
+    procedure create_reciproc(
+         signal self : inout reciprocal_record 
+         ; constant max_shift : natural := 8
+         ; output_int_length  : natural := 8
+     ) is
+
         constant radix : natural := self.xi'length-3;
         variable vxi : signed(self.xi'range);
 
@@ -144,18 +147,19 @@ package body reciproc_pkg is
         self.input_zero_count     <= self.input_zero_count + number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift);
         self.input_shift_register <= shift_left(
                                 self.input_shift_register
-                                ,(number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift)));
+                                ,(number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift))
+                            );
 
         self.output_ready <= false;
         if self.output_shift_count > 0 then
             if self.output_shift_count > 3
             then
-                self.output_shift_count <= self.output_shift_count - 3;
+                self.output_shift_count    <= self.output_shift_count - 3;
                 self.output_shift_register <= shift_right(self.output_shift_register,3);
             else
-                self.output_shift_count <= 0;
+                self.output_shift_count    <= 0;
                 self.output_shift_register <= shift_right(self.output_shift_register,self.output_shift_count);
-                self.output_ready <= true;
+                self.output_ready          <= true;
             end if;
         end if;
 
@@ -163,12 +167,13 @@ package body reciproc_pkg is
         if self.output_ready
         then
             self.inv_a_out <= self.output_shift_register(self.xi'high+radix downto radix);
-            self.is_ready <= true;
+            self.is_ready  <= true;
         end if;
 
-        self.mpyres <= self.mpya * self.mpyb;
+        self.mpyres       <= self.mpya * self.mpyb;
         self.mpy_pipeline <= self.mpy_pipeline(self.mpy_pipeline'left-1 downto 0) & '0';
 
+        -------------------------------
         CASE self.seq_count is
             WHEN 0 => 
                 if number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift) = 0
@@ -213,14 +218,15 @@ package body reciproc_pkg is
                         self.seq_count <= self.seq_count + 1;
                         -- TODO, minimize zeros in output
                         self.output_shift_register <= self.mpyres;
-                        self.output_shift_count <= output_int_length-1 - self.input_zero_count;
+                        self.output_shift_count <= output_int_length-2 - self.input_zero_count;
                         -- vxi := self.mpyres(self.xi'high+radix downto radix);
                         -- self.inv_a_out <= shift_right(vxi , output_int_length-1 - self.input_zero_count);
                     end if;
                 end if;
             WHEN others => -- do nothing
-
         end CASE;
+        -------------------------------
+
     end procedure;
     ------------------------------------------
     procedure request_inv(signal self : inout reciprocal_record ;a : signed ; iterations : natural) is
@@ -254,7 +260,7 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal simulator_clock : std_logic;
     constant clock_per : time := 1 ns;
     constant clock_half_per : time := 0.5 ns;
-    constant simtime_in_clocks : integer := 1500;
+    constant simtime_in_clocks : integer := 7500;
 
     signal simulation_counter : natural := 0;
     -----------------------------------
@@ -268,7 +274,7 @@ architecture vunit_simulation of seq_zero_shift_tb is
     signal self : init_reciproc'subtype := init_reciproc;
 
     use work.real_to_fixed_pkg.all;
-    signal test_input : real := 125.5686;
+    signal test_input : real := 127.0;
 
     signal result : real := 0.0;
     signal inv_a  : real := 0.0;
@@ -284,7 +290,8 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         simulation_running <= true;
-        wait for simtime_in_clocks*clock_per;
+        -- wait for simtime_in_clocks*clock_per;
+        wait until test_input < 16.0;
         simulation_running <= false;
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
@@ -311,7 +318,7 @@ begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            create_reciproc(self, max_shift => max_shift, output_int_length => 7);
+            create_reciproc(self, max_shift => max_shift, output_int_length => 8);
             inv_a <= to_real(get_result(self), radix);
 
             if is_ready(self)
@@ -323,11 +330,11 @@ begin
 
             if is_ready(self) or simulation_counter = 0
             then
-                used_test_input := test_input*0.85;
+                used_test_input := test_input*0.9995;
                 if (used_test_input < 127.9) and (used_test_input > 1.0)
                 then
-                    test_input <= test_input*0.85;
-                    request_inv(self, to_fixed(test_input*0.85, wordlength, wordlength-1-7), iterations => 5);
+                    test_input <= used_test_input;
+                    request_inv(self, to_fixed(used_test_input, wordlength, wordlength-8), iterations => 5);
                 end if;
             end if;
 
