@@ -16,6 +16,11 @@ package reciproc_pkg is
         xi                    : signed;
         input_zero_count      : natural range 0 to 127;
         input_shift_register  : unsigned;
+
+        output_shift_count    : natural range 0 to 127;
+        output_shift_register : signed;
+        output_ready          : boolean;
+
         is_negative           : boolean;
         inv_a_out             : signed;
         is_ready              : boolean;
@@ -28,21 +33,35 @@ package reciproc_pkg is
 
     -------
     function create_reciproc_typeref(wordlength : natural) return reciprocal_record;
-
     -------
     function mpy (left : signed; right : signed) return signed;
-
     -------
     function inv_mantissa(a : signed) return signed;
+    -------
+    procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8 ; output_int_length : natural := 7);
+    -------
+    procedure request_inv(signal self : inout reciprocal_record ;a : signed ; iterations : natural);
+    -------
+    function is_ready ( self : reciprocal_record) return boolean;
+    -------
+    function get_result ( self : reciprocal_record) return signed;
 
-    -------
-    procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8 ; return_radix : natural := 7);
-    -------
 
 end package reciproc_pkg;
 ------------------
 
 package body reciproc_pkg is
+
+    function is_ready ( self : reciprocal_record) return boolean is
+    begin
+        return self.is_ready;
+    end is_ready;
+
+    function get_result ( self : reciprocal_record) return signed is
+    begin
+        return self.inv_a_out;
+    end get_result;
+
 
     function create_reciproc_typeref(wordlength : natural) return reciprocal_record is
 
@@ -56,6 +75,9 @@ package body reciproc_pkg is
             , xi                    => to_fixed(0.0, wordlength, radix)
             , input_zero_count      => 0
             , input_shift_register  => unsigned(std_logic_vector'(to_fixed(0.0, wordlength-1, radix)))
+            , output_shift_count     => 0
+            , output_shift_register => to_fixed(0.0, wordlength*2, radix)
+            , output_ready          => false
             , is_negative           => false
             , inv_a_out             => to_fixed(0.0, wordlength, radix)
             , is_ready              => false
@@ -114,7 +136,7 @@ package body reciproc_pkg is
     -------------
 
     ------------------------------------------
-    procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8 ; return_radix : natural := 7) is
+    procedure create_reciproc(signal self : inout reciprocal_record ; constant max_shift : natural := 8 ; output_int_length : natural := 7) is
         constant radix : natural := self.xi'length-3;
         variable vxi : signed(self.xi'range);
 
@@ -124,10 +146,29 @@ package body reciproc_pkg is
                                 self.input_shift_register
                                 ,(number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift)));
 
+        self.output_ready <= false;
+        if self.output_shift_count > 0 then
+            if self.output_shift_count > 3
+            then
+                self.output_shift_count <= self.output_shift_count - 3;
+                self.output_shift_register <= shift_right(self.output_shift_register,3);
+            else
+                self.output_shift_count <= 0;
+                self.output_shift_register <= shift_right(self.output_shift_register,self.output_shift_count);
+                self.output_ready <= true;
+            end if;
+        end if;
+
+        self.is_ready <= false;
+        if self.output_ready
+        then
+            self.inv_a_out <= self.output_shift_register(self.xi'high+radix downto radix);
+            self.is_ready <= true;
+        end if;
+
         self.mpyres <= self.mpya * self.mpyb;
         self.mpy_pipeline <= self.mpy_pipeline(self.mpy_pipeline'left-1 downto 0) & '0';
 
-        self.is_ready <= false;
         CASE self.seq_count is
             WHEN 0 => 
                 if number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift) = 0
@@ -171,9 +212,10 @@ package body reciproc_pkg is
                     else
                         self.seq_count <= self.seq_count + 1;
                         -- TODO, minimize zeros in output
-                        vxi := self.mpyres(self.xi'high+radix downto radix);
-                        self.inv_a_out <= shift_right(vxi , return_radix-1 - self.input_zero_count);
-                        self.is_ready <= true;
+                        self.output_shift_register <= self.mpyres;
+                        self.output_shift_count <= output_int_length-1 - self.input_zero_count;
+                        -- vxi := self.mpyres(self.xi'high+radix downto radix);
+                        -- self.inv_a_out <= shift_right(vxi , output_int_length-1 - self.input_zero_count);
                     end if;
                 end if;
             WHEN others => -- do nothing
@@ -181,6 +223,15 @@ package body reciproc_pkg is
         end CASE;
     end procedure;
     ------------------------------------------
+    procedure request_inv(signal self : inout reciprocal_record ;a : signed ; iterations : natural) is
+    begin
+        self.input_shift_register <= unsigned(a(self.input_shift_register'range));
+        self.input_zero_count <= 0;
+        self.iteration_count <= iterations;
+        self.seq_count <= 0;
+        self.is_negative <= a < 0;
+    end request_inv;
+
 
 end package body;
 
@@ -254,39 +305,29 @@ begin
 
     stimulus : process(simulator_clock)
 
-
-        procedure request_inv(a : signed ; iterations : natural) is
-        begin
-            self.input_shift_register <= unsigned(a(self.input_shift_register'range));
-            self.input_zero_count <= 0;
-            self.iteration_count <= iterations;
-            self.seq_count <= 0;
-            self.is_negative <= a < 0;
-        end request_inv;
-
         variable used_test_input : real := 0.0;
 
     begin
         if rising_edge(simulator_clock) then
             simulation_counter <= simulation_counter + 1;
 
-            create_reciproc(self, max_shift => max_shift);
-            inv_a <= to_real(self.inv_a_out, radix);
+            create_reciproc(self, max_shift => max_shift, output_int_length => 7);
+            inv_a <= to_real(get_result(self), radix);
 
-            if self.is_ready 
+            if is_ready(self)
             then
-                ref_a <= 1.0/to_real(self.inv_a_out, radix);
-                err_a <= 1.0/to_real(self.inv_a_out, radix) - test_input;
+                ref_a <= 1.0/to_real(get_result(self), wordlength-3);
+                err_a <= 1.0/to_real(get_result(self), wordlength-3) - test_input;
             end if;
             check(err_a < 1.0e-2);
 
-            if self.is_ready or simulation_counter = 0
+            if is_ready(self) or simulation_counter = 0
             then
                 used_test_input := test_input*0.85;
                 if (used_test_input < 127.9) and (used_test_input > 1.0)
                 then
                     test_input <= test_input*0.85;
-                    request_inv(to_fixed(test_input*0.85, wordlength, radix-5), iterations => 5);
+                    request_inv(self, to_fixed(test_input*0.85, wordlength, wordlength-1-7), iterations => 5);
                 end if;
             end if;
 
