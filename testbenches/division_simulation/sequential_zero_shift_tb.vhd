@@ -179,7 +179,7 @@ package body reciproc_pkg is
                 if number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift) = 0
                 then
                     self.seq_count <= self.seq_count + 1;
-                    self.xi <= to_fixed(0.6666666, self.xi'length, radix);
+                    self.xi <= to_fixed(2.0/3.0, self.xi'length, radix);
                 end if;
 
             WHEN 1 => 
