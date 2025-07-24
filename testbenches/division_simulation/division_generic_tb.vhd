@@ -11,7 +11,7 @@ entity division_generic_tb is
 end;
 
 architecture vunit_simulation of division_generic_tb is
-    constant int_word_length : integer := 32;
+    constant int_word_length : integer := 31;
 
     use work.real_to_fixed_pkg.all;
 
@@ -50,6 +50,7 @@ begin
     begin
         test_runner_setup(runner, runner_cfg);
         wait for simtime_in_clocks*clock_period;
+        log("divider only works up to 31 bit word length", info);
         test_runner_cleanup(runner); -- Simulation ends here
         wait;
     end process simtime;	

@@ -117,27 +117,28 @@ sqrt_lib.add_source_files(ROOT / "testbenches/square_root/initia_values_tb.vhd")
 sqrt_lib.add_source_files(ROOT / "testbenches/square_root/isqrt_tb.vhd")
 sqrt_lib.add_source_files(ROOT / "testbenches/square_root/test_square_root_radix_tb.vhd")
 
-multiplier_generic_lib = VU.add_library("multiplier_generic_lib")
-multiplier_generic_lib.add_source_files(ROOT / "multiplier/multiplier_generic_pkg.vhd")
-multiplier_generic_lib.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
+vhdl2008 = VU.add_library("vhdl2008")
+vhdl2008.add_source_files(ROOT / "multiplier/multiplier_generic_pkg.vhd")
+vhdl2008.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
 
-multiplier_generic_lib.add_source_files(ROOT / "division/division_generic_pkg.vhd")
-multiplier_generic_lib.add_source_files(ROOT / "division/division_generic_pkg_body.vhd")
+vhdl2008.add_source_files(ROOT / "division/division_generic_pkg.vhd")
+vhdl2008.add_source_files(ROOT / "division/division_generic_pkg_body.vhd")
 
-multiplier_generic_lib.add_source_files(ROOT / "pi_controller/pi_controller_generic_pkg.vhd")
+vhdl2008.add_source_files(ROOT / "pi_controller/pi_controller_generic_pkg.vhd")
 
-multiplier_generic_lib.add_source_files(ROOT / "testbenches/multiplier_simulation/multiplier_generic_tb.vhd")
-multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/division_generic_tb.vhd")
-multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division_generic.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/multiplier_simulation/multiplier_generic_tb.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/division_generic_tb.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division_generic.vhd")
 
-multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/zero_shifter_tb.vhd")
-multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/sequential_zero_shift_tb.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/reciproc_pkg.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/zero_shifter_tb.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/sequential_zero_shift_tb.vhd")
 
-multiplier_generic_lib.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/dp_ram_w_configurable_recrods.vhd")
-multiplier_generic_lib.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/arch_sim_dp_ram_w_configurable_records.vhd")
+vhdl2008.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/dp_ram_w_configurable_recrods.vhd")
+vhdl2008.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/arch_sim_dp_ram_w_configurable_records.vhd")
 
-multiplier_generic_lib.add_source_files(ROOT / "adc_scaler/adc_scaler.vhd")
-multiplier_generic_lib.add_source_files(ROOT / "testbenches/adc_scaler/adc_scaler_tb.vhd")
+vhdl2008.add_source_files(ROOT / "adc_scaler/adc_scaler.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/adc_scaler/adc_scaler_tb.vhd")
 
 # these use initial values of signals as initial values of other signals, fix them
 # mathlib.add_source_files(ROOT / "testbenches/adder/adder_tb.vhd")
@@ -149,5 +150,5 @@ multiplier_generic_lib.add_source_files(ROOT / "testbenches/adc_scaler/adc_scale
 # sqrt_lib.add_source_files(ROOT / "testbenches/square_root/fixed_inv_square_root_tb.vhd")
 # sqrt_lib.add_source_files(ROOT / "testbenches/division_simulation/goldsmith_tb.vhd")
  
-# VU.set_sim_option("nvc.sim_flags", ["-w"])
+VU.set_sim_option("nvc.sim_flags", ["-w"])
 VU.main()
