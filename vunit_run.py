@@ -133,6 +133,12 @@ multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/
 multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/zero_shifter_tb.vhd")
 multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/sequential_zero_shift_tb.vhd")
 
+multiplier_generic_lib.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/dp_ram_w_configurable_recrods.vhd")
+multiplier_generic_lib.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/arch_sim_dp_ram_w_configurable_records.vhd")
+
+multiplier_generic_lib.add_source_files(ROOT / "adc_scaler/adc_scaler.vhd")
+multiplier_generic_lib.add_source_files(ROOT / "testbenches/adc_scaler/adc_scaler_tb.vhd")
+
 # these use initial values of signals as initial values of other signals, fix them
 # mathlib.add_source_files(ROOT / "testbenches/adder/adder_tb.vhd")
 # mathlib26.add_source_files(ROOT / "testbenches/division_simulation/division_tb.vhd")
@@ -142,7 +148,6 @@ multiplier_generic_lib.add_source_files(ROOT / "testbenches/division_simulation/
 # mathlib26.add_source_files(ROOT / "testbenches/real_to_fixed/real_to_fixed_tb.vhd")
 # sqrt_lib.add_source_files(ROOT / "testbenches/square_root/fixed_inv_square_root_tb.vhd")
 # sqrt_lib.add_source_files(ROOT / "testbenches/division_simulation/goldsmith_tb.vhd")
-
-
-VU.set_sim_option("nvc.sim_flags", ["-w"])
+ 
+# VU.set_sim_option("nvc.sim_flags", ["-w"])
 VU.main()
