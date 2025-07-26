@@ -75,7 +75,8 @@ begin
             end if;
             check(err_a < 1.0e-2);
 
-            if is_ready(self) or simulation_counter = 0
+            -- run system in idle loop for 200 clock cycles
+            if is_ready(self) or simulation_counter = 200
             then
                 used_test_input := test_input*0.9995;
                 if (used_test_input < 127.9) and (used_test_input > 1.0)

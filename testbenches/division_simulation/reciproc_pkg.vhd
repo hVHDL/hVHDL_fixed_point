@@ -65,6 +65,8 @@ package body reciproc_pkg is
 
     function create_reciproc_typeref(wordlength : natural) return reciprocal_record is
 
+        constant init_shifter : std_logic_vector(wordlength-2 downto 0) := (others => '1');
+
         constant radix  : natural := wordlength-3;
         constant retval : reciprocal_record := (
             seq_count               => 4
@@ -73,7 +75,7 @@ package body reciproc_pkg is
             , x1                    => to_fixed(0.5, wordlength, radix)
             , xi                    => to_fixed(0.0, wordlength, radix)
             , input_zero_count      => 0
-            , input_shift_register  => unsigned(std_logic_vector'(to_fixed(0.0, wordlength-1, radix)))
+            , input_shift_register  => unsigned(init_shifter)
             , output_shift_count     => 0
             , output_shift_register => to_fixed(0.0, wordlength*2, radix)
             , output_ready          => false
