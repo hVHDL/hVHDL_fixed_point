@@ -150,5 +150,5 @@ vhdl2008.add_source_files(ROOT / "testbenches/adc_scaler/adc_scaler_tb.vhd")
 # sqrt_lib.add_source_files(ROOT / "testbenches/square_root/fixed_inv_square_root_tb.vhd")
 # sqrt_lib.add_source_files(ROOT / "testbenches/division_simulation/goldsmith_tb.vhd")
  
-VU.set_sim_option("nvc.sim_flags", ["-w"])
+# VU.set_sim_option("nvc.sim_flags", ["-w"])
 VU.main()

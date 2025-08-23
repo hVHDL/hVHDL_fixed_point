@@ -232,6 +232,106 @@ package body reciproc_pkg is
 
     end procedure;
     ------------------------------------------
+    ------------------------------------------
+    procedure create_reciproc(
+         signal self : inout reciprocal_record 
+         ; constant max_shift : natural := 8
+         ; input_radix        : natural := 8
+         ; output_radix       : natural := 8
+     ) is
+
+        constant radix : natural := self.xi'length-3;
+        variable vxi : signed(self.xi'range);
+
+        constant output_int_length : integer := 
+            (self.number_to_be_inverted'length - output_radix)*2-3;
+
+    begin
+        self.input_zero_count     <= self.input_zero_count + number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift);
+        self.input_shift_register <= shift_left(
+                                self.input_shift_register
+                                ,(number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift))
+                            );
+
+        self.output_ready <= false;
+        if self.output_shift_count > 0 then
+            if self.output_shift_count > 3
+            then
+                self.output_shift_count    <= self.output_shift_count - 3;
+                self.output_shift_register <= shift_right(self.output_shift_register,3);
+            else
+                self.output_shift_count    <= 0;
+                self.output_shift_register <= shift_right(self.output_shift_register,self.output_shift_count);
+                self.output_ready          <= true;
+            end if;
+        end if;
+
+        self.is_ready <= false;
+        if self.output_ready
+        then
+            self.inv_a_out <= self.output_shift_register(self.xi'high+radix downto radix);
+            self.is_ready  <= true;
+        end if;
+
+        self.mpyres       <= self.mpya * self.mpyb;
+        self.mpy_pipeline <= self.mpy_pipeline(self.mpy_pipeline'left-1 downto 0) & '0';
+
+        -------------------------------
+        CASE self.seq_count is
+            WHEN 0 => 
+                if number_of_leading_zeroes(self.input_shift_register, max_shift => max_shift) = 0
+                then
+                    self.seq_count <= self.seq_count + 1;
+                    self.xi <= to_fixed(2.0/3.0, self.xi'length, radix);
+                end if;
+
+            WHEN 1 => 
+
+                self.mpya <= self.xi;
+                self.mpyb <= signed("00" & self.input_shift_register(self.input_shift_register'left downto 1));
+                self.mpy_pipeline(0) <= '1';
+
+                self.seq_count <= self.seq_count + 1;
+            WHEN 2 => 
+                if self.mpy_pipeline(self.mpy_pipeline'left) = '1' 
+                then
+
+                    vxi := self.mpyres(self.xi'high+radix downto radix);
+                    self.mpya <= self.xi;
+                    self.mpyb <= inv_mantissa(vxi);
+                    self.mpy_pipeline(0) <= '1';
+                    self.seq_count <= self.seq_count + 1;
+
+                end if;
+            WHEN 3 => 
+                if self.mpy_pipeline(self.mpy_pipeline'left) = '1' 
+                then
+                    if self.iteration_count > 0
+                    then
+                        self.iteration_count <= self.iteration_count -1;
+                        self.seq_count <= 2;
+                        vxi := self.mpyres(self.xi'high+radix downto radix);
+                        self.xi <= vxi;
+
+                        self.mpya <= vxi;
+                        self.mpyb <= signed("00" & self.input_shift_register(self.input_shift_register'left downto 1));
+                        self.mpy_pipeline(0) <= '1';
+
+                    else
+                        self.seq_count <= self.seq_count + 1;
+                        -- TODO, minimize zeros in output
+                        self.output_shift_register <= self.mpyres;
+                        self.output_shift_count <= output_int_length-2 - self.input_zero_count;
+                        -- vxi := self.mpyres(self.xi'high+radix downto radix);
+                        -- self.inv_a_out <= shift_right(vxi , output_int_length-1 - self.input_zero_count);
+                    end if;
+                end if;
+            WHEN others => -- do nothing
+        end CASE;
+        -------------------------------
+
+    end procedure;
+    ------------------------------------------
     procedure request_inv(signal self : inout reciprocal_record ;a : signed ; iterations : natural) is
     begin
         self.input_shift_register <= unsigned(a(self.input_shift_register'range));
