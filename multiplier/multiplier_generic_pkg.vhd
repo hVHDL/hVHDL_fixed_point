@@ -15,10 +15,10 @@ package multiplier_generic_pkg is
 
     subtype mpy_signed is signed(multiplier_word_length-1 downto 0);
     
-    type input_array is array (integer range g_input_registers-1 downto 0) of signed(g_number_of_input_bits-1 downto 0);
+    type input_array is array (natural range g_input_registers-1 downto 0) of signed(g_number_of_input_bits-1 downto 0);
     constant init_input_array  : input_array  := (others => (others => '0'));
 
-    type output_array is array (integer range g_output_registers-1 downto 0) of signed(g_number_of_input_bits*2-1 downto 0);
+    type output_array is array (natural range g_output_registers-1 downto 0) of signed(g_number_of_input_bits*2-1 downto 0);
     constant init_output_array : output_array := (others => (others => '0'));
 
     constant number_of_pipeline_cycles : integer := g_input_registers + g_output_registers-1;
