@@ -45,6 +45,9 @@ vhdl2008.add_source_files(ROOT / "testbenches/adc_scaler/adc_scaler_tb.vhd")
 vhdl2008.add_source_files(ROOT / "lut_interpolation/lut_interpolation_pkg.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/lut_interpolation/lut_interpolation_tb.vhd")
 
+vhdl2008.add_source_files(ROOT / "lut_interpolation/lut_reciprocal_pkg.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/lut_interpolation/lut_reciprocal_tb.vhd")
+
 # VU.set_sim_option("nvc.sim_flags", ["-w"])
 
 if args.dump_arrays is not None:
