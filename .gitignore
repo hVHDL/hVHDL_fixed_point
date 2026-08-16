@@ -13,3 +13,4 @@ temp
 *.fst.*
 *.toml
 *.json
+*work/

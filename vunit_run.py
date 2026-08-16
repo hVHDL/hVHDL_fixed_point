@@ -42,7 +42,7 @@ vhdl2008.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/arch_
 vhdl2008.add_source_files(ROOT / "adc_scaler/adc_scaler.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/adc_scaler/adc_scaler_tb.vhd")
 
-vhdl2008.add_source_files(ROOT / "lut_interpolation/lut_interpolation_pkg.vhd")
+vhdl2008.add_source_files(ROOT / "lut_interpolation/lut_sine_pkg.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/lut_interpolation/lut_interpolation_tb.vhd")
 
 vhdl2008.add_source_files(ROOT / "lut_interpolation/lut_reciprocal_pkg.vhd")

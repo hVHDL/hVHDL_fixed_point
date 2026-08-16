@@ -3,7 +3,7 @@ library ieee;
     use ieee.numeric_std.all;
     use ieee.math_real.all;
 
-package lut_interpolation_pkg is
+package lut_sine_pkg is
 
     -- angle is a 16 bit unsigned fraction of a full turn : 0 => 0 rad, 65536 => 2*pi rad
     constant angle_word_length : natural := 16;
@@ -40,9 +40,9 @@ package lut_interpolation_pkg is
     constant slope_lut : sine_table_array(0 to number_of_entries-1);
 
 ------------------------------------------------------------------------
-end package lut_interpolation_pkg;
+end package lut_sine_pkg;
 
-package body lut_interpolation_pkg is
+package body lut_sine_pkg is
 ------------------------------------------------------------------------
     function calculate_point_lut
     (
@@ -144,4 +144,4 @@ package body lut_interpolation_pkg is
     constant point_lut : sine_table_array(0 to number_of_entries-1) := calculate_point_lut(number_of_entries);
     constant slope_lut : sine_table_array(0 to number_of_entries-1) := calculate_slope_lut(number_of_entries);
 ------------------------------------------------------------------------
-end package body lut_interpolation_pkg;
+end package body lut_sine_pkg;

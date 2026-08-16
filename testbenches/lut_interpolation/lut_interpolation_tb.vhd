@@ -3,16 +3,16 @@ LIBRARY ieee  ;
     USE ieee.std_logic_1164.all  ;
     use ieee.math_real.all;
 
-    use work.lut_interpolation_pkg.all;
+    use work.lut_sine_pkg.all;
 
 library vunit_lib;
 context vunit_lib.vunit_context;
 
-entity lut_interpolation_tb is
+entity lut_sine_pkg_tb is
   generic (runner_cfg : string);
 end;
 
-architecture sim of lut_interpolation_tb is
+architecture sim of lut_sine_pkg_tb is
 
     signal simulator_clock : std_logic := '0';
     constant clock_period : time := 1 ns;
