@@ -21,6 +21,12 @@ package lut_interpolation_pkg is
     function calculate_slope_lut ( number_of_entries : natural)
         return sine_table_array;
 ------------------------------------------------------------------------
+    -- quarter wave symmetry : the index used to read both the point and the
+    -- slope lut for a given angle (the angle is mirrored first when its
+    -- quadrant is odd)
+    function get_quarter_index ( angle_rad16 : unsigned(angle_word_length-1 downto 0))
+        return natural;
+------------------------------------------------------------------------
     -- quarter wave sine lookup with linear interpolation using a single MAC :
     -- sine = point_lut(address) + slope_lut(address) * fraction ;
     -- the output length follows from the lut entries used to build it
@@ -73,42 +79,59 @@ package body lut_interpolation_pkg is
 
     end calculate_slope_lut;
 ------------------------------------------------------------------------
+    -- the next-to-top bit tells whether the quadrant is odd, in which case
+    -- the quarter wave lut must be traversed backwards (quarter wave symmetry) ;
+    -- not exported, used to build the quarter index and the fraction
+    function get_phase_in_quadrant
+    (
+        angle_rad16 : unsigned(angle_word_length-1 downto 0)
+    )
+    return unsigned
+    is
+    begin
+        if angle_rad16(angle_word_length-2) = '1' then
+            return not angle_rad16(angle_word_length-3 downto 0);
+        else
+            return angle_rad16(angle_word_length-3 downto 0);
+        end if;
+
+    end get_phase_in_quadrant;
+------------------------------------------------------------------------
+    function get_quarter_index
+    (
+        angle_rad16 : unsigned(angle_word_length-1 downto 0)
+    )
+    return natural
+    is
+    begin
+        return to_integer(get_phase_in_quadrant(angle_rad16)(angle_word_length-3 downto fraction_width));
+
+    end get_quarter_index;
+------------------------------------------------------------------------
     function get_sine_from_quarter_wave_lut
     (
         angle_rad16 : unsigned(angle_word_length-1 downto 0)
     )
     return signed
     is
-        -- top bit tells whether the sine is in the negative half of the wave,
-        -- the next bit tells whether the quadrant is odd, in which case the
-        -- quarter wave lut must be traversed backwards (quarter wave symmetry)
+        -- top bit tells whether the sine is in the negative half of the wave
         variable is_negative        : std_logic;
-        variable is_mirrored        : std_logic;
-        variable phase_in_quadrant  : unsigned(angle_word_length-3 downto 0);
-        variable address            : natural range 0 to number_of_entries-1;
+        variable quarter_index      : natural range 0 to number_of_entries-1;
         variable fraction           : unsigned(fraction_width-1 downto 0);
         variable product            : signed(point_lut(0)'length + fraction'length downto 0);
         variable interpolated_value : signed(point_lut(0)'length-1 downto 0);
     begin
-        is_negative := angle_rad16(angle_word_length-1);
-        is_mirrored := angle_rad16(angle_word_length-2);
-
-        if is_mirrored = '1' then
-            phase_in_quadrant := not angle_rad16(angle_word_length-3 downto 0);
-        else
-            phase_in_quadrant := angle_rad16(angle_word_length-3 downto 0);
-        end if;
-
-        address  := to_integer(phase_in_quadrant(angle_word_length-3 downto fraction_width));
-        fraction := phase_in_quadrant(fraction_width-1 downto 0);
+        is_negative   := angle_rad16(angle_word_length-1);
+        quarter_index := get_quarter_index(angle_rad16);
+        fraction      := get_phase_in_quadrant(angle_rad16)(fraction_width-1 downto 0);
 
         -- single MAC operation : point + slope * fraction, done entirely with
         -- signed/unsigned arithmetic ; the radix scaling is a free bit-select
         -- on the product, not a separate shift operation ; the output length
         -- is simply the length of the lut entries feeding the MAC
-        product := slope_lut(address) * signed('0' & fraction);
+        product := slope_lut(quarter_index) * signed('0' & fraction);
 
-        interpolated_value := point_lut(address) + product(product'left-1 downto fraction'length);
+        interpolated_value := point_lut(quarter_index) + product(product'left-1 downto fraction'length);
 
         if is_negative = '1' then
             return -interpolated_value;

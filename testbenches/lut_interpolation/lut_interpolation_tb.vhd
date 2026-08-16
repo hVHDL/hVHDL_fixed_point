@@ -23,6 +23,11 @@ architecture sim of lut_interpolation_tb is
     signal angle         : unsigned(angle_word_length-1 downto 0) := (others => '0');
     signal angle_of_sine : unsigned(angle_word_length-1 downto 0) := (others => '0');
     signal sine          : signed(angle_word_length-1 downto 0)   := (others => '0');
+
+    -- exposed only so the lut lookups can be seen in the waveform dump
+    signal quarter_index : natural range 0 to number_of_entries-1 := 0;
+    signal point_value   : signed(angle_word_length-1 downto 0) := (others => '0');
+    signal slope_value   : signed(angle_word_length-1 downto 0) := (others => '0');
 ------------------------------------------------------------------------
 begin
 
@@ -56,6 +61,10 @@ begin
             angle_of_sine <= angle;
             sine          <= get_sine_from_quarter_wave_lut(angle);
             angle         <= angle + 1;
+
+            quarter_index <= get_quarter_index(angle);
+            point_value   <= point_lut(get_quarter_index(angle));
+            slope_value   <= slope_lut(get_quarter_index(angle));
 
         end if; -- rising_edge
     end process stimulus_and_check;
