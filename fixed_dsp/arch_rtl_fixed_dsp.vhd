@@ -5,7 +5,7 @@ architecture rtl of fixed_dsp is
 
     signal c_buf : mult'subtype;
 
-    signal P : result'subtype := (others => '0');
+    signal P : fixed_dsp_out.result'subtype := (others => '0');
 
     signal buf_accumulate    : std_logic;-- 0=p <= p + (a*b)
     signal buf_pre_subtract  : std_logic;-- 0=a+d
@@ -19,8 +19,8 @@ architecture rtl of fixed_dsp is
 begin
 
     -- output
-    result <= P;
-    ready_with_1 <= ready_pipeline(ready_pipeline'high);
+    fixed_dsp_out.result <= P;
+    fixed_dsp_out.ready_with_1 <= ready_pipeline(ready_pipeline'high);
 
     -- Pre-adder
     pre <= fixed_dsp_in.a + fixed_dsp_in.d when fixed_dsp_in.pre_subtract_with_1 = '0'
