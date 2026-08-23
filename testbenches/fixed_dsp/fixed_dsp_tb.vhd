@@ -10,7 +10,13 @@ library vunit_lib;
 context vunit_lib.vunit_context;
 
 entity fixed_dsp_tb is
-  generic (runner_cfg : string);
+  generic (
+      runner_cfg : string
+      -- rtl is a generic-width pipeline usable at any word length ; ecp5
+      -- wraps the fixed-width mpy_32x32 hard IP (or its simulation model)
+      -- and only works at its native 32x32 bits
+      ;use_ecp5 : boolean := false
+  );
 end;
 
 architecture sim of fixed_dsp_tb is
@@ -21,8 +27,8 @@ architecture sim of fixed_dsp_tb is
 ------------------------------------------------------------------------
     signal simulation_counter : natural := 0;
 
-    constant word_length : natural := 18;
-    constant g_radix     : natural := 14;
+    constant word_length : natural := 32;
+    constant g_radix     : natural := 16;
     -- the multiplier output and the accumulator carry twice the input
     -- fractional bits, since c is pre-shifted left by g_radix to line up
     -- with the a*b product before it is added
@@ -89,13 +95,25 @@ architecture sim of fixed_dsp_tb is
 begin
 
 ------------------------------------------------------------------------
-    u_fixed_dsp : entity work.fixed_dsp(rtl)
-    generic map(g_radix => g_radix)
-    port map(
-        clock => simulator_clock
-        ,fixed_dsp_in  => fixed_dsp_in
-        ,fixed_dsp_out => fixed_dsp_out
-    );
+    gen_rtl : if not use_ecp5 generate
+        u_fixed_dsp : entity work.fixed_dsp(rtl)
+        generic map(g_radix => g_radix)
+        port map(
+            clock => simulator_clock
+            ,fixed_dsp_in  => fixed_dsp_in
+            ,fixed_dsp_out => fixed_dsp_out
+        );
+    end generate;
+
+    gen_ecp5 : if use_ecp5 generate
+        u_fixed_dsp : entity work.fixed_dsp(ecp5)
+        generic map(g_radix => g_radix)
+        port map(
+            clock => simulator_clock
+            ,fixed_dsp_in  => fixed_dsp_in
+            ,fixed_dsp_out => fixed_dsp_out
+        );
+    end generate;
 ------------------------------------------------------------------------
 
     simtime : process

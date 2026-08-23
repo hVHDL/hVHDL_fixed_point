@@ -50,7 +50,17 @@ vhdl2008.add_source_files(ROOT / "testbenches/lut_interpolation/lut_reciprocal_t
 
 vhdl2008.add_source_files(ROOT / "fixed_dsp/fixed_dsp.vhd")
 vhdl2008.add_source_files(ROOT / "fixed_dsp/arch_rtl_fixed_dsp.vhd")
+
+# mpy_32x32_sim.vhd stands in for the ECP5 sysDSP hard IP so arch_ecp5_fixed_dsp
+# can be elaborated by a generic simulator (the real vendor netlist depends on
+# the ECP5U primitive library and is only usable by Diamond)
+vhdl2008.add_source_files(ROOT / "fixed_dsp/mpy_32x32_sim.vhd")
+vhdl2008.add_source_files(ROOT / "fixed_dsp/arch_ecp5_fixed_dsp.vhd")
+
 vhdl2008.add_source_files(ROOT / "testbenches/fixed_dsp/fixed_dsp_tb.vhd")
+fixed_dsp_tb = vhdl2008.test_bench("fixed_dsp_tb")
+fixed_dsp_tb.add_config(name="rtl", generics=dict(use_ecp5=False))
+fixed_dsp_tb.add_config(name="ecp5", generics=dict(use_ecp5=True))
 
 # VU.set_sim_option("nvc.sim_flags", ["-w"])
 
