@@ -48,6 +48,10 @@ vhdl2008.add_source_files(ROOT / "testbenches/lut_interpolation/lut_interpolatio
 vhdl2008.add_source_files(ROOT / "lut_interpolation/lut_reciprocal_pkg.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/lut_interpolation/lut_reciprocal_tb.vhd")
 
+vhdl2008.add_source_files(ROOT / "fixed_dsp/fixed_dsp.vhd")
+vhdl2008.add_source_files(ROOT / "fixed_dsp/arch_rtl_fixed_dsp.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/fixed_dsp/fixed_dsp_tb.vhd")
+
 # VU.set_sim_option("nvc.sim_flags", ["-w"])
 
 if args.dump_arrays is not None:
