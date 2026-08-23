@@ -42,17 +42,21 @@ architecture sim of fixed_dsp_tb is
     signal fixed_dsp_in  : constrained_fixed_dsp_in_record;
     signal fixed_dsp_out : constrained_fixed_dsp_out_record;
 
+    -- exercises the fixed_dsp_pkg convenience procedures instead of
+    -- poking the input record fields directly
+    type op_kind_t is (op_reset, op_fmac, op_mac, op_add, op_sub);
+
     type test_case_record is record
-        real_a               : real;
-        real_d               : real;
-        real_b               : real;
-        real_c               : real;
-        pre_subtract_with_1  : std_logic;
-        post_subtract_with_1 : std_logic;
-        invert_result_with_1 : std_logic;
-        accumulate_with_1    : std_logic;
-        reset_accumulator    : std_logic;
-        expected_result      : real;
+        kind                  : op_kind_t;
+        real_a                : real;
+        real_d                : real;
+        real_b                : real;
+        real_c                : real;
+        pre_subtract_with_1   : std_logic; -- only meaningful for op_fmac
+        post_subtract_with_1  : std_logic; -- only meaningful for op_fmac
+        invert_result_with_1  : std_logic; -- only meaningful for op_fmac
+        accumulate_with_1     : std_logic; -- only meaningful for op_fmac
+        expected_result       : real;
     end record;
 
     type test_case_array is array (natural range <>) of test_case_record;
@@ -61,15 +65,15 @@ architecture sim of fixed_dsp_tb is
     -- (P) is shared between test cases, so accumulate/reset steps depend
     -- on whatever the previous step left behind
     constant test_cases : test_case_array(0 to 7) := (
-        -- a,     d,   b,   c,     pre_sub, post_sub, invert, acc, reset,  expected
-        (0.0,   0.0, 0.0, 0.0,    '0',     '0',      '0',   '0', '1',    0.0)  , -- clear the accumulator
-        (2.5,   0.0, 1.5, 0.0,    '0',     '0',      '0',   '0', '0',    3.75) , -- plain multiply : a*b
-        (5.0,   1.0, 2.0, 0.5,    '1',     '0',      '0',   '0', '0',    8.5)  , -- pre-subtract, add c : (a-d)*b + c
-        (3.0,   0.0, 2.0, 1.25,   '0',     '1',      '0',   '0', '0',    4.75) , -- post-subtract : a*b - c
-        (3.0,   0.0, 2.0, 1.0,    '0',     '0',      '1',   '0', '0',   -7.0)  , -- invert : -(a*b + c)
-        (1.0,   0.0, 1.0, 0.0,    '0',     '0',      '0',   '1', '0',   -6.0)  , -- accumulate : P + a*b (P was -7.0)
-        (2.0,   0.0, 1.5, 0.0,    '0',     '1',      '0',   '1', '0',   -9.0)  , -- accumulate w/ subtract : P - a*b (P was -6.0)
-        (0.0,   0.0, 0.0, 0.0,    '0',     '0',      '0',   '0', '1',    0.0)    -- clear the accumulator again
+        -- kind,      a,     d,   b,   c,     pre_sub, post_sub, invert, acc,  expected
+        (op_reset, 0.0,   0.0, 0.0, 0.0,    '0',     '0',      '0',   '0',    0.0)  , -- clear the accumulator
+        (op_add,   2.5,   0.0, 1.5, 0.0,    '0',     '0',      '0',   '0',    3.75) , -- add(a,b,0) : a*b
+        (op_fmac,  5.0,   1.0, 2.0, 0.5,    '1',     '0',      '0',   '0',    8.5)  , -- fmac : (a-d)*b + c
+        (op_sub,   3.0,   0.0, 2.0, 1.25,   '0',     '0',      '0',   '0',    4.75) , -- sub(a,b,c) : a*b - c
+        (op_fmac,  3.0,   0.0, 2.0, 1.0,    '0',     '0',      '1',   '0',   -7.0)  , -- fmac w/ invert : -(a*b + c)
+        (op_mac,   1.0,   0.0, 1.0, 0.0,    '0',     '0',      '0',   '0',   -6.0)  , -- mac(a,b) : P + a*b (P was -7.0)
+        (op_fmac,  2.0,   0.0, 1.5, 0.0,    '0',     '1',      '0',   '1',   -9.0)  , -- fmac accumulate+subtract : P - a*b (P was -6.0)
+        (op_reset, 0.0,   0.0, 0.0, 0.0,    '0',     '0',      '0',   '0',    0.0)    -- clear the accumulator again
     );
 
     constant tolerance : real := 0.001;
@@ -114,17 +118,43 @@ begin
             init_fixed_dsp(fixed_dsp_in);
 
             if issue_index <= test_cases'high then
-                fixed_dsp_in.a <= to_fixed(test_cases(issue_index).real_a, word_length, g_radix);
-                fixed_dsp_in.d <= to_fixed(test_cases(issue_index).real_d, word_length, g_radix);
-                fixed_dsp_in.b <= to_fixed(test_cases(issue_index).real_b, word_length, g_radix);
-                fixed_dsp_in.c <= to_fixed(test_cases(issue_index).real_c, word_length, g_radix);
+                CASE test_cases(issue_index).kind is
+                    WHEN op_reset =>
+                        fixed_dsp_in.request_with_1          <= '1';
+                        fixed_dsp_in.reset_accumulator_with_1 <= '1';
 
-                fixed_dsp_in.request_with_1           <= '1';
-                fixed_dsp_in.pre_subtract_with_1       <= test_cases(issue_index).pre_subtract_with_1;
-                fixed_dsp_in.post_subtract_with_1      <= test_cases(issue_index).post_subtract_with_1;
-                fixed_dsp_in.invert_result_with_1      <= test_cases(issue_index).invert_result_with_1;
-                fixed_dsp_in.accumulate_with_1         <= test_cases(issue_index).accumulate_with_1;
-                fixed_dsp_in.reset_accumulator_with_1  <= test_cases(issue_index).reset_accumulator;
+                    WHEN op_fmac =>
+                        fmac(fixed_dsp_in
+                            ,a => to_fixed(test_cases(issue_index).real_a, word_length, g_radix)
+                            ,d => to_fixed(test_cases(issue_index).real_d, word_length, g_radix)
+                            ,b => to_fixed(test_cases(issue_index).real_b, word_length, g_radix)
+                            ,c => to_fixed(test_cases(issue_index).real_c, word_length, g_radix)
+                            ,pre_subtract_with_1  => test_cases(issue_index).pre_subtract_with_1
+                            ,post_subtract_with_1 => test_cases(issue_index).post_subtract_with_1
+                            ,invert_result_with_1 => test_cases(issue_index).invert_result_with_1
+                            ,accumulate_with_1    => test_cases(issue_index).accumulate_with_1
+                        );
+
+                    WHEN op_mac =>
+                        mac(fixed_dsp_in
+                            ,a => to_fixed(test_cases(issue_index).real_a, word_length, g_radix)
+                            ,b => to_fixed(test_cases(issue_index).real_b, word_length, g_radix)
+                        );
+
+                    WHEN op_add =>
+                        add(fixed_dsp_in
+                            ,a => to_fixed(test_cases(issue_index).real_a, word_length, g_radix)
+                            ,b => to_fixed(test_cases(issue_index).real_b, word_length, g_radix)
+                            ,c => to_fixed(test_cases(issue_index).real_c, word_length, g_radix)
+                        );
+
+                    WHEN op_sub =>
+                        sub(fixed_dsp_in
+                            ,a => to_fixed(test_cases(issue_index).real_a, word_length, g_radix)
+                            ,b => to_fixed(test_cases(issue_index).real_b, word_length, g_radix)
+                            ,c => to_fixed(test_cases(issue_index).real_c, word_length, g_radix)
+                        );
+                end CASE;
 
                 issue_index <= issue_index + 1;
             end if;
