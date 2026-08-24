@@ -24,7 +24,7 @@ package fixed_dsp_pkg is
 
     type fixed_dsp_out_record is record
         ready_with_1 : std_logic;
-        result : signed;
+        result : signed(63 downto 0);
     end record;
 
 end package fixed_dsp_pkg;
