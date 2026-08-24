@@ -20,6 +20,8 @@ package fixed_dsp_pkg is
 
     end record;
 
+    function init_fixed_dsp_in (wordlength : natural := 32) return fixed_dsp_in_record;
+
     procedure init_fixed_dsp (signal self : out fixed_dsp_in_record);
 
     -- general fused multiply-add : result = +-((a +- d) * b) +- c
@@ -53,6 +55,26 @@ package fixed_dsp_pkg is
 end package fixed_dsp_pkg;
 
 package body fixed_dsp_pkg is
+
+    function init_fixed_dsp_in (wordlength : natural := 32) return fixed_dsp_in_record is
+        constant zero_in : signed(wordlength-1 downto 0) := (others => '0');
+        constant retval : fixed_dsp_in_record :=(
+            a => zero_in
+            ,b=> zero_in
+            ,c => zero_in
+            ,d => zero_in
+            ,request_with_1           => '0'
+            ,accumulate_with_1        => '0'-- 0=p <= p + (a*b)
+            ,pre_subtract_with_1      => '0'-- 0=a+d
+            ,post_subtract_with_1     => '0'-- 0=mpy_out+d, 1 => mpy_out-d
+            ,invert_result_with_1     => '0'-- 1 => negate multiplier result
+            ,reset_accumulator_with_1 => '0'
+        );
+
+    begin
+
+        return retval;
+    end function;
 
     procedure init_fixed_dsp (signal self : out fixed_dsp_in_record) is
     begin
