@@ -62,8 +62,7 @@ entity fixed_dsp is
     port(
         clock : in std_logic := '0'
         ;fixed_dsp_in : in fixed_dsp_in_record
+        ;fixed_dsp_out : out fixed_dsp_out_record
 
-        ;ready_with_1 : out std_logic
-        ;result : out signed
     );
 end entity;
