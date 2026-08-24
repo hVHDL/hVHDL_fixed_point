@@ -62,6 +62,12 @@ fixed_dsp_tb = vhdl2008.test_bench("fixed_dsp_tb")
 fixed_dsp_tb.add_config(name="rtl", generics=dict(use_ecp5=False))
 fixed_dsp_tb.add_config(name="ecp5", generics=dict(use_ecp5=True))
 
+vhdl2008.add_source_files(ROOT / "sine_calculator/sine_calculator.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/fixed_dsp/sine_lut_dsp_tb.vhd")
+sine_lut_dsp_tb = vhdl2008.test_bench("sine_lut_dsp_tb")
+sine_lut_dsp_tb.add_config(name="continuous", generics=dict(use_gaps=False))
+sine_lut_dsp_tb.add_config(name="gapped", generics=dict(use_gaps=True))
+
 # VU.set_sim_option("nvc.sim_flags", ["-w"])
 
 if args.dump_arrays is not None:
