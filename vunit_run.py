@@ -48,6 +48,9 @@ vhdl2008.add_source_files(ROOT / "testbenches/lut_interpolation/lut_interpolatio
 vhdl2008.add_source_files(ROOT / "lut_interpolation/lut_reciprocal_pkg.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/lut_interpolation/lut_reciprocal_tb.vhd")
 
+vhdl2008.add_source_files(ROOT / "lut_interpolation/lut_sqrt_pkg.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/lut_interpolation/lut_sqrt_tb.vhd")
+
 vhdl2008.add_source_files(ROOT / "fixed_dsp/fixed_dsp.vhd")
 vhdl2008.add_source_files(ROOT / "fixed_dsp/arch_rtl_fixed_dsp.vhd")
 
@@ -73,6 +76,12 @@ vhdl2008.add_source_files(ROOT / "testbenches/fixed_dsp/reciprocal_lut_dsp_tb.vh
 reciprocal_lut_dsp_tb = vhdl2008.test_bench("reciprocal_lut_dsp_tb")
 reciprocal_lut_dsp_tb.add_config(name="continuous", generics=dict(use_gaps=False))
 reciprocal_lut_dsp_tb.add_config(name="gapped", generics=dict(use_gaps=True))
+
+vhdl2008.add_source_files(ROOT / "sqrt_calculator/sqrt_calculator.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/fixed_dsp/sqrt_lut_dsp_tb.vhd")
+sqrt_lut_dsp_tb = vhdl2008.test_bench("sqrt_lut_dsp_tb")
+sqrt_lut_dsp_tb.add_config(name="continuous", generics=dict(use_gaps=False))
+sqrt_lut_dsp_tb.add_config(name="gapped", generics=dict(use_gaps=True))
 
 # VU.set_sim_option("nvc.sim_flags", ["-w"])
 
