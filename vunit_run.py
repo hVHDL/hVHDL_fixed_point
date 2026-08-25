@@ -68,6 +68,12 @@ sine_lut_dsp_tb = vhdl2008.test_bench("sine_lut_dsp_tb")
 sine_lut_dsp_tb.add_config(name="continuous", generics=dict(use_gaps=False))
 sine_lut_dsp_tb.add_config(name="gapped", generics=dict(use_gaps=True))
 
+vhdl2008.add_source_files(ROOT / "reciprocal_calculator/reciprocal_calculator.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/fixed_dsp/reciprocal_lut_dsp_tb.vhd")
+reciprocal_lut_dsp_tb = vhdl2008.test_bench("reciprocal_lut_dsp_tb")
+reciprocal_lut_dsp_tb.add_config(name="continuous", generics=dict(use_gaps=False))
+reciprocal_lut_dsp_tb.add_config(name="gapped", generics=dict(use_gaps=True))
+
 # VU.set_sim_option("nvc.sim_flags", ["-w"])
 
 if args.dump_arrays is not None:

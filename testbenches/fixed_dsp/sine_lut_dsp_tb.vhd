@@ -52,6 +52,9 @@ architecture sim of sine_lut_dsp_tb is
 
     signal all_tests_done : boolean := false;
     constant tolerance : real := 0.001;
+
+    signal sine_error : real := 0.0;
+    signal calculated_sine : real := 0.0;
 ------------------------------------------------------------------------
 begin
 
@@ -106,9 +109,11 @@ begin
 
                 expected_real := sin(2.0*math_pi*real(to_integer(result_count))/real(2**angle_word_length));
                 actual_real   := real(to_integer(sine_calculator_out.sine))/(2.0**(angle_word_length-1)-1.0);
+                calculated_sine <= actual_real;
                 check(abs(actual_real - expected_real) < tolerance,
                     "sine error too large at angle " & natural'image(to_integer(result_count)));
 
+                sine_error <= actual_real - expected_real;
                 if result_count = 2**angle_word_length - 1 then
                     all_tests_done <= true;
                 end if;
