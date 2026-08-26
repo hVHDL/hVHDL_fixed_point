@@ -65,6 +65,8 @@ fixed_dsp_tb = vhdl2008.test_bench("fixed_dsp_tb")
 fixed_dsp_tb.add_config(name="rtl", generics=dict(use_ecp5=False))
 fixed_dsp_tb.add_config(name="ecp5", generics=dict(use_ecp5=True))
 
+vhdl2008.add_source_files(ROOT / "testbenches/fixed_dsp/fixed_dsp_combine_tb.vhd")
+
 vhdl2008.add_source_files(ROOT / "sine_calculator/sine_calculator.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/fixed_dsp/sine_lut_dsp_tb.vhd")
 sine_lut_dsp_tb = vhdl2008.test_bench("sine_lut_dsp_tb")

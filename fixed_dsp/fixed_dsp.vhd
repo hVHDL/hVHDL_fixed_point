@@ -28,6 +28,19 @@ package fixed_dsp_pkg is
 
     procedure init_fixed_dsp (signal self : out fixed_dsp_in_record);
 
+    -- numeric_std has no bitwise logical operators for signed/unsigned ;
+    -- this casts to std_logic_vector, ors bit for bit, and casts back
+    function "or" (left : signed; right : signed) return signed;
+
+    -- lets several processes each build their own fixed_dsp_in_record
+    -- (starting from an idle/all-zero state, e.g. via init_fixed_dsp,
+    -- and setting only the fields their own request needs) and combine
+    -- them into one request that drives a single shared fixed_dsp
+    -- instance : this is combining independent ports onto a shared bus,
+    -- not adding values together, so every field is bitwise or'd ; only
+    -- correct when at most one side is active at a time
+    function "and" (left : fixed_dsp_in_record; right : fixed_dsp_in_record) return fixed_dsp_in_record;
+
     -- general fused multiply-add : result = +-((a +- d) * b) +- c
     -- (or, when accumulate_with_1 = '1', result = P +- (a*b) instead)
     procedure fmac (
@@ -59,6 +72,38 @@ package fixed_dsp_pkg is
 end package fixed_dsp_pkg;
 
 package body fixed_dsp_pkg is
+
+    function "or" (left : signed; right : signed) return signed is
+    begin
+        return signed(std_logic_vector(left) or std_logic_vector(right));
+    end function;
+
+    -- combines two independently-prepared requests into one, so that
+    -- separate processes can each build their own fixed_dsp_in_record
+    -- (starting from init_fixed_dsp's all-zero/idle state, and setting
+    -- only the fields their own request needs) while still sharing a
+    -- single fixed_dsp instance : combining independent ports onto a
+    -- shared bus, not adding values together, so every field (including
+    -- a/b/c/d) is bitwise or'd via the "or" overload above ; safe as
+    -- long as at most one side is actually active on a given cycle,
+    -- since idle fields are always zero either way
+    function "and" (left : fixed_dsp_in_record; right : fixed_dsp_in_record) return fixed_dsp_in_record is
+        variable retval : left'subtype;
+    begin
+        retval.a := left.a or right.a;
+        retval.d := left.d or right.d;
+        retval.b := left.b or right.b;
+        retval.c := left.c or right.c;
+
+        retval.request_with_1           := left.request_with_1           or right.request_with_1;
+        retval.accumulate_with_1        := left.accumulate_with_1        or right.accumulate_with_1;
+        retval.pre_subtract_with_1      := left.pre_subtract_with_1      or right.pre_subtract_with_1;
+        retval.post_subtract_with_1     := left.post_subtract_with_1     or right.post_subtract_with_1;
+        retval.invert_result_with_1     := left.invert_result_with_1     or right.invert_result_with_1;
+        retval.reset_accumulator_with_1 := left.reset_accumulator_with_1 or right.reset_accumulator_with_1;
+
+        return retval;
+    end function;
 
     function init_fixed_dsp_in (wordlength : natural := 32) return fixed_dsp_in_record is
         constant zero_in : signed(wordlength-1 downto 0) := (others => '0');
