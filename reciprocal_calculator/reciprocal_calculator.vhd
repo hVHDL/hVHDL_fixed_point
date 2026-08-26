@@ -71,18 +71,10 @@ entity reciprocal_calculator is
         ;reciprocal_calculator_out : out reciprocal_calculator_out_record
         -- fixed_dsp itself lives outside this entity : the caller
         -- instantiates it (choosing its architecture/generic) and wires
-        -- these ports straight to it
-        ;fixed_dsp_in  : out fixed_dsp_in_record(
-            a(recip_word_length-1 downto 0)
-            ,d(recip_word_length-1 downto 0)
-            ,b(recip_word_length-1 downto 0)
-            -- c is added directly into the multiplier's output width :
-            -- see the shift_left/resize on the add() call below
-            ,c(2*recip_word_length-1 downto 0)
-        )
-        ;fixed_dsp_out : in fixed_dsp_out_record(
-            result(2*recip_word_length-1 downto 0)
-        )
+        -- these ports straight to it ; widths are left unconstrained
+        -- here and fixed by the actual signal at the instantiation site
+        ;fixed_dsp_in  : out fixed_dsp_in_record
+        ;fixed_dsp_out : in fixed_dsp_out_record
     );
 end entity;
 
