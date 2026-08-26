@@ -54,18 +54,21 @@ begin
 
             buf_c <= buf_c(1 downto 0) & fixed_dsp_in.c;
 
+            -- buf_c arrives already at the multiplier's output width and
+            -- radix, so it is added/subtracted directly, with no
+            -- shift/resize of its own
             CASE arg is
                 WHEN "00" =>
                     if buf_invert_result(2) = '1' then
-                        res_buf <= -(signed(mpy_out) + shift_left(resize(buf_c(2), res'length),g_radix));
+                        res_buf <= -(signed(mpy_out) + buf_c(2));
                     else
-                        res_buf <=  signed(mpy_out) + shift_left(resize(buf_c(2), res'length),g_radix);
+                        res_buf <=  signed(mpy_out) + buf_c(2);
                     end if;
                 WHEN "01" =>
                     if buf_invert_result(2) = '1' then
-                        res_buf <= -(signed(mpy_out) - shift_left(resize(buf_c(2), res'length),g_radix));
+                        res_buf <= -(signed(mpy_out) - buf_c(2));
                     else
-                        res_buf <=  signed(mpy_out) - shift_left(resize(buf_c(2), res'length),g_radix);
+                        res_buf <=  signed(mpy_out) - buf_c(2);
                     end if;
                 WHEN "10" =>
                     res_buf <= res_buf + signed(mpy_out);

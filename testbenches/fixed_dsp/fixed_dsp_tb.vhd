@@ -30,15 +30,16 @@ architecture sim of fixed_dsp_tb is
     constant word_length : natural := 32;
     constant g_radix     : natural := 16;
     -- the multiplier output and the accumulator carry twice the input
-    -- fractional bits, since c is pre-shifted left by g_radix to line up
-    -- with the a*b product before it is added
+    -- fractional bits, since c is shifted left by g_radix (done here now,
+    -- not inside fixed_dsp) to line up with the a*b product before it is added
     constant result_radix : natural := 2*g_radix;
 
     subtype constrained_fixed_dsp_in_record is fixed_dsp_in_record(
         a(word_length-1 downto 0)
         ,d(word_length-1 downto 0)
         ,b(word_length-1 downto 0)
-        ,c(word_length-1 downto 0)
+        -- c is added directly into the multiplier's output width
+        ,c(2*word_length-1 downto 0)
     );
 
     subtype constrained_fixed_dsp_out_record is fixed_dsp_out_record(
@@ -97,7 +98,6 @@ begin
 ------------------------------------------------------------------------
     gen_rtl : if not use_ecp5 generate
         u_fixed_dsp : entity work.fixed_dsp(rtl)
-        generic map(g_radix => g_radix)
         port map(
             clock => simulator_clock
             ,fixed_dsp_in  => fixed_dsp_in
@@ -107,7 +107,6 @@ begin
 
     gen_ecp5 : if use_ecp5 generate
         u_fixed_dsp : entity work.fixed_dsp(ecp5)
-        generic map(g_radix => g_radix)
         port map(
             clock => simulator_clock
             ,fixed_dsp_in  => fixed_dsp_in
@@ -146,7 +145,7 @@ begin
                             ,a => to_fixed(test_cases(issue_index).real_a, word_length, g_radix)
                             ,d => to_fixed(test_cases(issue_index).real_d, word_length, g_radix)
                             ,b => to_fixed(test_cases(issue_index).real_b, word_length, g_radix)
-                            ,c => to_fixed(test_cases(issue_index).real_c, word_length, g_radix)
+                            ,c => shift_left(resize(to_fixed(test_cases(issue_index).real_c, word_length, g_radix), 2*word_length), g_radix)
                             ,pre_subtract_with_1  => test_cases(issue_index).pre_subtract_with_1
                             ,post_subtract_with_1 => test_cases(issue_index).post_subtract_with_1
                             ,invert_result_with_1 => test_cases(issue_index).invert_result_with_1
@@ -163,14 +162,14 @@ begin
                         add(fixed_dsp_in
                             ,a => to_fixed(test_cases(issue_index).real_a, word_length, g_radix)
                             ,b => to_fixed(test_cases(issue_index).real_b, word_length, g_radix)
-                            ,c => to_fixed(test_cases(issue_index).real_c, word_length, g_radix)
+                            ,c => shift_left(resize(to_fixed(test_cases(issue_index).real_c, word_length, g_radix), 2*word_length), g_radix)
                         );
 
                     WHEN op_sub =>
                         sub(fixed_dsp_in
                             ,a => to_fixed(test_cases(issue_index).real_a, word_length, g_radix)
                             ,b => to_fixed(test_cases(issue_index).real_b, word_length, g_radix)
-                            ,c => to_fixed(test_cases(issue_index).real_c, word_length, g_radix)
+                            ,c => shift_left(resize(to_fixed(test_cases(issue_index).real_c, word_length, g_radix), 2*word_length), g_radix)
                         );
                 end CASE;
 

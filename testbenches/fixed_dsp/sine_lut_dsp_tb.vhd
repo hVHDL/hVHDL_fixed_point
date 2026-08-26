@@ -5,6 +5,7 @@ LIBRARY ieee  ;
 
     use work.lut_sine_pkg.all;
     use work.sine_calculator_pkg.all;
+    use work.fixed_dsp_pkg.all;
 
 library vunit_lib;
 context vunit_lib.vunit_context;
@@ -37,6 +38,22 @@ architecture sim of sine_lut_dsp_tb is
     signal sine_calculator_in  : sine_calculator_in_record;
     signal sine_calculator_out : sine_calculator_out_record;
 
+    -- fixed_dsp now lives outside sine_calculator ; instantiated here and
+    -- wired straight to its fixed_dsp_in/fixed_dsp_out ports
+    subtype constrained_fixed_dsp_in_record is fixed_dsp_in_record(
+        a(angle_word_length-1 downto 0)
+        ,d(angle_word_length-1 downto 0)
+        ,b(angle_word_length-1 downto 0)
+        -- c is added directly into the multiplier's output width now
+        ,c(2*angle_word_length-1 downto 0)
+    );
+    subtype constrained_fixed_dsp_out_record is fixed_dsp_out_record(
+        result(2*angle_word_length-1 downto 0)
+    );
+
+    signal dsp_in  : constrained_fixed_dsp_in_record;
+    signal dsp_out : constrained_fixed_dsp_out_record;
+
     signal test_angle : unsigned(angle_word_length-1 downto 0) := (others => '0');
 
     -- an arbitrary, irregular issue/idle pattern (not a simple period-2
@@ -59,11 +76,20 @@ architecture sim of sine_lut_dsp_tb is
 begin
 
 ------------------------------------------------------------------------
+    u_fixed_dsp : entity work.fixed_dsp(rtl)
+    port map(
+        clock => simulator_clock
+        ,fixed_dsp_in  => dsp_in
+        ,fixed_dsp_out => dsp_out
+    );
+
     u_sine_calculator : entity work.sine_calculator
     port map(
         clock => simulator_clock
         ,sine_calculator_in  => sine_calculator_in
         ,sine_calculator_out => sine_calculator_out
+        ,fixed_dsp_in  => dsp_in
+        ,fixed_dsp_out => dsp_out
     );
 ------------------------------------------------------------------------
 

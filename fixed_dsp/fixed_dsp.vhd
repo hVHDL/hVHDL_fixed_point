@@ -9,6 +9,10 @@ package fixed_dsp_pkg is
         a : signed;
         d : signed;
         b : signed;
+        -- c is added directly into the (a+-d)*b product with no internal
+        -- scaling : it must already be at the multiplier output's width
+        -- (a'length + b'length), pre-shifted/resized by the caller to
+        -- whatever radix that product is meant to carry
         c : signed;
 
         request_with_1           : std_logic;
@@ -58,10 +62,14 @@ package body fixed_dsp_pkg is
 
     function init_fixed_dsp_in (wordlength : natural := 32) return fixed_dsp_in_record is
         constant zero_in : signed(wordlength-1 downto 0) := (others => '0');
+        -- c is added straight into the multiplier's own output width (no
+        -- radix shift happens inside fixed_dsp any more), so it is twice
+        -- as wide as a/b/d
+        constant zero_c  : signed(2*wordlength-1 downto 0) := (others => '0');
         constant retval : fixed_dsp_in_record :=(
             a => zero_in
             ,b=> zero_in
-            ,c => zero_in
+            ,c => zero_c
             ,d => zero_in
             ,request_with_1           => '0'
             ,accumulate_with_1        => '0'-- 0=p <= p + (a*b)
@@ -126,7 +134,7 @@ package body fixed_dsp_pkg is
             ,a => a
             ,d => signed'(a'range => '0')
             ,b => b
-            ,c => signed'(b'range => '0')
+            ,c => signed'(self.c'range => '0')
             ,accumulate_with_1 => '1'
         );
     end procedure;
@@ -162,7 +170,6 @@ LIBRARY ieee  ;
     use work.fixed_dsp_pkg.all;
 
 entity fixed_dsp is
-    generic(g_radix : natural);
     port(
         clock : in std_logic := '0'
         ;fixed_dsp_in : in fixed_dsp_in_record

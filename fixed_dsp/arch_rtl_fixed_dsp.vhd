@@ -3,7 +3,9 @@ architecture rtl of fixed_dsp is
     signal pre  : fixed_dsp_in.a'subtype;
     signal mult : signed(fixed_dsp_in.a'length + fixed_dsp_in.b'length-1 downto 0);
 
-    signal c_buf : mult'subtype;
+    -- c arrives already at the multiplier's output width and radix ; just
+    -- register it alongside mult, with no shift/resize of its own
+    signal c_buf : fixed_dsp_in.c'subtype;
 
     signal P : fixed_dsp_out.result'subtype := (others => '0');
 
@@ -35,7 +37,7 @@ begin
             --p1
             -- Resize to accumulator width
             mult  <= pre * fixed_dsp_in.b;
-            c_buf <= shift_left(resize(fixed_dsp_in.c, c_buf'length), g_radix);
+            c_buf <= fixed_dsp_in.c;
 
             buf_accumulate    <= fixed_dsp_in.accumulate_with_1   ;
             buf_pre_subtract  <= fixed_dsp_in.pre_subtract_with_1 ;

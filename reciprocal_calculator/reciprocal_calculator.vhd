@@ -69,6 +69,20 @@ entity reciprocal_calculator is
         clock : in std_logic := '0'
         ;reciprocal_calculator_in  : in reciprocal_calculator_in_record
         ;reciprocal_calculator_out : out reciprocal_calculator_out_record
+        -- fixed_dsp itself lives outside this entity : the caller
+        -- instantiates it (choosing its architecture/generic) and wires
+        -- these ports straight to it
+        ;fixed_dsp_in  : out fixed_dsp_in_record(
+            a(recip_word_length-1 downto 0)
+            ,d(recip_word_length-1 downto 0)
+            ,b(recip_word_length-1 downto 0)
+            -- c is added directly into the multiplier's output width :
+            -- see the shift_left/resize on the add() call below
+            ,c(2*recip_word_length-1 downto 0)
+        )
+        ;fixed_dsp_out : in fixed_dsp_out_record(
+            result(2*recip_word_length-1 downto 0)
+        )
     );
 end entity;
 
@@ -98,19 +112,6 @@ architecture rtl of reciprocal_calculator is
     signal ram_a_out : dp_ram_subtype.ram_out'subtype;
     signal ram_b_in  : ram_a_in'subtype;
     signal ram_b_out : ram_a_out'subtype;
-
-    subtype constrained_fixed_dsp_in_record is fixed_dsp_in_record(
-        a(recip_word_length-1 downto 0)
-        ,d(recip_word_length-1 downto 0)
-        ,b(recip_word_length-1 downto 0)
-        ,c(recip_word_length-1 downto 0)
-    );
-    subtype constrained_fixed_dsp_out_record is fixed_dsp_out_record(
-        result(2*recip_word_length-1 downto 0)
-    );
-
-    signal dsp_in  : constrained_fixed_dsp_in_record;
-    signal dsp_out : constrained_fixed_dsp_out_record;
 
     ------------------------------------------------------------------------
     -- a small fifo of in-flight x_frac requests : the ram read has a
@@ -145,23 +146,15 @@ begin
         ,ram_b_out => ram_b_out
     );
 
-    u_fixed_dsp : entity work.fixed_dsp(rtl)
-    generic map(g_radix => recip_fraction_width)
-    port map(
-        clock => clock
-        ,fixed_dsp_in  => dsp_in
-        ,fixed_dsp_out => dsp_out
-    );
-
     ------------------------------------------------------------------------
-    -- (point<<g_radix + slope*fraction) >> g_radix = point + (slope*fraction >> g_radix)
-    -- exactly, since point<<g_radix is a multiple of 2**g_radix, so this
+    -- (point<<radix + slope*fraction) >> radix = point + (slope*fraction >> radix)
+    -- exactly, since point<<radix is a multiple of 2**radix, so this
     -- reproduces get_reciprocal_from_lut bit for bit ; purely combinational
     -- from already-registered signals, so no extra latency is added on
     -- top of the dsp's own
-    dsp_interpolated <= resize(shift_right(dsp_out.result, recip_fraction_width), recip_word_length);
+    dsp_interpolated <= resize(shift_right(fixed_dsp_out.result, recip_fraction_width), recip_word_length);
 
-    reciprocal_calculator_out.ready_with_1 <= dsp_out.ready_with_1;
+    reciprocal_calculator_out.ready_with_1 <= fixed_dsp_out.ready_with_1;
     reciprocal_calculator_out.y            <= unsigned(dsp_interpolated);
 
     process(clock)
@@ -184,16 +177,18 @@ begin
             end if;
 
             -- ram ready : issue the dsp add for the oldest fifo entry not
-            -- yet consumed by this stage ; result = slope*fraction + point<<g_radix
-            init_fixed_dsp(dsp_in);
+            -- yet consumed by this stage ; result = slope*fraction + point<<radix ;
+            -- c has to be pre-shifted up to the multiplier's output width
+            -- here, since fixed_dsp no longer does that internally
+            init_fixed_dsp(fixed_dsp_in);
             if ram_read_is_ready(ram_a_out) then
                 fraction_ram := x_frac_fifo(ram_read_ptr)(recip_fraction_width-1 downto 0);
                 ram_read_ptr <= (ram_read_ptr + 1) mod fifo_depth;
 
-                add(dsp_in
+                add(fixed_dsp_in
                     ,a => signed(ram_b_out.data)
                     ,b => signed(resize(fraction_ram, recip_word_length))
-                    ,c => signed(ram_a_out.data)
+                    ,c => shift_left(resize(signed(ram_a_out.data), 2*recip_word_length), recip_fraction_width)
                 );
             end if;
 

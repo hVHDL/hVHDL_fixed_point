@@ -67,6 +67,8 @@ entity sine_calculator is
         clock : in std_logic := '0'
         ;sine_calculator_in  : in sine_calculator_in_record
         ;sine_calculator_out : out sine_calculator_out_record
+        ;fixed_dsp_in  : out fixed_dsp_in_record
+        ;fixed_dsp_out : in fixed_dsp_out_record
     );
 end entity;
 
@@ -96,19 +98,6 @@ architecture rtl of sine_calculator is
     signal ram_a_out : dp_ram_subtype.ram_out'subtype;
     signal ram_b_in  : ram_a_in'subtype;
     signal ram_b_out : ram_a_out'subtype;
-
-    subtype constrained_fixed_dsp_in_record is fixed_dsp_in_record(
-        a(angle_word_length-1 downto 0)
-        ,d(angle_word_length-1 downto 0)
-        ,b(angle_word_length-1 downto 0)
-        ,c(angle_word_length-1 downto 0)
-    );
-    subtype constrained_fixed_dsp_out_record is fixed_dsp_out_record(
-        result(2*angle_word_length-1 downto 0)
-    );
-
-    signal dsp_in  : constrained_fixed_dsp_in_record;
-    signal dsp_out : constrained_fixed_dsp_out_record;
 
     -- mirrors lut_sine_pkg's own (private) get_phase_in_quadrant, needed
     -- here to recover the interpolation fraction alongside the (public)
@@ -156,23 +145,15 @@ begin
         ,ram_b_out => ram_b_out
     );
 
-    u_fixed_dsp : entity work.fixed_dsp(rtl)
-    generic map(g_radix => fraction_width)
-    port map(
-        clock => clock
-        ,fixed_dsp_in  => dsp_in
-        ,fixed_dsp_out => dsp_out
-    );
-
     ------------------------------------------------------------------------
-    -- (point<<g_radix + slope*fraction) >> g_radix = point + (slope*fraction >> g_radix)
-    -- exactly, since point<<g_radix is a multiple of 2**g_radix, so this
+    -- (point<<radix + slope*fraction) >> radix = point + (slope*fraction >> radix)
+    -- exactly, since point<<radix is a multiple of 2**radix, so this
     -- reproduces get_sine_from_quarter_wave_lut bit for bit ; purely
     -- combinational from already-registered signals, so no extra latency
     -- is added on top of the dsp's own
-    dsp_interpolated <= resize(shift_right(dsp_out.result, fraction_width), angle_word_length);
+    dsp_interpolated <= resize(shift_right(fixed_dsp_out.result, fraction_width), angle_word_length);
 
-    sine_calculator_out.ready_with_1 <= dsp_out.ready_with_1;
+    sine_calculator_out.ready_with_1 <= fixed_dsp_out.ready_with_1;
     sine_calculator_out.sine <=
         -dsp_interpolated when angle_fifo(output_ptr)(angle_word_length-1) = '1'
         else dsp_interpolated;
@@ -197,23 +178,25 @@ begin
             end if;
 
             -- ram ready : issue the dsp add for the oldest fifo entry not
-            -- yet consumed by this stage
-            init_fixed_dsp(dsp_in);
+            -- yet consumed by this stage ; c has to be pre-shifted up to
+            -- the multiplier's output width here, since fixed_dsp no
+            -- longer does that internally
+            init_fixed_dsp(fixed_dsp_in);
             if ram_read_is_ready(ram_a_out) then
                 fraction_ram := phase_in_quadrant(angle_fifo(ram_read_ptr))(fraction_width-1 downto 0);
                 ram_read_ptr <= (ram_read_ptr + 1) mod fifo_depth;
 
-                add(dsp_in
+                add(fixed_dsp_in
                     ,a => signed(ram_b_out.data)
                     ,b => signed(resize(fraction_ram, angle_word_length))
-                    ,c => signed(ram_a_out.data)
+                    ,c => shift_left(resize(signed(ram_a_out.data), 2*angle_word_length), fraction_width)
                 );
             end if;
 
             -- dsp ready : the oldest fifo entry not yet output now has its
             -- final sine value on sine_calculator_out (see the
             -- combinational assignments above)
-            if dsp_out.ready_with_1 = '1' then
+            if fixed_dsp_out.ready_with_1 = '1' then
                 output_ptr <= (output_ptr + 1) mod fifo_depth;
             end if;
 
