@@ -9,7 +9,16 @@ library ieee;
 -- internally this wraps a dual_port_ram (holding lut_sine_pkg's
 -- point_lut/slope_lut tables) and a fixed_dsp (performing the
 -- interpolation multiply-add), each of which is itself a fixed-latency,
--- non-stalling pipeline stage
+-- non-stalling pipeline stage.
+--
+-- fixed_dsp_in/fixed_dsp_out are left unconstrained, so the caller's
+-- fixed_dsp can be any word length >= angle_word_length (e.g. a real
+-- 32x32 hard multiplier, wider than lut_sine_pkg's own 16-bit tables) :
+-- the a/b/c operands are resized up to whatever width fixed_dsp_in
+-- actually has before use, and the result is resized back down to
+-- angle_word_length once read back, which is exact regardless of the
+-- intermediate width since resize sign-extends/truncates without
+-- touching the low-order bits or the radix
 package sine_calculator_pkg is
 
     type sine_calculator_in_record is record
@@ -178,18 +187,20 @@ begin
             end if;
 
             -- ram ready : issue the dsp add for the oldest fifo entry not
-            -- yet consumed by this stage ; c has to be pre-shifted up to
-            -- the multiplier's output width here, since fixed_dsp no
-            -- longer does that internally
+            -- yet consumed by this stage. a/b/c are resized up to
+            -- fixed_dsp_in's actual width (which may be wider than
+            -- angle_word_length) before use ; c also has to be
+            -- pre-shifted up to the multiplier's output width here,
+            -- since fixed_dsp no longer does that internally
             init_fixed_dsp(fixed_dsp_in);
             if ram_read_is_ready(ram_a_out) then
                 fraction_ram := phase_in_quadrant(angle_fifo(ram_read_ptr))(fraction_width-1 downto 0);
                 ram_read_ptr <= (ram_read_ptr + 1) mod fifo_depth;
 
                 add(fixed_dsp_in
-                    ,a => signed(ram_b_out.data)
-                    ,b => signed(resize(fraction_ram, angle_word_length))
-                    ,c => shift_left(resize(signed(ram_a_out.data), 2*angle_word_length), fraction_width)
+                    ,a => resize(signed(ram_b_out.data), fixed_dsp_in.a'length)
+                    ,b => signed(resize(fraction_ram, fixed_dsp_in.b'length))
+                    ,c => shift_left(resize(signed(ram_a_out.data), fixed_dsp_in.c'length), fraction_width)
                 );
             end if;
 

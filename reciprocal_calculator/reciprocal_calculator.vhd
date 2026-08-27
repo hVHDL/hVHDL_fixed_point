@@ -11,7 +11,16 @@ library ieee;
 -- interpolation multiply-add), each of which is itself a fixed-latency,
 -- non-stalling pipeline stage. mirrors sine_calculator, but simpler :
 -- 1/x has no quarter-wave mirroring and is always positive, so there is
--- no sign to track from request through to output
+-- no sign to track from request through to output.
+--
+-- fixed_dsp_in/fixed_dsp_out are left unconstrained, so the caller's
+-- fixed_dsp can be any word length >= recip_word_length (e.g. a real
+-- 32x32 hard multiplier, wider than lut_reciprocal_pkg's own tables) :
+-- the a/b/c operands are resized up to whatever width fixed_dsp_in
+-- actually has before use, and the result is resized back down to
+-- recip_word_length once read back, which is exact regardless of the
+-- intermediate width since resize sign-extends/truncates without
+-- touching the low-order bits or the radix
 package reciprocal_calculator_pkg is
 
     type reciprocal_calculator_in_record is record
@@ -169,8 +178,10 @@ begin
             end if;
 
             -- ram ready : issue the dsp add for the oldest fifo entry not
-            -- yet consumed by this stage ; result = slope*fraction + point<<radix ;
-            -- c has to be pre-shifted up to the multiplier's output width
+            -- yet consumed by this stage ; result = slope*fraction + point<<radix.
+            -- a/b/c are resized up to fixed_dsp_in's actual width (which
+            -- may be wider than recip_word_length) before use ; c also
+            -- has to be pre-shifted up to the multiplier's output width
             -- here, since fixed_dsp no longer does that internally
             init_fixed_dsp(fixed_dsp_in);
             if ram_read_is_ready(ram_a_out) then
@@ -178,9 +189,9 @@ begin
                 ram_read_ptr <= (ram_read_ptr + 1) mod fifo_depth;
 
                 add(fixed_dsp_in
-                    ,a => signed(ram_b_out.data)
-                    ,b => signed(resize(fraction_ram, recip_word_length))
-                    ,c => shift_left(resize(signed(ram_a_out.data), 2*recip_word_length), recip_fraction_width)
+                    ,a => resize(signed(ram_b_out.data), fixed_dsp_in.a'length)
+                    ,b => signed(resize(fraction_ram, fixed_dsp_in.b'length))
+                    ,c => shift_left(resize(signed(ram_a_out.data), fixed_dsp_in.c'length), recip_fraction_width)
                 );
             end if;
 
