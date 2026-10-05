@@ -21,6 +21,7 @@ entity lut_divider_tb is
       ;quotient_radix       : natural := 16
       ;use_pre_add_register : boolean := false
       ;use_gaps             : boolean := false
+      ;shifter_stages       : positive := 2
   );
 end;
 
@@ -183,6 +184,7 @@ begin
     generic map(
         g_quotient_radix    => quotient_radix
         ,g_pre_add_register => use_pre_add_register
+        ,g_shifter_stages   => shifter_stages
     )
     port map(
         clock            => simulator_clock

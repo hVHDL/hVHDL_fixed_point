@@ -86,6 +86,9 @@ sqrt_lut_dsp_tb = vhdl2008.test_bench("sqrt_lut_dsp_tb")
 sqrt_lut_dsp_tb.add_config(name="continuous", generics=dict(use_gaps=False))
 sqrt_lut_dsp_tb.add_config(name="gapped", generics=dict(use_gaps=True))
 
+# leading zero count for the divider's and the square root's shifters
+vhdl2008.add_source_files(ROOT / "fixed_point_scaling/fixed_point_scaling_pkg.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/fixed_point_scaling/fixed_point_scaling_tb.vhd")
 vhdl2008.add_source_files(ROOT / "lut_divider/lut_divider.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/lut_divider/lut_divider_tb.vhd")
 lut_divider_tb = vhdl2008.test_bench("lut_divider_tb")
@@ -96,6 +99,11 @@ lut_divider_tb.add_config(name="w32_radix10", generics=dict(word_length=32, quot
 lut_divider_tb.add_config(name="w32_radix0", generics=dict(word_length=32, quotient_radix=0))
 lut_divider_tb.add_config(name="w24_radix8", generics=dict(word_length=24, quotient_radix=8))
 lut_divider_tb.add_config(name="w17_radix12", generics=dict(word_length=17, quotient_radix=12))
+lut_divider_tb.add_config(name="w32_radix16_1_shifter_stage", generics=dict(word_length=32, quotient_radix=16, shifter_stages=1))
+lut_divider_tb.add_config(name="w32_radix0_3_shifter_stages", generics=dict(word_length=32, quotient_radix=0, shifter_stages=3))
+lut_divider_tb.add_config(name="w32_radix16_5_shifter_stages", generics=dict(word_length=32, quotient_radix=16, shifter_stages=5))
+lut_divider_tb.add_config(name="w24_radix8_1_shifter_stage", generics=dict(word_length=24, quotient_radix=8, shifter_stages=1))
+lut_divider_tb.add_config(name="w17_radix12_7_shifter_stages", generics=dict(word_length=17, quotient_radix=12, shifter_stages=7))
 
 vhdl2008.add_source_files(ROOT / "full_range_sqrt/full_range_sqrt.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/full_range_sqrt/full_range_sqrt_tb.vhd")
@@ -108,6 +116,11 @@ full_range_sqrt_tb.add_config(name="w32_radix0", generics=dict(word_length=32, r
 full_range_sqrt_tb.add_config(name="w32_radix31", generics=dict(word_length=32, radix=31))
 full_range_sqrt_tb.add_config(name="w24_radix8", generics=dict(word_length=24, radix=8))
 full_range_sqrt_tb.add_config(name="w17_radix12", generics=dict(word_length=17, radix=12))
+full_range_sqrt_tb.add_config(name="w32_radix16_1_shifter_stage", generics=dict(word_length=32, radix=16, shifter_stages=1))
+full_range_sqrt_tb.add_config(name="w32_radix31_3_shifter_stages", generics=dict(word_length=32, radix=31, shifter_stages=3))
+full_range_sqrt_tb.add_config(name="w32_radix15_5_shifter_stages", generics=dict(word_length=32, radix=15, shifter_stages=5))
+full_range_sqrt_tb.add_config(name="w24_radix8_1_shifter_stage", generics=dict(word_length=24, radix=8, shifter_stages=1))
+full_range_sqrt_tb.add_config(name="w17_radix12_7_shifter_stages", generics=dict(word_length=17, radix=12, shifter_stages=7))
 
 # VU.set_sim_option("nvc.sim_flags", ["-w"])
 

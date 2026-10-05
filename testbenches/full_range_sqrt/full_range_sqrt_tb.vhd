@@ -21,6 +21,7 @@ entity full_range_sqrt_tb is
       ;radix                : natural := 16
       ;use_pre_add_register : boolean := false
       ;use_gaps             : boolean := false
+      ;shifter_stages       : positive := 2
   );
 end;
 
@@ -176,6 +177,7 @@ begin
     generic map(
         g_radix             => radix
         ,g_pre_add_register => use_pre_add_register
+        ,g_shifter_stages   => shifter_stages
     )
     port map(
         clock                => simulator_clock

@@ -16,13 +16,19 @@ library ieee;
 -- hardware matches it bit for bit.
 --
 --   1. the radicand is normalised into 0.5 <= y < 1 by a pipelined leading
---      zero shifter, one register stage per bit of the shift count zeros
+--      zero shifter of g_shifter_stages register stages
 --   2. sqrt_calculator looks up sqrt(y) (radix 15) with the 16 bits that
 --      follow the leading one
 --   3. radicand = y * 2**e with e = w - zeros + g_radix, so the root is
 --      sqrt(y) * 2**(e/2) : a fixed_dsp multiplies sqrt(y) with 1.0 for an
 --      even e and with sqrt(2) for an odd e (radix 15 constants)
---   4. a pipelined barrel shifter scales the product by 2**floor(e/2)
+--   4. a pipelined barrel shifter of g_shifter_stages register stages
+--      scales the product by 2**floor(e/2)
+--
+-- each shifter splits the bits of its shift count over g_shifter_stages
+-- stages, high bits first : with 2 stages a 32 bit word shifts by 0, 4 ..
+-- 28 and then by 0 .. 3. one stage shifts in one go, one stage per bit
+-- gives the shortest logic per stage.
 --
 -- the shift count and the parity travel alongside in delay lines, which
 -- needs the lookup and multiply latencies to be fixed : the root owns both
@@ -123,11 +129,13 @@ library ieee;
     use work.fixed_dsp_pkg.all;
     use work.sqrt_calculator_pkg.all;
     use work.full_range_sqrt_pkg.all;
+    use work.fixed_point_scaling_pkg.all;
 
 entity full_range_sqrt is
     generic (
         g_radix             : natural
-        ;g_pre_add_register : boolean := false
+        ;g_pre_add_register : boolean  := false
+        ;g_shifter_stages   : positive := 2
     );
     port (
         clock                : in std_logic
@@ -157,17 +165,39 @@ architecture rtl of full_range_sqrt is
     constant extra            : natural := maximum(0, max_half - 30);
     constant product_w        : natural := maximum(36, w) + extra;
     constant max_shift        : natural := 30 + extra - min_half;
-    constant normalize_stages : natural := bits_for(w-1);
-    constant shift_stages     : natural := bits_for(max_shift);
+    -- bits in the normalisation shift count and in the output shift
+    constant count_bits       : natural := bits_for(w-1);
+    constant shift_bits       : natural := bits_for(max_shift);
+    constant stages           : positive := g_shifter_stages;
     constant dsp_latency      : natural := 2 + boolean'pos(g_pre_add_register);
     -- sqrt_calculator : its request register, the two stage ram read, its
     -- dsp request register and its fixed_dsp
     constant sqrt_latency     : natural := 4 + dsp_latency;
 
+    -- a shift count's bits split over the stages, high bits first : stage s
+    -- (1 = the first) handles bits group_low .. group_low + group_size - 1
+    function group_size (total_bits : natural; stage : positive) return natural is
+    begin
+        if stage <= total_bits mod stages then
+            return total_bits / stages + 1;
+        else
+            return total_bits / stages;
+        end if;
+    end function;
+
+    function group_low (total_bits : natural; stage : positive) return natural is
+        variable low : natural := total_bits;
+    begin
+        for k in 1 to stage loop
+            low := low - group_size(total_bits, k);
+        end loop;
+        return low;
+    end function;
+
     type carry_record is record
         zero  : std_logic;
         valid : std_logic;
-        zeros : unsigned(normalize_stages-1 downto 0);
+        zeros : unsigned(count_bits-1 downto 0);
     end record;
 
     constant init_carry : carry_record := (
@@ -178,15 +208,15 @@ architecture rtl of full_range_sqrt is
     type carry_array     is array (natural range <>) of carry_record;
     type magnitude_array is array (natural range <>) of unsigned(w-1 downto 0);
     type product_array   is array (natural range <>) of unsigned(product_w-1 downto 0);
-    type shift_array     is array (natural range <>) of unsigned(shift_stages-1 downto 0);
+    type shift_array     is array (natural range <>) of unsigned(shift_bits-1 downto 0);
 
-    signal normalize_carry     : carry_array(0 to normalize_stages)     := (others => init_carry);
-    signal normalize_magnitude : magnitude_array(0 to normalize_stages) := (others => (others => '0'));
+    signal normalize_carry     : carry_array(0 to stages)               := (others => init_carry);
+    signal normalize_magnitude : magnitude_array(0 to stages)           := (others => (others => '0'));
     signal sqrt_carry          : carry_array(1 to sqrt_latency)         := (others => init_carry);
     signal multiply_carry      : carry_array(0 to dsp_latency)          := (others => init_carry);
-    signal shift_carry         : carry_array(0 to shift_stages)         := (others => init_carry);
-    signal shift_value         : product_array(0 to shift_stages)       := (others => (others => '0'));
-    signal shift_amount        : shift_array(0 to shift_stages)         := (others => (others => '0'));
+    signal shift_carry         : carry_array(0 to stages)               := (others => init_carry);
+    signal shift_value         : product_array(0 to stages)             := (others => (others => '0'));
+    signal shift_amount        : shift_array(0 to stages)               := (others => (others => '0'));
 
     signal sqrt_in  : sqrt_calculator_in_record;
     signal sqrt_out : sqrt_calculator_out_record;
@@ -212,19 +242,22 @@ begin
         severity failure;
 
     sqrt_in <= (
-        x_frac          => normalize_magnitude(normalize_stages)(w-2 downto w-17)
-        ,request_with_1 => normalize_carry(normalize_stages).valid);
+        x_frac          => normalize_magnitude(stages)(w-2 downto w-17)
+        ,request_with_1 => normalize_carry(stages).valid);
 
     full_range_sqrt_out.root <=
-        (full_range_sqrt_out.root'range => '0') when shift_carry(shift_stages).zero = '1'
-        else shift_value(shift_stages)(w-1 downto 0);
-    full_range_sqrt_out.ready_with_1 <= shift_carry(shift_stages).valid;
+        (full_range_sqrt_out.root'range => '0') when shift_carry(stages).zero = '1'
+        else shift_value(stages)(w-1 downto 0);
+    full_range_sqrt_out.ready_with_1 <= shift_carry(stages).valid;
 
     process(clock)
         variable carry      : carry_record;
         variable magnitude  : unsigned(w-1 downto 0);
         variable value      : unsigned(product_w-1 downto 0);
-        variable shift      : natural;
+        variable size       : natural;
+        variable low        : natural;
+        variable leading    : natural;
+        variable amount     : natural;
         variable multiplier : natural;
     begin
         if rising_edge(clock) then
@@ -238,24 +271,30 @@ begin
             normalize_carry(0)     <= carry;
             normalize_magnitude(0) <= full_range_sqrt_in.radicand;
 
-            -- leading zero shifter : stage k shifts by 2**(normalize_stages-k)
-            -- when that many top bits are zero, which leaves the leading one
-            -- in the top bit and the shift count in carry.zeros
-            for k in 1 to normalize_stages loop
-                carry     := normalize_carry(k-1);
-                magnitude := normalize_magnitude(k-1);
-                shift     := 2**(normalize_stages-k);
-                if magnitude(w-1 downto w-shift) = 0 then
-                    magnitude := shift_left(magnitude, shift);
-                    carry.zeros(normalize_stages-k) := '1';
+            -- leading zero shifter : stage s removes the leading zeros of its
+            -- group, a multiple of 2**low up to its group's worth, which
+            -- leaves the leading one in the top bit after the last stage and
+            -- the shift count in carry.zeros. the earlier stages have removed
+            -- the larger multiples, so a nonzero magnitude has fewer than
+            -- 2**(low+size) leading zeros left here
+            for s in 1 to stages loop
+                carry     := normalize_carry(s-1);
+                magnitude := normalize_magnitude(s-1);
+                size      := group_size(count_bits, s);
+                low       := group_low(count_bits, s);
+                if size > 0 then
+                    leading   := get_number_of_leading_zeros(signed(magnitude), minimum(2**(low+size) - 1, w-1));
+                    amount    := (leading / 2**low) mod 2**size;
+                    magnitude := shift_left(magnitude, amount * 2**low);
+                    carry.zeros(low+size-1 downto low) := to_unsigned(amount, size);
                 end if;
-                normalize_carry(k)     <= carry;
-                normalize_magnitude(k) <= magnitude;
+                normalize_carry(s)     <= carry;
+                normalize_magnitude(s) <= magnitude;
             end loop;
 
             -- the normalised radicand goes to sqrt_calculator (see sqrt_in),
             -- the rest waits for its result
-            sqrt_carry <= normalize_carry(normalize_stages) & sqrt_carry(1 to sqrt_latency-1);
+            sqrt_carry <= normalize_carry(stages) & sqrt_carry(1 to sqrt_latency-1);
 
             -- multiply : sqrt(y) * 1.0 for an even exponent, * sqrt(2) for an
             -- odd one
@@ -291,23 +330,24 @@ begin
 
             shift_carry(0) <= carry;
             shift_value(0) <= shift_left(resize(unsigned(multiply_dsp_out.result), product_w), extra);
-            -- a zero radicand, or an idle stage with no request, shifts by
-            -- all normalize stages, which can be more than w-1 ; neither root
-            -- is used
+            -- a zero radicand, or an idle stage with no request, has a
+            -- meaningless shift count ; neither root is used
             if carry.zero = '1' or carry.valid = '0' then
                 shift_amount(0) <= (others => '0');
             else
-                shift_amount(0) <= to_unsigned(30 + extra - (w - to_integer(carry.zeros) + g_radix) / 2, shift_stages);
+                shift_amount(0) <= to_unsigned(30 + extra - (w - to_integer(carry.zeros) + g_radix) / 2, shift_bits);
             end if;
 
-            for k in 1 to shift_stages loop
-                value := shift_value(k-1);
-                if shift_amount(k-1)(shift_stages-k) = '1' then
-                    value := shift_right(value, 2**(shift_stages-k));
+            for s in 1 to stages loop
+                value := shift_value(s-1);
+                size  := group_size(shift_bits, s);
+                low   := group_low(shift_bits, s);
+                if size > 0 then
+                    value := shift_right(value, to_integer(shift_amount(s-1)(low+size-1 downto low)) * 2**low);
                 end if;
-                shift_value(k)  <= value;
-                shift_amount(k) <= shift_amount(k-1);
-                shift_carry(k)  <= shift_carry(k-1);
+                shift_value(s)  <= value;
+                shift_amount(s) <= shift_amount(s-1);
+                shift_carry(s)  <= shift_carry(s-1);
             end loop;
 
         end if;

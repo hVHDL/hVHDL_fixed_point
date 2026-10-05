@@ -17,13 +17,18 @@ library ieee;
 -- matches it bit for bit.
 --
 --   1. |denominator| is normalised into 0.5 <= x < 1 by a pipelined leading
---      zero shifter, one register stage per bit of the shift count
+--      zero shifter of g_shifter_stages register stages
 --   2. reciprocal_calculator looks up 1/x (radix 14) with the 16 bits that
 --      follow the leading one
 --   3. a fixed_dsp multiplies the numerator with 1/x, negated for a
 --      negative denominator
---   4. a pipelined barrel shifter scales the product back by the
---      normalisation shift and the quotient radix
+--   4. a pipelined barrel shifter of g_shifter_stages register stages
+--      scales the product back by the normalisation shift and the radix
+--
+-- each shifter splits the bits of its shift count over g_shifter_stages
+-- stages, high bits first : with 2 stages a 32 bit word shifts by 0, 4 ..
+-- 28 and then by 0 .. 3. one stage shifts in one go, one stage per bit
+-- gives the shortest logic per stage.
 --
 -- the numerator, the sign and the shift count travel alongside in delay
 -- lines, which needs the reciprocal and multiply latencies to be fixed : the
@@ -125,11 +130,13 @@ library ieee;
     use work.fixed_dsp_pkg.all;
     use work.reciprocal_calculator_pkg.all;
     use work.lut_divider_pkg.all;
+    use work.fixed_point_scaling_pkg.all;
 
 entity lut_divider is
     generic (
         g_quotient_radix    : natural
-        ;g_pre_add_register : boolean := false
+        ;g_pre_add_register : boolean  := false
+        ;g_shifter_stages   : positive := 2
     );
     port (
         clock            : in std_logic
@@ -153,20 +160,42 @@ architecture rtl of lut_divider is
         return b;
     end function;
 
-    constant normalize_stages   : natural := bits_for(w-1);
+    -- bits in the normalisation shift count and in the output shift
+    constant count_bits         : natural := bits_for(w-1);
     constant max_shift          : natural := 14 + w - g_quotient_radix + extra;
-    constant shift_stages       : natural := bits_for(max_shift);
+    constant shift_bits         : natural := bits_for(max_shift);
+    constant stages             : positive := g_shifter_stages;
     constant dsp_latency        : natural := 2 + boolean'pos(g_pre_add_register);
     -- reciprocal_calculator : its request register, the two stage ram read,
     -- its dsp request register and its fixed_dsp
     constant reciprocal_latency : natural := 4 + dsp_latency;
+
+    -- a shift count's bits split over the stages, high bits first : stage s
+    -- (1 = the first) handles bits group_low .. group_low + group_size - 1
+    function group_size (total_bits : natural; stage : positive) return natural is
+    begin
+        if stage <= total_bits mod stages then
+            return total_bits / stages + 1;
+        else
+            return total_bits / stages;
+        end if;
+    end function;
+
+    function group_low (total_bits : natural; stage : positive) return natural is
+        variable low : natural := total_bits;
+    begin
+        for k in 1 to stage loop
+            low := low - group_size(total_bits, k);
+        end loop;
+        return low;
+    end function;
 
     type carry_record is record
         numerator        : signed(w-1 downto 0);
         negative         : std_logic;
         division_by_zero : std_logic;
         valid            : std_logic;
-        zeros            : unsigned(normalize_stages-1 downto 0);
+        zeros            : unsigned(count_bits-1 downto 0);
     end record;
 
     constant init_carry : carry_record := (
@@ -179,15 +208,15 @@ architecture rtl of lut_divider is
     type carry_array     is array (natural range <>) of carry_record;
     type magnitude_array is array (natural range <>) of unsigned(w-1 downto 0);
     type product_array   is array (natural range <>) of signed(2*w+extra-1 downto 0);
-    type shift_array     is array (natural range <>) of unsigned(shift_stages-1 downto 0);
+    type shift_array     is array (natural range <>) of unsigned(shift_bits-1 downto 0);
 
-    signal normalize_carry     : carry_array(0 to normalize_stages)     := (others => init_carry);
-    signal normalize_magnitude : magnitude_array(0 to normalize_stages) := (others => (others => '0'));
+    signal normalize_carry     : carry_array(0 to stages)               := (others => init_carry);
+    signal normalize_magnitude : magnitude_array(0 to stages)           := (others => (others => '0'));
     signal reciprocal_carry    : carry_array(1 to reciprocal_latency)   := (others => init_carry);
     signal multiply_carry      : carry_array(0 to dsp_latency)          := (others => init_carry);
-    signal shift_carry         : carry_array(0 to shift_stages)         := (others => init_carry);
-    signal shift_value         : product_array(0 to shift_stages)       := (others => (others => '0'));
-    signal shift_amount        : shift_array(0 to shift_stages)         := (others => (others => '0'));
+    signal shift_carry         : carry_array(0 to stages)               := (others => init_carry);
+    signal shift_value         : product_array(0 to stages)             := (others => (others => '0'));
+    signal shift_amount        : shift_array(0 to stages)               := (others => (others => '0'));
 
     signal reciprocal_in  : reciprocal_calculator_in_record;
     signal reciprocal_out : reciprocal_calculator_out_record;
@@ -208,20 +237,23 @@ begin
         severity failure;
 
     reciprocal_in <= (
-        x_frac          => normalize_magnitude(normalize_stages)(w-2 downto w-17)
-        ,request_with_1 => normalize_carry(normalize_stages).valid);
+        x_frac          => normalize_magnitude(stages)(w-2 downto w-17)
+        ,request_with_1 => normalize_carry(stages).valid);
 
     lut_divider_out.quotient <=
-        (lut_divider_out.quotient'range => '0') when shift_carry(shift_stages).division_by_zero = '1'
-        else shift_value(shift_stages)(w-1 downto 0);
-    lut_divider_out.division_by_zero <= shift_carry(shift_stages).division_by_zero;
-    lut_divider_out.ready_with_1     <= shift_carry(shift_stages).valid;
+        (lut_divider_out.quotient'range => '0') when shift_carry(stages).division_by_zero = '1'
+        else shift_value(stages)(w-1 downto 0);
+    lut_divider_out.division_by_zero <= shift_carry(stages).division_by_zero;
+    lut_divider_out.ready_with_1     <= shift_carry(stages).valid;
 
     process(clock)
         variable carry     : carry_record;
         variable magnitude : unsigned(w-1 downto 0);
         variable value     : signed(2*w+extra-1 downto 0);
-        variable shift     : natural;
+        variable size      : natural;
+        variable low       : natural;
+        variable leading   : natural;
+        variable amount    : natural;
     begin
         if rising_edge(clock) then
 
@@ -238,24 +270,30 @@ begin
             -- read as unsigned is the right magnitude 2**(w-1)
             normalize_magnitude(0) <= unsigned(abs(lut_divider_in.denominator));
 
-            -- leading zero shifter : stage k shifts by 2**(normalize_stages-k)
-            -- when that many top bits are zero, which leaves the leading one
-            -- in the top bit and the shift count in carry.zeros
-            for k in 1 to normalize_stages loop
-                carry     := normalize_carry(k-1);
-                magnitude := normalize_magnitude(k-1);
-                shift     := 2**(normalize_stages-k);
-                if magnitude(w-1 downto w-shift) = 0 then
-                    magnitude := shift_left(magnitude, shift);
-                    carry.zeros(normalize_stages-k) := '1';
+            -- leading zero shifter : stage s removes the leading zeros of its
+            -- group, a multiple of 2**low up to its group's worth, which
+            -- leaves the leading one in the top bit after the last stage and
+            -- the shift count in carry.zeros. the earlier stages have removed
+            -- the larger multiples, so a nonzero magnitude has fewer than
+            -- 2**(low+size) leading zeros left here
+            for s in 1 to stages loop
+                carry     := normalize_carry(s-1);
+                magnitude := normalize_magnitude(s-1);
+                size      := group_size(count_bits, s);
+                low       := group_low(count_bits, s);
+                if size > 0 then
+                    leading   := get_number_of_leading_zeros(signed(magnitude), minimum(2**(low+size) - 1, w-1));
+                    amount    := (leading / 2**low) mod 2**size;
+                    magnitude := shift_left(magnitude, amount * 2**low);
+                    carry.zeros(low+size-1 downto low) := to_unsigned(amount, size);
                 end if;
-                normalize_carry(k)     <= carry;
-                normalize_magnitude(k) <= magnitude;
+                normalize_carry(s)     <= carry;
+                normalize_magnitude(s) <= magnitude;
             end loop;
 
             -- the normalised denominator goes to reciprocal_calculator (see
             -- reciprocal_in), the rest waits for its result
-            reciprocal_carry <= normalize_carry(normalize_stages) & reciprocal_carry(1 to reciprocal_latency-1);
+            reciprocal_carry <= normalize_carry(stages) & reciprocal_carry(1 to reciprocal_latency-1);
 
             -- multiply : numerator * 1/x, negated for a negative denominator
             carry := reciprocal_carry(reciprocal_latency);
@@ -285,23 +323,24 @@ begin
 
             shift_carry(0)  <= carry;
             shift_value(0)  <= shift_left(resize(multiply_dsp_out.result, 2*w+extra), extra);
-            -- a zero denominator, or an idle stage with no request, shifts
-            -- by all normalize stages, which can be more than w-1 ; neither
-            -- quotient is used
+            -- a zero denominator, or an idle stage with no request, has a
+            -- meaningless shift count ; neither quotient is used
             if carry.division_by_zero = '1' or carry.valid = '0' then
                 shift_amount(0) <= (others => '0');
             else
-                shift_amount(0) <= to_unsigned(max_shift - to_integer(carry.zeros), shift_stages);
+                shift_amount(0) <= to_unsigned(max_shift - to_integer(carry.zeros), shift_bits);
             end if;
 
-            for k in 1 to shift_stages loop
-                value := shift_value(k-1);
-                if shift_amount(k-1)(shift_stages-k) = '1' then
-                    value := shift_right(value, 2**(shift_stages-k));
+            for s in 1 to stages loop
+                value := shift_value(s-1);
+                size  := group_size(shift_bits, s);
+                low   := group_low(shift_bits, s);
+                if size > 0 then
+                    value := shift_right(value, to_integer(shift_amount(s-1)(low+size-1 downto low)) * 2**low);
                 end if;
-                shift_value(k)  <= value;
-                shift_amount(k) <= shift_amount(k-1);
-                shift_carry(k)  <= shift_carry(k-1);
+                shift_value(s)  <= value;
+                shift_amount(s) <= shift_amount(s-1);
+                shift_carry(s)  <= shift_carry(s-1);
             end loop;
 
         end if;
