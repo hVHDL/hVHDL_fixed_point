@@ -210,13 +210,13 @@ architecture rtl of lut_divider is
     type product_array   is array (natural range <>) of signed(2*w+extra-1 downto 0);
     type shift_array     is array (natural range <>) of unsigned(shift_bits-1 downto 0);
 
-    signal normalize_carry     : carry_array(0 to stages)               := (others => init_carry);
-    signal normalize_magnitude : magnitude_array(0 to stages)           := (others => (others => '0'));
+    signal normalize_carry     : carry_array(1 to stages)               := (others => init_carry);
+    signal normalize_magnitude : magnitude_array(1 to stages)           := (others => (others => '0'));
     signal reciprocal_carry    : carry_array(1 to reciprocal_latency)   := (others => init_carry);
     signal multiply_carry      : carry_array(0 to dsp_latency)          := (others => init_carry);
-    signal shift_carry         : carry_array(0 to stages)               := (others => init_carry);
-    signal shift_value         : product_array(0 to stages)             := (others => (others => '0'));
-    signal shift_amount        : shift_array(0 to stages)               := (others => (others => '0'));
+    signal shift_carry         : carry_array(1 to stages)               := (others => init_carry);
+    signal shift_value         : product_array(1 to stages)             := (others => (others => '0'));
+    signal shift_amount        : shift_array(1 to stages)               := (others => (others => '0'));
 
     signal reciprocal_in  : reciprocal_calculator_in_record;
     signal reciprocal_out : reciprocal_calculator_out_record;
@@ -254,21 +254,21 @@ begin
         variable low       : natural;
         variable leading   : natural;
         variable amount    : natural;
+        variable shift     : unsigned(shift_bits-1 downto 0);
     begin
         if rising_edge(clock) then
 
-            -- input register
-            carry                  := init_carry;
-            carry.numerator        := lut_divider_in.numerator;
-            carry.negative         := lut_divider_in.denominator(lut_divider_in.denominator'left);
-            carry.valid            := lut_divider_in.request_with_1;
+            -- the first normaliser stage works straight off the inputs
+            carry           := init_carry;
+            carry.numerator := lut_divider_in.numerator;
+            carry.negative  := lut_divider_in.denominator(lut_divider_in.denominator'left);
+            carry.valid     := lut_divider_in.request_with_1;
             if lut_divider_in.denominator = 0 then
                 carry.division_by_zero := '1';
             end if;
-            normalize_carry(0)     <= carry;
             -- abs of the most negative denominator wraps to itself, which
             -- read as unsigned is the right magnitude 2**(w-1)
-            normalize_magnitude(0) <= unsigned(abs(lut_divider_in.denominator));
+            magnitude := unsigned(abs(lut_divider_in.denominator));
 
             -- leading zero shifter : stage s removes the leading zeros of its
             -- group, a multiple of 2**low up to its group's worth, which
@@ -277,8 +277,10 @@ begin
             -- the larger multiples, so a nonzero magnitude has fewer than
             -- 2**(low+size) leading zeros left here
             for s in 1 to stages loop
-                carry     := normalize_carry(s-1);
-                magnitude := normalize_magnitude(s-1);
+                if s > 1 then
+                    carry     := normalize_carry(s-1);
+                    magnitude := normalize_magnitude(s-1);
+                end if;
                 size      := group_size(count_bits, s);
                 low       := group_low(count_bits, s);
                 if size > 0 then
@@ -321,26 +323,30 @@ begin
                 report "lut_divider : multiply fixed_dsp is not aligned with its delay line"
                 severity failure;
 
-            shift_carry(0)  <= carry;
-            shift_value(0)  <= shift_left(resize(multiply_dsp_out.result, 2*w+extra), extra);
+            -- the first shifter stage works straight off the multiplier
+            value := shift_left(resize(multiply_dsp_out.result, 2*w+extra), extra);
             -- a zero denominator, or an idle stage with no request, has a
             -- meaningless shift count ; neither quotient is used
             if carry.division_by_zero = '1' or carry.valid = '0' then
-                shift_amount(0) <= (others => '0');
+                shift := (others => '0');
             else
-                shift_amount(0) <= to_unsigned(max_shift - to_integer(carry.zeros), shift_bits);
+                shift := to_unsigned(max_shift - to_integer(carry.zeros), shift_bits);
             end if;
 
             for s in 1 to stages loop
-                value := shift_value(s-1);
+                if s > 1 then
+                    carry := shift_carry(s-1);
+                    value := shift_value(s-1);
+                    shift := shift_amount(s-1);
+                end if;
                 size  := group_size(shift_bits, s);
                 low   := group_low(shift_bits, s);
                 if size > 0 then
-                    value := shift_right(value, to_integer(shift_amount(s-1)(low+size-1 downto low)) * 2**low);
+                    value := shift_right(value, to_integer(shift(low+size-1 downto low)) * 2**low);
                 end if;
                 shift_value(s)  <= value;
-                shift_amount(s) <= shift_amount(s-1);
-                shift_carry(s)  <= shift_carry(s-1);
+                shift_amount(s) <= shift;
+                shift_carry(s)  <= carry;
             end loop;
 
         end if;
