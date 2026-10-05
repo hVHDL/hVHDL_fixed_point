@@ -139,6 +139,9 @@ entity full_range_sqrt is
         -- dual_port_ram's output register in the lookup table : without it
         -- the latency is one clock shorter
         ;g_ram_output_register : boolean := true
+        -- register the requests to the fixed_dsps : without them each
+        -- request goes to its fixed_dsp directly, two clocks shorter
+        ;g_dsp_request_register : boolean := true
     );
     port (
         clock                : in std_logic
@@ -174,9 +177,13 @@ architecture rtl of full_range_sqrt is
     constant stages           : positive := g_shifter_stages;
     constant dsp_latency      : natural := 2 + boolean'pos(g_pre_add_register);
     -- sqrt_calculator : its request register, the ram read (2 clocks, 1
-    -- without the ram's output register), its dsp request register and its
-    -- fixed_dsp
-    constant sqrt_latency     : natural := 3 + boolean'pos(g_ram_output_register) + dsp_latency;
+    -- without the ram's output register), its dsp request register (when
+    -- g_dsp_request_register) and its fixed_dsp
+    constant sqrt_latency     : natural := 2 + boolean'pos(g_ram_output_register)
+                                          + boolean'pos(g_dsp_request_register) + dsp_latency;
+    -- the multiply : its request register (when g_dsp_request_register) and
+    -- its fixed_dsp
+    constant multiply_latency : natural := boolean'pos(g_dsp_request_register) + dsp_latency;
 
     -- a shift count's bits split over the stages, high bits first : stage s
     -- (1 = the first) handles bits group_low .. group_low + group_size - 1
@@ -217,7 +224,7 @@ architecture rtl of full_range_sqrt is
     signal normalize_carry     : carry_array(1 to stages)               := (others => init_carry);
     signal normalize_magnitude : magnitude_array(1 to stages)           := (others => (others => '0'));
     signal sqrt_carry          : carry_array(1 to sqrt_latency)         := (others => init_carry);
-    signal multiply_carry      : carry_array(0 to dsp_latency)          := (others => init_carry);
+    signal multiply_carry      : carry_array(1 to multiply_latency)     := (others => init_carry);
     signal shift_carry         : carry_array(1 to stages)               := (others => init_carry);
     signal shift_value         : product_array(1 to stages)             := (others => (others => '0'));
     signal shift_amount        : shift_array(1 to stages)               := (others => (others => '0'));
@@ -232,6 +239,7 @@ architecture rtl of full_range_sqrt is
 
     signal multiply_dsp_in : fixed_dsp_in_record(
         a(17 downto 0), d(17 downto 0), b(17 downto 0), c(35 downto 0));
+    signal multiply_request : multiply_dsp_in'subtype;
     signal multiply_dsp_out : fixed_dsp_out_record(result(35 downto 0));
 
     function exponent_is_odd (zeros : unsigned) return boolean is
@@ -262,7 +270,6 @@ begin
         variable low        : natural;
         variable leading    : natural;
         variable amount     : natural;
-        variable multiplier : natural;
         variable shift      : unsigned(shift_bits-1 downto 0);
     begin
         if rising_edge(clock) then
@@ -309,27 +316,12 @@ begin
                 report "full_range_sqrt : sqrt_calculator is not aligned with its delay line"
                 severity failure;
 
-            if exponent_is_odd(carry.zeros) then
-                multiplier := sqrt_two_radix15;
-            else
-                multiplier := sqrt_one_radix15;
-            end if;
-
-            init_fixed_dsp(multiply_dsp_in);
-            if carry.valid = '1' then
-                fmac(multiply_dsp_in
-                    ,a => signed(resize(sqrt_out.y, 18))
-                    ,d => (multiply_dsp_in.d'range => '0')
-                    ,b => to_signed(multiplier, 18)
-                    ,c => (multiply_dsp_in.c'range => '0')
-                );
-            end if;
-            multiply_carry <= carry & multiply_carry(0 to dsp_latency-1);
+            multiply_carry <= carry & multiply_carry(1 to multiply_latency-1);
 
             -- barrel shifter : the product is sqrt(y) * 2**30 (times sqrt(2)
             -- for an odd exponent), shift right by 30 - floor(e/2) (after a
             -- left shift of extra for large word lengths and radixes)
-            carry := multiply_carry(dsp_latency);
+            carry := multiply_carry(multiply_latency);
             assert (carry.valid = '1') = (multiply_dsp_out.ready_with_1 = '1')
                 report "full_range_sqrt : multiply fixed_dsp is not aligned with its delay line"
                 severity failure;
@@ -363,8 +355,49 @@ begin
         end if;
     end process;
 
+    ------------------------------------------------------------------------
+    -- the multiply request, combinational from the sqrt_calculator result and
+    -- the delay line ; it reaches multiply_dsp_in through a register, or
+    -- directly when g_dsp_request_register is false
+    multiply_request_process : process(all)
+        variable carry      : carry_record;
+        variable multiplier : natural;
+    begin
+        carry := sqrt_carry(sqrt_latency);
+        if exponent_is_odd(carry.zeros) then
+            multiplier := sqrt_two_radix15;
+        else
+            multiplier := sqrt_one_radix15;
+        end if;
+
+        init_fixed_dsp(multiply_request);
+        if carry.valid = '1' then
+            fmac(multiply_request
+                ,a => signed(resize(sqrt_out.y, 18))
+                ,d => (multiply_request.d'range => '0')
+                ,b => to_signed(multiplier, 18)
+                ,c => (multiply_request.c'range => '0')
+            );
+        end if;
+    end process;
+
+    multiply_request_registered : if g_dsp_request_register generate
+        process(clock)
+        begin
+            if rising_edge(clock) then
+                multiply_dsp_in <= multiply_request;
+            end if;
+        end process;
+    end generate;
+
+    multiply_request_direct : if not g_dsp_request_register generate
+        multiply_dsp_in <= multiply_request;
+    end generate;
+
     u_sqrt_calculator : entity work.sqrt_calculator
-    generic map(g_ram_output_register => g_ram_output_register)
+    generic map(
+        g_ram_output_register   => g_ram_output_register
+        ,g_dsp_request_register => g_dsp_request_register)
     port map(
         clock                => clock
         ,sqrt_calculator_in  => sqrt_in

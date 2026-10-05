@@ -78,6 +78,9 @@ entity sqrt_calculator is
         -- dual_port_ram's output register : a ram read takes 2 clocks with
         -- it, 1 without, which takes one clock off the latency
         g_ram_output_register : boolean := true
+        -- register the request to fixed_dsp : without it the request goes
+        -- to fixed_dsp straight from the ram output, a clock shorter
+        ;g_dsp_request_register : boolean := true
     );
     port (
         clock : in std_logic := '0'
@@ -133,6 +136,9 @@ architecture rtl of sqrt_calculator is
 
     signal dsp_interpolated : signed(sqrt_word_length-1 downto 0);
 
+
+    signal dsp_request : fixed_dsp_in'subtype;
+
 begin
 
     u_dpram : entity work.dual_port_ram
@@ -162,7 +168,6 @@ begin
 
     process(clock)
         variable index        : natural range 0 to sqrt_number_of_entries-1;
-        variable fraction_ram : unsigned(sqrt_fraction_width-1 downto 0);
     begin
         if rising_edge(clock) then
 
@@ -179,24 +184,45 @@ begin
                 request_data_from_ram(ram_b_in, index + sqrt_number_of_entries);
             end if;
 
-            -- ram ready : issue the dsp add for the x_frac that left the
-            -- delay line ; result = slope*fraction + point<<radix.
-            -- a/b/c are resized up to fixed_dsp_in's actual width (which
-            -- may be wider than sqrt_word_length) before use ; c also
-            -- has to be pre-shifted up to the multiplier's output width
-            -- here, since fixed_dsp no longer does that internally
-            init_fixed_dsp(fixed_dsp_in);
-            if ram_read_is_ready(ram_a_out) then
-                fraction_ram := x_frac_delay(ram_read_latency)(sqrt_fraction_width-1 downto 0);
-
-                add(fixed_dsp_in
-                    ,a => resize(signed(ram_b_out.data), fixed_dsp_in.a'length)
-                    ,b => signed(resize(fraction_ram, fixed_dsp_in.b'length))
-                    ,c => shift_left(resize(signed(ram_a_out.data), fixed_dsp_in.c'length), sqrt_fraction_width)
-                );
-            end if;
-
         end if;
     end process;
+
+    ------------------------------------------------------------------------
+    -- the request to fixed_dsp, combinational from the ram output and the
+    -- delay line ; it reaches fixed_dsp_in through a register, or directly
+    -- when g_dsp_request_register is false
+    dsp_request_process : process(all)
+        variable fraction_ram : unsigned(sqrt_fraction_width-1 downto 0);
+    begin
+        -- ram ready : issue the dsp add for the x_frac that left the
+        -- delay line ; result = slope*fraction + point<<radix.
+        -- a/b/c are resized up to fixed_dsp_in's actual width (which
+        -- may be wider than sqrt_word_length) before use ; c also
+        -- has to be pre-shifted up to the multiplier's output width
+        -- here, since fixed_dsp no longer does that internally
+        init_fixed_dsp(dsp_request);
+        if ram_read_is_ready(ram_a_out) then
+            fraction_ram := x_frac_delay(ram_read_latency)(sqrt_fraction_width-1 downto 0);
+
+            add(dsp_request
+                ,a => resize(signed(ram_b_out.data), dsp_request.a'length)
+                ,b => signed(resize(fraction_ram, dsp_request.b'length))
+                ,c => shift_left(resize(signed(ram_a_out.data), dsp_request.c'length), sqrt_fraction_width)
+            );
+        end if;
+    end process;
+
+    dsp_request_registered : if g_dsp_request_register generate
+        process(clock)
+        begin
+            if rising_edge(clock) then
+                fixed_dsp_in <= dsp_request;
+            end if;
+        end process;
+    end generate;
+
+    dsp_request_direct : if not g_dsp_request_register generate
+        fixed_dsp_in <= dsp_request;
+    end generate;
 
 end rtl;

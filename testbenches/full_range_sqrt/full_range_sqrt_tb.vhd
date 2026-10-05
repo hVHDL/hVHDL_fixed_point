@@ -23,6 +23,7 @@ entity full_range_sqrt_tb is
       ;use_gaps             : boolean := false
       ;shifter_stages       : positive := 2
       ;use_ram_output_register : boolean := true
+      ;use_dsp_request_register : boolean := true
   );
 end;
 
@@ -180,6 +181,7 @@ begin
         ,g_pre_add_register => use_pre_add_register
         ,g_shifter_stages   => shifter_stages
         ,g_ram_output_register => use_ram_output_register
+        ,g_dsp_request_register => use_dsp_request_register
     )
     port map(
         clock                => simulator_clock

@@ -24,6 +24,7 @@ entity reciprocal_lut_dsp_tb is
       runner_cfg : string
       ;use_gaps : boolean := false
       ;use_ram_output_register : boolean := true
+      ;use_dsp_request_register : boolean := true
   );
 end;
 
@@ -86,7 +87,9 @@ begin
     );
 
     u_reciprocal_calculator : entity work.reciprocal_calculator
-    generic map(g_ram_output_register => use_ram_output_register)
+    generic map(
+        g_ram_output_register   => use_ram_output_register
+        ,g_dsp_request_register => use_dsp_request_register)
     port map(
         clock => simulator_clock
         ,reciprocal_calculator_in  => reciprocal_calculator_in
