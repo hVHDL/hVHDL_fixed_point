@@ -215,6 +215,13 @@ LIBRARY ieee  ;
     use work.fixed_dsp_pkg.all;
 
 entity fixed_dsp is
+    generic(
+        -- rtl architecture only : register the pre-adder output (together
+        -- with the rest of the request) before the multiplier, so the
+        -- a +- d carry chain and the multiplier are not in the same
+        -- register stage. adds one clock of latency, 2 -> 3
+        g_pre_add_register : boolean := false
+    );
     port(
         clock : in std_logic := '0'
         ;fixed_dsp_in : in fixed_dsp_in_record

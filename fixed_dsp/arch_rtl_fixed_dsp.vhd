@@ -1,6 +1,11 @@
 architecture rtl of fixed_dsp is
 
-    signal pre  : fixed_dsp_in.a'subtype;
+    -- the pre-adder output and the request as the multiplier stage sees
+    -- them, registered when g_pre_add_register is set
+    signal pre_add  : fixed_dsp_in.a'subtype;
+    signal pre      : fixed_dsp_in.a'subtype;
+    signal stage_in : fixed_dsp_in'subtype;
+
     signal mult : signed(fixed_dsp_in.a'length + fixed_dsp_in.b'length-1 downto 0);
 
     -- c arrives already at the multiplier's output width and radix ; just
@@ -25,25 +30,40 @@ begin
     fixed_dsp_out.ready_with_1 <= ready_pipeline(ready_pipeline'high);
 
     -- Pre-adder
-    pre <= fixed_dsp_in.a + fixed_dsp_in.d when fixed_dsp_in.pre_subtract_with_1 = '0'
-     else  fixed_dsp_in.a - fixed_dsp_in.d;
+    pre_add <= fixed_dsp_in.a + fixed_dsp_in.d when fixed_dsp_in.pre_subtract_with_1 = '0'
+     else      fixed_dsp_in.a - fixed_dsp_in.d;
+
+    no_pre_add_register : if not g_pre_add_register generate
+        pre      <= pre_add;
+        stage_in <= fixed_dsp_in;
+    end generate;
+
+    pre_add_register : if g_pre_add_register generate
+        process(clock)
+        begin
+            if rising_edge(clock) then
+                pre      <= pre_add;
+                stage_in <= fixed_dsp_in;
+            end if;
+        end process;
+    end generate;
 
     process(clock)
     begin
         if rising_edge(clock) then
 
-            ready_pipeline <= ready_pipeline(ready_pipeline'high-1 downto 0) & fixed_dsp_in.request_with_1;
+            ready_pipeline <= ready_pipeline(ready_pipeline'high-1 downto 0) & stage_in.request_with_1;
 
             --p1
             -- Resize to accumulator width
-            mult  <= pre * fixed_dsp_in.b;
-            c_buf <= fixed_dsp_in.c;
+            mult  <= pre * stage_in.b;
+            c_buf <= stage_in.c;
 
-            buf_accumulate    <= fixed_dsp_in.accumulate_with_1   ;
-            buf_pre_subtract  <= fixed_dsp_in.pre_subtract_with_1 ;
-            buf_post_subtract <= fixed_dsp_in.post_subtract_with_1;
-            buf_invert_result <= fixed_dsp_in.invert_result_with_1;
-            buf_reset_accumulator_with_1 <= fixed_dsp_in.reset_accumulator_with_1;
+            buf_accumulate    <= stage_in.accumulate_with_1   ;
+            buf_pre_subtract  <= stage_in.pre_subtract_with_1 ;
+            buf_post_subtract <= stage_in.post_subtract_with_1;
+            buf_invert_result <= stage_in.invert_result_with_1;
+            buf_reset_accumulator_with_1 <= stage_in.reset_accumulator_with_1;
 
             --p2
             if buf_invert_result = '1' then

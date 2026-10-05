@@ -63,6 +63,7 @@ vhdl2008.add_source_files(ROOT / "fixed_dsp/arch_ecp5_fixed_dsp.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/fixed_dsp/fixed_dsp_tb.vhd")
 fixed_dsp_tb = vhdl2008.test_bench("fixed_dsp_tb")
 fixed_dsp_tb.add_config(name="rtl", generics=dict(use_ecp5=False))
+fixed_dsp_tb.add_config(name="rtl_pre_add_register", generics=dict(use_ecp5=False, use_pre_add_register=True))
 fixed_dsp_tb.add_config(name="ecp5", generics=dict(use_ecp5=True))
 
 vhdl2008.add_source_files(ROOT / "testbenches/fixed_dsp/fixed_dsp_combine_tb.vhd")
