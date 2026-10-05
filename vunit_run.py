@@ -97,6 +97,18 @@ lut_divider_tb.add_config(name="w32_radix0", generics=dict(word_length=32, quoti
 lut_divider_tb.add_config(name="w24_radix8", generics=dict(word_length=24, quotient_radix=8))
 lut_divider_tb.add_config(name="w17_radix12", generics=dict(word_length=17, quotient_radix=12))
 
+vhdl2008.add_source_files(ROOT / "full_range_sqrt/full_range_sqrt.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/full_range_sqrt/full_range_sqrt_tb.vhd")
+full_range_sqrt_tb = vhdl2008.test_bench("full_range_sqrt_tb")
+full_range_sqrt_tb.add_config(name="w32_radix16", generics=dict(word_length=32, radix=16))
+full_range_sqrt_tb.add_config(name="w32_radix16_gapped", generics=dict(word_length=32, radix=16, use_gaps=True))
+full_range_sqrt_tb.add_config(name="w32_radix16_pre_add_register", generics=dict(word_length=32, radix=16, use_pre_add_register=True))
+full_range_sqrt_tb.add_config(name="w32_radix15", generics=dict(word_length=32, radix=15))
+full_range_sqrt_tb.add_config(name="w32_radix0", generics=dict(word_length=32, radix=0))
+full_range_sqrt_tb.add_config(name="w32_radix31", generics=dict(word_length=32, radix=31))
+full_range_sqrt_tb.add_config(name="w24_radix8", generics=dict(word_length=24, radix=8))
+full_range_sqrt_tb.add_config(name="w17_radix12", generics=dict(word_length=17, radix=12))
+
 # VU.set_sim_option("nvc.sim_flags", ["-w"])
 
 if args.dump_arrays is not None:
