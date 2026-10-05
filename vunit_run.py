@@ -86,6 +86,17 @@ sqrt_lut_dsp_tb = vhdl2008.test_bench("sqrt_lut_dsp_tb")
 sqrt_lut_dsp_tb.add_config(name="continuous", generics=dict(use_gaps=False))
 sqrt_lut_dsp_tb.add_config(name="gapped", generics=dict(use_gaps=True))
 
+vhdl2008.add_source_files(ROOT / "lut_divider/lut_divider.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/lut_divider/lut_divider_tb.vhd")
+lut_divider_tb = vhdl2008.test_bench("lut_divider_tb")
+lut_divider_tb.add_config(name="w32_radix16", generics=dict(word_length=32, quotient_radix=16))
+lut_divider_tb.add_config(name="w32_radix16_gapped", generics=dict(word_length=32, quotient_radix=16, use_gaps=True))
+lut_divider_tb.add_config(name="w32_radix16_pre_add_register", generics=dict(word_length=32, quotient_radix=16, use_pre_add_register=True))
+lut_divider_tb.add_config(name="w32_radix10", generics=dict(word_length=32, quotient_radix=10))
+lut_divider_tb.add_config(name="w32_radix0", generics=dict(word_length=32, quotient_radix=0))
+lut_divider_tb.add_config(name="w24_radix8", generics=dict(word_length=24, quotient_radix=8))
+lut_divider_tb.add_config(name="w17_radix12", generics=dict(word_length=17, quotient_radix=12))
+
 # VU.set_sim_option("nvc.sim_flags", ["-w"])
 
 if args.dump_arrays is not None:
