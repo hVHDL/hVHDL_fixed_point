@@ -136,6 +136,9 @@ entity full_range_sqrt is
         g_radix             : natural
         ;g_pre_add_register : boolean  := false
         ;g_shifter_stages   : positive := 2
+        -- dual_port_ram's output register in the lookup table : without it
+        -- the latency is one clock shorter
+        ;g_ram_output_register : boolean := true
     );
     port (
         clock                : in std_logic
@@ -170,9 +173,10 @@ architecture rtl of full_range_sqrt is
     constant shift_bits       : natural := bits_for(max_shift);
     constant stages           : positive := g_shifter_stages;
     constant dsp_latency      : natural := 2 + boolean'pos(g_pre_add_register);
-    -- sqrt_calculator : its request register, the two stage ram read, its
-    -- dsp request register and its fixed_dsp
-    constant sqrt_latency     : natural := 4 + dsp_latency;
+    -- sqrt_calculator : its request register, the ram read (2 clocks, 1
+    -- without the ram's output register), its dsp request register and its
+    -- fixed_dsp
+    constant sqrt_latency     : natural := 3 + boolean'pos(g_ram_output_register) + dsp_latency;
 
     -- a shift count's bits split over the stages, high bits first : stage s
     -- (1 = the first) handles bits group_low .. group_low + group_size - 1
@@ -360,6 +364,7 @@ begin
     end process;
 
     u_sqrt_calculator : entity work.sqrt_calculator
+    generic map(g_ram_output_register => g_ram_output_register)
     port map(
         clock                => clock
         ,sqrt_calculator_in  => sqrt_in

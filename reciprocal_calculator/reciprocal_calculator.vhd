@@ -74,6 +74,11 @@ library ieee;
     use work.reciprocal_calculator_pkg.all;
 
 entity reciprocal_calculator is
+    generic (
+        -- dual_port_ram's output register : a ram read takes 2 clocks with
+        -- it, 1 without, which takes one clock off the latency
+        g_ram_output_register : boolean := true
+    );
     port (
         clock : in std_logic := '0'
         ;reciprocal_calculator_in  : in reciprocal_calculator_in_record
@@ -119,9 +124,10 @@ architecture rtl of reciprocal_calculator is
     -- fixed latency and neither stalls nor reorders, so the x_frac of the
     -- lookup that is ready now is always the one requested
     -- ram_read_latency clocks ago (the request register in this process
-    -- plus dual_port_ram's two stage read). 1/x has no sign to recover, so
-    -- nothing has to travel past the dsp
-    constant ram_read_latency : natural := 3;
+    -- plus dual_port_ram's read, 2 clocks or 1 without its output
+    -- register). 1/x has no sign to recover, so nothing has to travel past
+    -- the dsp
+    constant ram_read_latency : natural := 2 + boolean'pos(g_ram_output_register);
     type x_frac_delay_t is array (1 to ram_read_latency) of unsigned(recip_word_length-1 downto 0);
     signal x_frac_delay : x_frac_delay_t;
 
@@ -133,6 +139,7 @@ begin
     generic map(
         g_dpram_subtype   => dp_ram_subtype
         ,g_ram_init_values => lut_ram_contents
+        ,g_output_register => g_ram_output_register
     )
     port map(
         clock     => clock

@@ -22,6 +22,7 @@ entity sqrt_lut_dsp_tb is
   generic (
       runner_cfg : string
       ;use_gaps : boolean := false
+      ;use_ram_output_register : boolean := true
   );
 end;
 
@@ -84,6 +85,7 @@ begin
     );
 
     u_sqrt_calculator : entity work.sqrt_calculator
+    generic map(g_ram_output_register => use_ram_output_register)
     port map(
         clock => simulator_clock
         ,sqrt_calculator_in  => sqrt_calculator_in

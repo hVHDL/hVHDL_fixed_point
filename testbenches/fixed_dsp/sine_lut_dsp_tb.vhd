@@ -22,6 +22,7 @@ entity sine_lut_dsp_tb is
   generic (
       runner_cfg : string
       ;use_gaps : boolean := false
+      ;use_ram_output_register : boolean := true
   );
 end;
 
@@ -84,6 +85,7 @@ begin
     );
 
     u_sine_calculator : entity work.sine_calculator
+    generic map(g_ram_output_register => use_ram_output_register)
     port map(
         clock => simulator_clock
         ,sine_calculator_in  => sine_calculator_in

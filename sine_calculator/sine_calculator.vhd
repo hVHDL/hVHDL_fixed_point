@@ -73,6 +73,11 @@ library ieee;
     use work.sine_calculator_pkg.all;
 
 entity sine_calculator is
+    generic (
+        -- dual_port_ram's output register : a ram read takes 2 clocks with
+        -- it, 1 without, which takes one clock off the latency
+        g_ram_output_register : boolean := true
+    );
     port (
         clock : in std_logic := '0'
         ;sine_calculator_in  : in sine_calculator_in_record
@@ -126,10 +131,10 @@ architecture rtl of sine_calculator is
     -- a delay line of the requested angles : the ram read has a fixed
     -- latency and neither stalls nor reorders, so the angle of the lookup
     -- that is ready now is always the one requested ram_read_latency clocks
-    -- ago (the request register in this process plus dual_port_ram's two
-    -- stage read). nothing has to travel past the dsp, the sign is folded
-    -- into the dsp request itself
-    constant ram_read_latency : natural := 3;
+    -- ago (the request register in this process plus dual_port_ram's
+    -- read, 2 clocks or 1 without its output register). nothing has to
+    -- travel past the dsp, the sign is folded into the dsp request itself
+    constant ram_read_latency : natural := 2 + boolean'pos(g_ram_output_register);
     type angle_delay_t is array (1 to ram_read_latency) of unsigned(angle_word_length-1 downto 0);
     signal angle_delay : angle_delay_t;
 
@@ -141,6 +146,7 @@ begin
     generic map(
         g_dpram_subtype   => dp_ram_subtype
         ,g_ram_init_values => lut_ram_contents
+        ,g_output_register => g_ram_output_register
     )
     port map(
         clock     => clock

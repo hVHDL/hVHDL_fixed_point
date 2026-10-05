@@ -22,6 +22,7 @@ entity full_range_sqrt_tb is
       ;use_pre_add_register : boolean := false
       ;use_gaps             : boolean := false
       ;shifter_stages       : positive := 2
+      ;use_ram_output_register : boolean := true
   );
 end;
 
@@ -178,6 +179,7 @@ begin
         g_radix             => radix
         ,g_pre_add_register => use_pre_add_register
         ,g_shifter_stages   => shifter_stages
+        ,g_ram_output_register => use_ram_output_register
     )
     port map(
         clock                => simulator_clock
