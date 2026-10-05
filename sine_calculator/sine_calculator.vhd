@@ -9,7 +9,8 @@ library ieee;
 -- internally this wraps a dual_port_ram (holding lut_sine_pkg's
 -- point_lut/slope_lut tables) and a fixed_dsp (performing the
 -- interpolation multiply-add), each of which is itself a fixed-latency,
--- non-stalling pipeline stage.
+-- non-stalling pipeline stage. the result is independent of the
+-- fixed_dsp's own latency, ready_with_1 comes straight from it.
 --
 -- fixed_dsp_in/fixed_dsp_out are left unconstrained, so the caller's
 -- fixed_dsp can be any word length >= angle_word_length (e.g. a real
@@ -122,20 +123,15 @@ architecture rtl of sine_calculator is
     end function;
 
     ------------------------------------------------------------------------
-    -- a small fifo of in-flight angles : the ram read and the dsp add each
-    -- have their own fixed latency and neither stalls or reorders, so an
-    -- angle pushed in at request time is popped once by the ram-ready
-    -- stage (to compute the interpolation fraction) and again by the
-    -- dsp-ready stage (to know which angle the finished result belongs to,
-    -- for the sign flip). the depth only needs to exceed the combined
-    -- ram+dsp latency, so this is deliberately generous
-    constant fifo_depth : natural := 16;
-    type angle_fifo_t is array (0 to fifo_depth-1) of unsigned(angle_word_length-1 downto 0);
-    signal angle_fifo : angle_fifo_t;
-
-    signal ram_read_ptr : natural range 0 to fifo_depth-1 := 0;
-    signal output_ptr   : natural range 0 to fifo_depth-1 := 0;
-    signal write_ptr     : natural range 0 to fifo_depth-1 := 0;
+    -- a delay line of the requested angles : the ram read has a fixed
+    -- latency and neither stalls nor reorders, so the angle of the lookup
+    -- that is ready now is always the one requested ram_read_latency clocks
+    -- ago (the request register in this process plus dual_port_ram's two
+    -- stage read). nothing has to travel past the dsp, the sign is folded
+    -- into the dsp request itself
+    constant ram_read_latency : natural := 3;
+    type angle_delay_t is array (1 to ram_read_latency) of unsigned(angle_word_length-1 downto 0);
+    signal angle_delay : angle_delay_t;
 
     signal dsp_interpolated : signed(angle_word_length-1 downto 0);
 
@@ -156,59 +152,67 @@ begin
 
     ------------------------------------------------------------------------
     -- (point<<radix + slope*fraction) >> radix = point + (slope*fraction >> radix)
-    -- exactly, since point<<radix is a multiple of 2**radix, so this
-    -- reproduces get_sine_from_quarter_wave_lut bit for bit ; purely
-    -- combinational from already-registered signals, so no extra latency
-    -- is added on top of the dsp's own
+    -- exactly, since point<<radix is a multiple of 2**radix, and the
+    -- negative half comes out of the dsp already negated (see the dsp
+    -- request below), so this reproduces get_sine_from_quarter_wave_lut bit
+    -- for bit ; purely combinational from already-registered signals, so
+    -- no extra latency is added on top of the dsp's own
     dsp_interpolated <= resize(shift_right(fixed_dsp_out.result, fraction_width), angle_word_length);
 
     sine_calculator_out.ready_with_1 <= fixed_dsp_out.ready_with_1;
-    sine_calculator_out.sine <=
-        -dsp_interpolated when angle_fifo(output_ptr)(angle_word_length-1) = '1'
-        else dsp_interpolated;
+    sine_calculator_out.sine         <= dsp_interpolated;
 
     process(clock)
         variable quarter_index : natural range 0 to number_of_entries-1;
         variable fraction_ram  : unsigned(fraction_width-1 downto 0);
+        variable ram_angle     : unsigned(angle_word_length-1 downto 0);
     begin
         if rising_edge(clock) then
 
-            -- push : a new request enters the fifo and its ram lookup is
-            -- issued in the same cycle
+            -- the delay line shifts every clock, request or not, so it
+            -- stays aligned with the ram pipeline
+            angle_delay <= sine_calculator_in.angle & angle_delay(1 to ram_read_latency-1);
+
+            -- a new request issues its ram lookup
             init_ram(ram_a_in);
             init_ram(ram_b_in);
             if sine_calculator_in.request_with_1 = '1' then
-                angle_fifo(write_ptr) <= sine_calculator_in.angle;
-                write_ptr <= (write_ptr + 1) mod fifo_depth;
-
                 quarter_index := get_quarter_index(sine_calculator_in.angle);
                 request_data_from_ram(ram_a_in, quarter_index);
                 request_data_from_ram(ram_b_in, quarter_index + number_of_entries);
             end if;
 
-            -- ram ready : issue the dsp add for the oldest fifo entry not
-            -- yet consumed by this stage. a/b/c are resized up to
-            -- fixed_dsp_in's actual width (which may be wider than
-            -- angle_word_length) before use ; c also has to be
-            -- pre-shifted up to the multiplier's output width here,
-            -- since fixed_dsp no longer does that internally
+            -- ram ready : issue the dsp request for the angle that left the
+            -- delay line. a/b/c are resized up to fixed_dsp_in's actual
+            -- width (which may be wider than angle_word_length) before use ;
+            -- c also has to be pre-shifted up to the multiplier's output
+            -- width here, since fixed_dsp no longer does that internally
             init_fixed_dsp(fixed_dsp_in);
             if ram_read_is_ready(ram_a_out) then
-                fraction_ram := phase_in_quadrant(angle_fifo(ram_read_ptr))(fraction_width-1 downto 0);
-                ram_read_ptr <= (ram_read_ptr + 1) mod fifo_depth;
+                ram_angle    := angle_delay(ram_read_latency);
+                fraction_ram := phase_in_quadrant(ram_angle)(fraction_width-1 downto 0);
 
-                add(fixed_dsp_in
-                    ,a => resize(signed(ram_b_out.data), fixed_dsp_in.a'length)
-                    ,b => signed(resize(fraction_ram, fixed_dsp_in.b'length))
-                    ,c => shift_left(resize(signed(ram_a_out.data), fixed_dsp_in.c'length), fraction_width)
-                );
-            end if;
-
-            -- dsp ready : the oldest fifo entry not yet output now has its
-            -- final sine value on sine_calculator_out (see the
-            -- combinational assignments above)
-            if fixed_dsp_out.ready_with_1 = '1' then
-                output_ptr <= (output_ptr + 1) mod fifo_depth;
+                if ram_angle(angle_word_length-1) = '0' then
+                    add(fixed_dsp_in
+                        ,a => resize(signed(ram_b_out.data), fixed_dsp_in.a'length)
+                        ,b => signed(resize(fraction_ram, fixed_dsp_in.b'length))
+                        ,c => shift_left(resize(signed(ram_a_out.data), fixed_dsp_in.c'length), fraction_width)
+                    );
+                else
+                    -- negative half : the reference negates after the
+                    -- shift, -(point + floor(slope*fraction / 2**radix)).
+                    -- with x = slope*fraction + point<<radix that is
+                    -- floor((2**radix - 1 - x) / 2**radix), so the dsp
+                    -- inverts (mult + c) with c lowered by 2**radix - 1
+                    fmac(fixed_dsp_in
+                        ,a => resize(signed(ram_b_out.data), fixed_dsp_in.a'length)
+                        ,d => (fixed_dsp_in.d'range => '0')
+                        ,b => signed(resize(fraction_ram, fixed_dsp_in.b'length))
+                        ,c => shift_left(resize(signed(ram_a_out.data), fixed_dsp_in.c'length), fraction_width)
+                              - (2**fraction_width - 1)
+                        ,invert_result_with_1 => '1'
+                    );
+                end if;
             end if;
 
         end if;
