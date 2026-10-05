@@ -153,6 +153,11 @@ full_range_sqrt_tb.add_config(name="w32_radix31_1_shifter_stage_no_ram_output_re
 full_range_sqrt_tb.add_config(name="w32_radix16_no_dsp_request_register", generics=dict(word_length=32, radix=16, use_dsp_request_register=False))
 full_range_sqrt_tb.add_config(name="w32_radix16_gapped_no_registers", generics=dict(word_length=32, radix=16, use_gaps=True, use_ram_output_register=False, use_dsp_request_register=False))
 full_range_sqrt_tb.add_config(name="w24_radix8_1_shifter_stage_no_registers_pre_add", generics=dict(word_length=24, radix=8, shifter_stages=1, use_ram_output_register=False, use_dsp_request_register=False, use_pre_add_register=True))
+full_range_sqrt_tb.add_config(name="w32_radix16_512x18_r17", generics=dict(word_length=32, radix=16, index_width=9, table_word_length=18, table_radix=17, x_frac_width=18))
+full_range_sqrt_tb.add_config(name="w32_radix16_512x18_r17_no_registers", generics=dict(word_length=32, radix=16, index_width=9, table_word_length=18, table_radix=17, x_frac_width=18, use_ram_output_register=False, use_dsp_request_register=False, use_gaps=True))
+full_range_sqrt_tb.add_config(name="w32_radix31_1024x20_r19_x24", generics=dict(word_length=32, radix=31, index_width=10, table_word_length=20, table_radix=19, x_frac_width=24))
+full_range_sqrt_tb.add_config(name="w32_radix0_512x18_r17_x30", generics=dict(word_length=32, radix=0, index_width=9, table_word_length=18, table_radix=17, x_frac_width=30))
+full_range_sqrt_tb.add_config(name="w24_radix8_128x14_r13_x12", generics=dict(word_length=24, radix=8, index_width=7, table_word_length=14, table_radix=13, x_frac_width=12, shifter_stages=1))
 
 # VU.set_sim_option("nvc.sim_flags", ["-w"])
 

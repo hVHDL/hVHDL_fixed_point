@@ -37,8 +37,8 @@ architecture sim of sqrt_lut_dsp_tb is
     constant simtime_in_clocks : integer := 2*2**sqrt_word_length + 20;
 ------------------------------------------------------------------------
 
-    signal sqrt_calculator_in  : sqrt_calculator_in_record;
-    signal sqrt_calculator_out : sqrt_calculator_out_record;
+    signal sqrt_calculator_in  : sqrt_calculator_in_record(x_frac(sqrt_word_length-1 downto 0));
+    signal sqrt_calculator_out : sqrt_calculator_out_record(y(sqrt_word_length-1 downto 0));
 
     -- fixed_dsp now lives outside sqrt_calculator ; instantiated here
     -- and wired straight to its fixed_dsp_in/fixed_dsp_out ports

@@ -10,15 +10,17 @@ library ieee;
 --
 --   root = sqrt(radicand * 2**-g_radix) * 2**g_radix
 --
--- radicand and root are unsigned with one word length w >= 17, set by the
--- caller's subtypes, and share the radix g_radix. the root is floored ; a
+-- radicand and root are unsigned with one word length w > g_x_frac_width,
+-- set by the caller's subtypes, and share the radix g_radix. the root is floored ; a
 -- zero radicand gives 0. the reference is get_full_range_sqrt below, the
 -- hardware matches it bit for bit.
 --
 --   1. the radicand is normalised into 0.5 <= y < 1 by a pipelined leading
 --      zero shifter of g_shifter_stages register stages
---   2. sqrt_calculator looks up sqrt(y) (radix 15) with the 16 bits that
---      follow the leading one
+--   2. sqrt_calculator looks up sqrt(y) with the g_x_frac_width bits that
+--      follow the leading one, in a table of 2**g_index_width entries of
+--      g_table_word_length bits at radix g_table_radix (defaults 256
+--      entries, 16 bits, radix 15 and a 16 bit x_frac)
 --   3. radicand = y * 2**e with e = w - zeros + g_radix, so the root is
 --      sqrt(y) * 2**(e/2) : a fixed_dsp multiplies sqrt(y) with 1.0 for an
 --      even e and with sqrt(2) for an odd e (radix 15 constants)
@@ -57,10 +59,23 @@ package full_range_sqrt_pkg is
     constant sqrt_one_radix15 : natural := 32768;
     constant sqrt_two_radix15 : natural := 46341;
 
-    -- bit exact reference of the full_range_sqrt pipeline
+    -- bit exact reference of the full_range_sqrt pipeline with its default
+    -- table
     function get_full_range_sqrt (
         radicand : unsigned
         ;radix   : natural
+    ) return unsigned;
+
+    -- bit exact reference for any table : point_lut and slope_lut from
+    -- lut_sqrt_pkg's make_sqrt_*_lut with the root's g_index_width,
+    -- g_table_word_length and g_table_radix
+    function get_full_range_sqrt (
+        radicand      : unsigned
+        ;radix        : natural
+        ;point_lut    : sqrt_lut_array
+        ;slope_lut    : sqrt_lut_array
+        ;table_radix  : natural
+        ;x_frac_width : natural
     ) return unsigned;
 
 end package full_range_sqrt_pkg;
@@ -119,6 +134,51 @@ package body full_range_sqrt_pkg is
         return product(w-1 downto 0);
     end function;
 
+    function get_full_range_sqrt (
+        radicand      : unsigned
+        ;radix        : natural
+        ;point_lut    : sqrt_lut_array
+        ;slope_lut    : sqrt_lut_array
+        ;table_radix  : natural
+        ;x_frac_width : natural
+    ) return unsigned is
+        constant w           : natural := radicand'length;
+        constant word_length : natural := point_lut(point_lut'low)'length;
+        -- the product of the table value and a radix 15 multiplier
+        constant product_radix : natural := table_radix + 15;
+        constant max_half    : natural := (w + radix) / 2;
+        constant extra       : natural := maximum(0, max_half - product_radix);
+        constant product_w   : natural := maximum(word_length + 17, w) + extra;
+        variable m           : unsigned(w-1 downto 0) := radicand;
+        variable zeros       : natural := 0;
+        variable exponent    : natural;
+        variable multiplier  : natural;
+        variable product     : unsigned(product_w-1 downto 0);
+    begin
+        if radicand = 0 then
+            return to_unsigned(0, w);
+        end if;
+
+        while m(w-1) = '0' loop
+            m     := shift_left(m, 1);
+            zeros := zeros + 1;
+        end loop;
+
+        exponent := w - zeros + radix;
+        if exponent mod 2 = 1 then
+            multiplier := sqrt_two_radix15;
+        else
+            multiplier := sqrt_one_radix15;
+        end if;
+
+        product := resize(get_sqrt_from_lut(m(w-2 downto w-1-x_frac_width), point_lut, slope_lut)
+                          * to_unsigned(multiplier, 17), product_w);
+        product := shift_left(product, extra);
+        product := shift_right(product, product_radix + extra - exponent/2);
+
+        return product(w-1 downto 0);
+    end function;
+
 end package body full_range_sqrt_pkg;
 
 ------------------------------------------------------------------------
@@ -127,6 +187,7 @@ library ieee;
     use ieee.numeric_std.all;
 
     use work.fixed_dsp_pkg.all;
+    use work.lut_sqrt_pkg.all;
     use work.sqrt_calculator_pkg.all;
     use work.full_range_sqrt_pkg.all;
     use work.fixed_point_scaling_pkg.all;
@@ -134,6 +195,13 @@ library ieee;
 entity full_range_sqrt is
     generic (
         g_radix             : natural
+        -- the sqrt table : 2**g_index_width entries of g_table_word_length
+        -- bits, sqrt(x) at radix g_table_radix, looked up with the
+        -- g_x_frac_width bits after the radicand's leading one
+        ;g_index_width       : natural := sqrt_index_width
+        ;g_table_word_length : natural := sqrt_word_length
+        ;g_table_radix       : natural := 15
+        ;g_x_frac_width      : natural := 16
         ;g_pre_add_register : boolean  := false
         ;g_shifter_stages   : positive := 2
         -- dual_port_ram's output register in the lookup table : without it
@@ -165,12 +233,17 @@ architecture rtl of full_range_sqrt is
     end function;
 
     -- the exponent e = w - zeros + g_radix runs from 1 + g_radix (zeros =
-    -- w-1) to w + g_radix (zeros = 0), the product has radix 30
+    -- w-1) to w + g_radix (zeros = 0), the product has radix product_radix
     constant max_half         : natural := (w + g_radix) / 2;
     constant min_half         : natural := (1 + g_radix) / 2;
-    constant extra            : natural := maximum(0, max_half - 30);
-    constant product_w        : natural := maximum(36, w) + extra;
-    constant max_shift        : natural := 30 + extra - min_half;
+    -- the multiply : the table value (unsigned, one bit more as signed)
+    -- times a radix 15 constant, at least an 18 bit dsp ; the product has
+    -- radix g_table_radix + 15
+    constant multiply_w       : natural := maximum(18, g_table_word_length + 1);
+    constant product_radix    : natural := g_table_radix + 15;
+    constant extra            : natural := maximum(0, max_half - product_radix);
+    constant product_w        : natural := maximum(2*multiply_w, w) + extra;
+    constant max_shift        : natural := product_radix + extra - min_half;
     -- bits in the normalisation shift count and in the output shift
     constant count_bits       : natural := bits_for(w-1);
     constant shift_bits       : natural := bits_for(max_shift);
@@ -229,18 +302,22 @@ architecture rtl of full_range_sqrt is
     signal shift_value         : product_array(1 to stages)             := (others => (others => '0'));
     signal shift_amount        : shift_array(1 to stages)               := (others => (others => '0'));
 
-    signal sqrt_in  : sqrt_calculator_in_record;
-    signal sqrt_out : sqrt_calculator_out_record;
+    signal sqrt_in  : sqrt_calculator_in_record(x_frac(g_x_frac_width-1 downto 0));
+    signal sqrt_out : sqrt_calculator_out_record(y(g_table_word_length-1 downto 0));
 
-    -- sqrt_calculator's tables and the radix 15 multipliers fit an 18 bit dsp
+    -- the sqrt interpolation : the table words and the fraction (plus its
+    -- sign bit), at least an 18 bit dsp
+    constant sqrt_dsp_w : natural := maximum(18, maximum(g_table_word_length, g_x_frac_width - g_index_width + 1));
     signal sqrt_dsp_in : fixed_dsp_in_record(
-        a(17 downto 0), d(17 downto 0), b(17 downto 0), c(35 downto 0));
-    signal sqrt_dsp_out : fixed_dsp_out_record(result(35 downto 0));
+        a(sqrt_dsp_w-1 downto 0), d(sqrt_dsp_w-1 downto 0),
+        b(sqrt_dsp_w-1 downto 0), c(2*sqrt_dsp_w-1 downto 0));
+    signal sqrt_dsp_out : fixed_dsp_out_record(result(2*sqrt_dsp_w-1 downto 0));
 
     signal multiply_dsp_in : fixed_dsp_in_record(
-        a(17 downto 0), d(17 downto 0), b(17 downto 0), c(35 downto 0));
+        a(multiply_w-1 downto 0), d(multiply_w-1 downto 0),
+        b(multiply_w-1 downto 0), c(2*multiply_w-1 downto 0));
     signal multiply_request : multiply_dsp_in'subtype;
-    signal multiply_dsp_out : fixed_dsp_out_record(result(35 downto 0));
+    signal multiply_dsp_out : fixed_dsp_out_record(result(2*multiply_w-1 downto 0));
 
     function exponent_is_odd (zeros : unsigned) return boolean is
     begin
@@ -249,12 +326,12 @@ architecture rtl of full_range_sqrt is
 
 begin
 
-    assert w >= 17
-        report "full_range_sqrt needs a word length of at least 17 bits"
+    assert w > g_x_frac_width
+        report "full_range_sqrt needs a word length above g_x_frac_width"
         severity failure;
 
     sqrt_in <= (
-        x_frac          => normalize_magnitude(stages)(w-2 downto w-17)
+        x_frac          => normalize_magnitude(stages)(w-2 downto w-1-g_x_frac_width)
         ,request_with_1 => normalize_carry(stages).valid);
 
     full_range_sqrt_out.root <=
@@ -318,8 +395,9 @@ begin
 
             multiply_carry <= carry & multiply_carry(1 to multiply_latency-1);
 
-            -- barrel shifter : the product is sqrt(y) * 2**30 (times sqrt(2)
-            -- for an odd exponent), shift right by 30 - floor(e/2) (after a
+            -- barrel shifter : the product is sqrt(y) * 2**product_radix (times
+            -- sqrt(2) for an odd exponent), shift right by product_radix -
+            -- floor(e/2) (after a
             -- left shift of extra for large word lengths and radixes)
             carry := multiply_carry(multiply_latency);
             assert (carry.valid = '1') = (multiply_dsp_out.ready_with_1 = '1')
@@ -333,7 +411,7 @@ begin
             if carry.zero = '1' or carry.valid = '0' then
                 shift := (others => '0');
             else
-                shift := to_unsigned(30 + extra - (w - to_integer(carry.zeros) + g_radix) / 2, shift_bits);
+                shift := to_unsigned(product_radix + extra - (w - to_integer(carry.zeros) + g_radix) / 2, shift_bits);
             end if;
 
             for s in 1 to stages loop
@@ -373,9 +451,9 @@ begin
         init_fixed_dsp(multiply_request);
         if carry.valid = '1' then
             fmac(multiply_request
-                ,a => signed(resize(sqrt_out.y, 18))
+                ,a => signed(resize(sqrt_out.y, multiply_w))
                 ,d => (multiply_request.d'range => '0')
-                ,b => to_signed(multiplier, 18)
+                ,b => to_signed(multiplier, multiply_w)
                 ,c => (multiply_request.c'range => '0')
             );
         end if;
@@ -396,7 +474,10 @@ begin
 
     u_sqrt_calculator : entity work.sqrt_calculator
     generic map(
-        g_ram_output_register   => g_ram_output_register
+        g_index_width           => g_index_width
+        ,g_word_length          => g_table_word_length
+        ,g_radix                => g_table_radix
+        ,g_ram_output_register  => g_ram_output_register
         ,g_dsp_request_register => g_dsp_request_register)
     port map(
         clock                => clock

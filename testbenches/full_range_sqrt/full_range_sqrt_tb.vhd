@@ -4,6 +4,7 @@ LIBRARY ieee  ;
     use ieee.math_real.all;
 
     use work.full_range_sqrt_pkg.all;
+    use work.lut_sqrt_pkg.all;
 
 library vunit_lib;
 context vunit_lib.vunit_context;
@@ -24,6 +25,11 @@ entity full_range_sqrt_tb is
       ;shifter_stages       : positive := 2
       ;use_ram_output_register : boolean := true
       ;use_dsp_request_register : boolean := true
+      -- the sqrt table, defaults are lut_sqrt_pkg's own
+      ;index_width          : natural := 8
+      ;table_word_length    : natural := 16
+      ;table_radix          : natural := 15
+      ;x_frac_width         : natural := 16
   );
 end;
 
@@ -33,6 +39,9 @@ architecture sim of full_range_sqrt_tb is
     constant clock_period : time := 1 ns;
 
     constant w : natural := word_length;
+
+    constant point_lut : sqrt_lut_array := make_sqrt_point_lut(index_width, table_word_length, table_radix);
+    constant slope_lut : sqrt_lut_array := make_sqrt_slope_lut(index_width, table_word_length, table_radix);
     subtype word is unsigned(w-1 downto 0);
     type word_array is array (natural range <>) of word;
 
@@ -149,7 +158,7 @@ begin
         if rising_edge(simulator_clock) then
             if full_range_sqrt_out.ready_with_1 = '1' then
                 radicand := requested(result_count);
-                expected := get_full_range_sqrt(radicand, radix);
+                expected := get_full_range_sqrt(radicand, radix, point_lut, slope_lut, table_radix, x_frac_width);
 
                 check(full_range_sqrt_out.root = expected,
                     "root " & integer'image(result_count) & " differs from get_full_range_sqrt : "
@@ -159,7 +168,7 @@ begin
                 -- only roots that fit in the word, larger ones wrap
                 if exact < 2.0**w - 2.0 then
                     error := abs(to_real(full_range_sqrt_out.root) - exact);
-                    check(error <= exact * 2.0**(-12) + 2.0,
+                    check(error <= exact * 2.0**(-(table_radix - 3)) + 2.0,
                         "root " & integer'image(result_count) & " error " & real'image(error)
                         & " for " & real'image(exact));
                     if exact > 2.0**10 and error / exact > max_relative_error then
@@ -178,6 +187,10 @@ begin
     u_full_range_sqrt : entity work.full_range_sqrt
     generic map(
         g_radix             => radix
+        ,g_index_width       => index_width
+        ,g_table_word_length => table_word_length
+        ,g_table_radix       => table_radix
+        ,g_x_frac_width      => x_frac_width
         ,g_pre_add_register => use_pre_add_register
         ,g_shifter_stages   => shifter_stages
         ,g_ram_output_register => use_ram_output_register
