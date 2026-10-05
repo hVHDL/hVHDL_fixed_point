@@ -38,8 +38,8 @@ architecture sim of reciprocal_lut_dsp_tb is
     constant simtime_in_clocks : integer := 2*2**recip_word_length + 20;
 ------------------------------------------------------------------------
 
-    signal reciprocal_calculator_in  : reciprocal_calculator_in_record;
-    signal reciprocal_calculator_out : reciprocal_calculator_out_record;
+    signal reciprocal_calculator_in  : reciprocal_calculator_in_record(x_frac(recip_word_length-1 downto 0));
+    signal reciprocal_calculator_out : reciprocal_calculator_out_record(y(recip_word_length-1 downto 0));
 
     -- fixed_dsp now lives outside reciprocal_calculator ; instantiated
     -- here and wired straight to its fixed_dsp_in/fixed_dsp_out ports

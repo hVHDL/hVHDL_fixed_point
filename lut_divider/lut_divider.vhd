@@ -11,15 +11,18 @@ library ieee;
 --   quotient = numerator / denominator * 2**g_quotient_radix
 --
 -- numerator, denominator and quotient are signed and share one word
--- length w >= 17, set by the caller's subtypes. the quotient is floored and
+-- length w, set by the caller's subtypes, w > g_x_frac_width and
+-- w > g_table_word_length. the quotient is floored and
 -- wraps to w bits when it does not fit ; a zero denominator gives 0 with
 -- division_by_zero set. the reference is lut_divide below, the hardware
 -- matches it bit for bit.
 --
 --   1. |denominator| is normalised into 0.5 <= x < 1 by a pipelined leading
 --      zero shifter of g_shifter_stages register stages
---   2. reciprocal_calculator looks up 1/x (radix 14) with the 16 bits that
---      follow the leading one
+--   2. reciprocal_calculator looks up 1/x with the g_x_frac_width bits that
+--      follow the leading one, in a table of 2**g_index_width entries of
+--      g_table_word_length bits at radix g_table_radix (defaults 256 entries,
+--      16 bits, radix 14 and a 16 bit x_frac)
 --   3. a fixed_dsp multiplies the numerator with 1/x, negated for a
 --      negative denominator
 --   4. a pipelined barrel shifter of g_shifter_stages register stages
@@ -56,11 +59,24 @@ package lut_divider_pkg is
         ;denominator  : signed
     );
 
-    -- bit exact reference of the lut_divider pipeline
+    -- bit exact reference of the lut_divider pipeline with its default table
     function lut_divide (
         numerator       : signed
         ;denominator    : signed
         ;quotient_radix : natural
+    ) return signed;
+
+    -- bit exact reference for any table : point_lut and slope_lut from
+    -- lut_reciprocal_pkg's make_reciprocal_*_lut with the divider's
+    -- g_index_width, g_table_word_length and g_table_radix
+    function lut_divide (
+        numerator       : signed
+        ;denominator    : signed
+        ;quotient_radix : natural
+        ;point_lut      : reciprocal_lut_array
+        ;slope_lut      : reciprocal_lut_array
+        ;table_radix    : natural
+        ;x_frac_width   : natural
     ) return signed;
 
 end package lut_divider_pkg;
@@ -120,6 +136,45 @@ package body lut_divider_pkg is
         return shifted(w-1 downto 0);
     end function;
 
+    function lut_divide (
+        numerator       : signed
+        ;denominator    : signed
+        ;quotient_radix : natural
+        ;point_lut      : reciprocal_lut_array
+        ;slope_lut      : reciprocal_lut_array
+        ;table_radix    : natural
+        ;x_frac_width   : natural
+    ) return signed is
+        constant w       : natural := numerator'length;
+        constant extra   : natural := maximum(0, quotient_radix - (table_radix + 1));
+        variable n       : signed(w-1 downto 0) := numerator;
+        -- abs of the most negative denominator wraps to itself, which read
+        -- as unsigned is the right magnitude 2**(w-1)
+        variable m       : unsigned(w-1 downto 0) := unsigned(abs(denominator));
+        variable zeros   : natural := 0;
+        variable product : signed(2*w-1 downto 0);
+        variable shifted : signed(2*w+extra-1 downto 0);
+    begin
+        if denominator = 0 then
+            return to_signed(0, w);
+        end if;
+
+        while m(w-1) = '0' loop
+            m     := shift_left(m, 1);
+            zeros := zeros + 1;
+        end loop;
+
+        product := resize(n * signed('0' & get_reciprocal_from_lut(m(w-2 downto w-1-x_frac_width), point_lut, slope_lut)), 2*w);
+        if denominator(denominator'left) = '1' then
+            product := -product;
+        end if;
+
+        shifted := shift_left(resize(product, shifted'length), extra);
+        shifted := shift_right(shifted, table_radix + w - quotient_radix + extra - zeros);
+
+        return shifted(w-1 downto 0);
+    end function;
+
 end package body lut_divider_pkg;
 
 ------------------------------------------------------------------------
@@ -128,6 +183,7 @@ library ieee;
     use ieee.numeric_std.all;
 
     use work.fixed_dsp_pkg.all;
+    use work.lut_reciprocal_pkg.all;
     use work.reciprocal_calculator_pkg.all;
     use work.lut_divider_pkg.all;
     use work.fixed_point_scaling_pkg.all;
@@ -135,6 +191,13 @@ library ieee;
 entity lut_divider is
     generic (
         g_quotient_radix    : natural
+        -- the reciprocal table : 2**g_index_width entries of
+        -- g_table_word_length bits, 1/x at radix g_table_radix, looked up with
+        -- the g_x_frac_width bits after the denominator's leading one
+        ;g_index_width       : natural := recip_index_width
+        ;g_table_word_length : natural := recip_word_length
+        ;g_table_radix       : natural := 14
+        ;g_x_frac_width      : natural := 16
         ;g_pre_add_register : boolean  := false
         ;g_shifter_stages   : positive := 2
         -- dual_port_ram's output register in the lookup table : without it
@@ -154,7 +217,7 @@ end entity;
 architecture rtl of lut_divider is
 
     constant w     : natural := lut_divider_in.numerator'length;
-    constant extra : natural := maximum(0, g_quotient_radix - 15);
+    constant extra : natural := maximum(0, g_quotient_radix - (g_table_radix + 1));
 
     -- smallest b with 2**b > max_value
     function bits_for (max_value : natural) return natural is
@@ -168,7 +231,7 @@ architecture rtl of lut_divider is
 
     -- bits in the normalisation shift count and in the output shift
     constant count_bits         : natural := bits_for(w-1);
-    constant max_shift          : natural := 14 + w - g_quotient_radix + extra;
+    constant max_shift          : natural := g_table_radix + w - g_quotient_radix + extra;
     constant shift_bits         : natural := bits_for(max_shift);
     constant stages             : positive := g_shifter_stages;
     constant dsp_latency        : natural := 2 + boolean'pos(g_pre_add_register);
@@ -229,13 +292,16 @@ architecture rtl of lut_divider is
     signal shift_value         : product_array(1 to stages)             := (others => (others => '0'));
     signal shift_amount        : shift_array(1 to stages)               := (others => (others => '0'));
 
-    signal reciprocal_in  : reciprocal_calculator_in_record;
-    signal reciprocal_out : reciprocal_calculator_out_record;
+    signal reciprocal_in  : reciprocal_calculator_in_record(x_frac(g_x_frac_width-1 downto 0));
+    signal reciprocal_out : reciprocal_calculator_out_record(y(g_table_word_length-1 downto 0));
 
-    -- reciprocal_calculator's tables are 16 bits, an 18 bit dsp covers them
+    -- the reciprocal interpolation : the table words and the fraction (plus
+    -- its sign bit), at least an 18 bit dsp
+    constant reciprocal_dsp_w : natural := maximum(18, maximum(g_table_word_length, g_x_frac_width - g_index_width + 1));
     signal reciprocal_dsp_in : fixed_dsp_in_record(
-        a(17 downto 0), d(17 downto 0), b(17 downto 0), c(35 downto 0));
-    signal reciprocal_dsp_out : fixed_dsp_out_record(result(35 downto 0));
+        a(reciprocal_dsp_w-1 downto 0), d(reciprocal_dsp_w-1 downto 0),
+        b(reciprocal_dsp_w-1 downto 0), c(2*reciprocal_dsp_w-1 downto 0));
+    signal reciprocal_dsp_out : fixed_dsp_out_record(result(2*reciprocal_dsp_w-1 downto 0));
 
     signal multiply_dsp_in : fixed_dsp_in_record(
         a(w-1 downto 0), d(w-1 downto 0), b(w-1 downto 0), c(2*w-1 downto 0));
@@ -244,12 +310,12 @@ architecture rtl of lut_divider is
 
 begin
 
-    assert w >= 17
-        report "lut_divider needs a word length of at least 17 bits"
+    assert w > g_x_frac_width and w > g_table_word_length
+        report "lut_divider needs a word length above g_x_frac_width and g_table_word_length"
         severity failure;
 
     reciprocal_in <= (
-        x_frac          => normalize_magnitude(stages)(w-2 downto w-17)
+        x_frac          => normalize_magnitude(stages)(w-2 downto w-1-g_x_frac_width)
         ,request_with_1 => normalize_carry(stages).valid);
 
     lut_divider_out.quotient <=
@@ -317,8 +383,8 @@ begin
 
             multiply_carry <= carry & multiply_carry(1 to multiply_latency-1);
 
-            -- barrel shifter : the product is n/x * 2**14 and |denominator|
-            -- = x * 2**(w - zeros), shift right by 14 + w - zeros - radix
+            -- barrel shifter : the product is n/x * 2**table radix and |denominator|
+            -- = x * 2**(w - zeros), shift right by table radix + w - zeros - radix
             -- (after a left shift of extra for radixes above 15)
             carry := multiply_carry(multiply_latency);
             assert (carry.valid = '1') = (multiply_dsp_out.ready_with_1 = '1')
@@ -389,7 +455,10 @@ begin
 
     u_reciprocal_calculator : entity work.reciprocal_calculator
     generic map(
-        g_ram_output_register   => g_ram_output_register
+        g_index_width           => g_index_width
+        ,g_word_length          => g_table_word_length
+        ,g_radix                => g_table_radix
+        ,g_ram_output_register  => g_ram_output_register
         ,g_dsp_request_register => g_dsp_request_register)
     port map(
         clock                      => clock

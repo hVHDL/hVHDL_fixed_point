@@ -13,23 +13,31 @@ library ieee;
 -- 1/x has no quarter-wave mirroring and is always positive, so there is
 -- no sign to track from request through to output.
 --
+-- the table has 2**g_index_width entries of g_word_length bits holding 1/x
+-- at radix g_radix (lut_reciprocal_pkg's make_reciprocal_*_lut) ; the
+-- defaults are lut_reciprocal_pkg's own 256 entries, 16 bits, radix 14.
+-- x_frac and y are unconstrained : x_frac's width is the caller's, its top
+-- g_index_width bits index the table and the rest is the interpolation
+-- fraction (x = 0.5 + x_frac / 2**(x_frac'length+1)) ; y has g_word_length
+-- bits. get_reciprocal_from_lut(x_frac, point_lut, slope_lut) is the bit
+-- exact reference.
+--
 -- fixed_dsp_in/fixed_dsp_out are left unconstrained, so the caller's
--- fixed_dsp can be any word length >= recip_word_length (e.g. a real
--- 32x32 hard multiplier, wider than lut_reciprocal_pkg's own tables) :
--- the a/b/c operands are resized up to whatever width fixed_dsp_in
--- actually has before use, and the result is resized back down to
--- recip_word_length once read back, which is exact regardless of the
--- intermediate width since resize sign-extends/truncates without
--- touching the low-order bits or the radix
+-- fixed_dsp can be any word length that holds the table words and the
+-- fraction (e.g. a real 32x32 hard multiplier) : the a/b/c operands are
+-- resized up to whatever width fixed_dsp_in actually has before use, and
+-- the result is resized back down to g_word_length once read back, which is
+-- exact regardless of the intermediate width since resize
+-- sign-extends/truncates without touching the low-order bits or the radix
 package reciprocal_calculator_pkg is
 
     type reciprocal_calculator_in_record is record
-        x_frac         : unsigned(recip_word_length-1 downto 0);
+        x_frac         : unsigned;
         request_with_1 : std_logic;
     end record;
 
     type reciprocal_calculator_out_record is record
-        y            : unsigned(recip_word_length-1 downto 0);
+        y            : unsigned;
         ready_with_1 : std_logic;
     end record;
 
@@ -75,9 +83,14 @@ library ieee;
 
 entity reciprocal_calculator is
     generic (
+        -- the table : 2**g_index_width entries of g_word_length bits, 1/x at
+        -- radix g_radix
+        g_index_width : natural := recip_index_width
+        ;g_word_length : natural := recip_word_length
+        ;g_radix       : natural := 14
         -- dual_port_ram's output register : a ram read takes 2 clocks with
         -- it, 1 without, which takes one clock off the latency
-        g_ram_output_register : boolean := true
+        ;g_ram_output_register : boolean := true
         -- register the request to fixed_dsp : without it the request goes
         -- to fixed_dsp straight from the ram output, a clock shorter
         ;g_dsp_request_register : boolean := true
@@ -97,24 +110,31 @@ end entity;
 
 architecture rtl of reciprocal_calculator is
 
+    constant x_frac_width      : natural := reciprocal_calculator_in.x_frac'length;
+    constant fraction_width    : natural := x_frac_width - g_index_width;
+    constant number_of_entries : natural := 2**g_index_width;
+
+    constant table_points : reciprocal_lut_array := make_reciprocal_point_lut(g_index_width, g_word_length, g_radix);
+    constant table_slopes : reciprocal_lut_array := make_reciprocal_slope_lut(g_index_width, g_word_length, g_radix);
+
     -- point_lut fills the low half of the ram's address space, slope_lut
     -- the high half
     function build_lut_ram_contents return ram_array is
-        variable retval : ram_array(0 to 2*recip_number_of_entries-1)(recip_word_length-1 downto 0);
+        variable retval : ram_array(0 to 2*number_of_entries-1)(g_word_length-1 downto 0);
     begin
-        for i in 0 to recip_number_of_entries-1 loop
-            retval(i)                          := std_logic_vector(point_lut(i));
-            retval(i + recip_number_of_entries) := std_logic_vector(slope_lut(i));
+        for i in 0 to number_of_entries-1 loop
+            retval(i)                          := std_logic_vector(table_points(i));
+            retval(i + number_of_entries) := std_logic_vector(table_slopes(i));
         end loop;
         return retval;
     end function;
 
-    constant lut_ram_contents : ram_array(0 to 2*recip_number_of_entries-1)(recip_word_length-1 downto 0)
+    constant lut_ram_contents : ram_array(0 to 2*number_of_entries-1)(g_word_length-1 downto 0)
         := build_lut_ram_contents;
 
     constant dp_ram_subtype : dpram_ref_record := create_ref_subtypes(
-        datawidth     => recip_word_length
-        ,addresswidth => recip_index_width+1
+        datawidth     => g_word_length
+        ,addresswidth => g_index_width+1
     );
 
     signal ram_a_in  : dp_ram_subtype.ram_in'subtype;
@@ -131,15 +151,22 @@ architecture rtl of reciprocal_calculator is
     -- register). 1/x has no sign to recover, so nothing has to travel past
     -- the dsp
     constant ram_read_latency : natural := 2 + boolean'pos(g_ram_output_register);
-    type x_frac_delay_t is array (1 to ram_read_latency) of unsigned(recip_word_length-1 downto 0);
+    type x_frac_delay_t is array (1 to ram_read_latency) of unsigned(x_frac_width-1 downto 0);
     signal x_frac_delay : x_frac_delay_t;
 
-    signal dsp_interpolated : signed(recip_word_length-1 downto 0);
+    signal dsp_interpolated : signed(g_word_length-1 downto 0);
 
 
     signal dsp_request : fixed_dsp_in'subtype;
 
 begin
+
+    assert fraction_width >= 1 and x_frac_width > g_index_width
+        report "reciprocal_calculator : x_frac needs more bits than the table index"
+        severity failure;
+    assert reciprocal_calculator_out.y'length = g_word_length
+        report "reciprocal_calculator : y must have the table's word length"
+        severity failure;
 
     u_dpram : entity work.dual_port_ram
     generic map(
@@ -161,13 +188,13 @@ begin
     -- reproduces get_reciprocal_from_lut bit for bit ; purely combinational
     -- from already-registered signals, so no extra latency is added on
     -- top of the dsp's own
-    dsp_interpolated <= resize(shift_right(fixed_dsp_out.result, recip_fraction_width), recip_word_length);
+    dsp_interpolated <= resize(shift_right(fixed_dsp_out.result, fraction_width), g_word_length);
 
     reciprocal_calculator_out.ready_with_1 <= fixed_dsp_out.ready_with_1;
     reciprocal_calculator_out.y            <= unsigned(dsp_interpolated);
 
     process(clock)
-        variable index        : natural range 0 to recip_number_of_entries-1;
+        variable index        : natural range 0 to number_of_entries-1;
     begin
         if rising_edge(clock) then
 
@@ -179,9 +206,9 @@ begin
             init_ram(ram_a_in);
             init_ram(ram_b_in);
             if reciprocal_calculator_in.request_with_1 = '1' then
-                index := get_reciprocal_index(reciprocal_calculator_in.x_frac);
+                index := to_integer(reciprocal_calculator_in.x_frac(x_frac_width-1 downto fraction_width));
                 request_data_from_ram(ram_a_in, index);
-                request_data_from_ram(ram_b_in, index + recip_number_of_entries);
+                request_data_from_ram(ram_b_in, index + number_of_entries);
             end if;
 
         end if;
@@ -192,22 +219,22 @@ begin
     -- delay line ; it reaches fixed_dsp_in through a register, or directly
     -- when g_dsp_request_register is false
     dsp_request_process : process(all)
-        variable fraction_ram : unsigned(recip_fraction_width-1 downto 0);
+        variable fraction_ram : unsigned(fraction_width-1 downto 0);
     begin
         -- ram ready : issue the dsp add for the x_frac that left the
         -- delay line ; result = slope*fraction + point<<radix.
         -- a/b/c are resized up to fixed_dsp_in's actual width (which
-        -- may be wider than recip_word_length) before use ; c also
+        -- may be wider than g_word_length) before use ; c also
         -- has to be pre-shifted up to the multiplier's output width
         -- here, since fixed_dsp no longer does that internally
         init_fixed_dsp(dsp_request);
         if ram_read_is_ready(ram_a_out) then
-            fraction_ram := x_frac_delay(ram_read_latency)(recip_fraction_width-1 downto 0);
+            fraction_ram := x_frac_delay(ram_read_latency)(fraction_width-1 downto 0);
 
             add(dsp_request
                 ,a => resize(signed(ram_b_out.data), dsp_request.a'length)
                 ,b => signed(resize(fraction_ram, dsp_request.b'length))
-                ,c => shift_left(resize(signed(ram_a_out.data), dsp_request.c'length), recip_fraction_width)
+                ,c => shift_left(resize(signed(ram_a_out.data), dsp_request.c'length), fraction_width)
             );
         end if;
     end process;

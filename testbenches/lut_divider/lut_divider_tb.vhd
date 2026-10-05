@@ -4,6 +4,7 @@ LIBRARY ieee  ;
     use ieee.math_real.all;
 
     use work.lut_divider_pkg.all;
+    use work.lut_reciprocal_pkg.all;
 
 library vunit_lib;
 context vunit_lib.vunit_context;
@@ -24,6 +25,11 @@ entity lut_divider_tb is
       ;shifter_stages       : positive := 2
       ;use_ram_output_register : boolean := true
       ;use_dsp_request_register : boolean := true
+      -- the reciprocal table, defaults are lut_reciprocal_pkg's own
+      ;index_width          : natural := 8
+      ;table_word_length    : natural := 16
+      ;table_radix          : natural := 14
+      ;x_frac_width         : natural := 16
   );
 end;
 
@@ -33,6 +39,9 @@ architecture sim of lut_divider_tb is
     constant clock_period : time := 1 ns;
 
     constant w : natural := word_length;
+
+    constant point_lut : reciprocal_lut_array := make_reciprocal_point_lut(index_width, table_word_length, table_radix);
+    constant slope_lut : reciprocal_lut_array := make_reciprocal_slope_lut(index_width, table_word_length, table_radix);
     subtype word is signed(w-1 downto 0);
 
     signal lut_divider_in  : lut_divider_in_record(numerator(w-1 downto 0), denominator(w-1 downto 0));
@@ -151,7 +160,8 @@ begin
         if rising_edge(simulator_clock) then
             if lut_divider_out.ready_with_1 = '1' then
                 pair     := requested(result_count);
-                expected := lut_divide(pair.numerator, pair.denominator, quotient_radix);
+                expected := lut_divide(pair.numerator, pair.denominator, quotient_radix
+                    , point_lut, slope_lut, table_radix, x_frac_width);
 
                 check(lut_divider_out.quotient = expected,
                     "quotient " & integer'image(result_count) & " differs from lut_divide : "
@@ -165,7 +175,7 @@ begin
                     -- only quotients that fit in the word, larger ones wrap
                     if abs(exact) < 2.0**(w-1) - 2.0 then
                         error := abs(real(to_integer(lut_divider_out.quotient)) - exact);
-                        check(error <= abs(exact) * 2.0**(-12) + 2.0,
+                        check(error <= abs(exact) * 2.0**(-(table_radix - 2)) + 2.0,
                             "quotient " & integer'image(result_count) & " error " & real'image(error)
                             & " for " & real'image(exact));
                         if abs(exact) > 2.0**10 and error / abs(exact) > max_relative_error then
@@ -185,6 +195,10 @@ begin
     u_lut_divider : entity work.lut_divider
     generic map(
         g_quotient_radix    => quotient_radix
+        ,g_index_width       => index_width
+        ,g_table_word_length => table_word_length
+        ,g_table_radix       => table_radix
+        ,g_x_frac_width      => x_frac_width
         ,g_pre_add_register => use_pre_add_register
         ,g_shifter_stages   => shifter_stages
         ,g_ram_output_register => use_ram_output_register

@@ -125,6 +125,11 @@ lut_divider_tb.add_config(name="w32_radix0_1_shifter_stage_no_ram_output_registe
 lut_divider_tb.add_config(name="w32_radix16_no_dsp_request_register", generics=dict(word_length=32, quotient_radix=16, use_dsp_request_register=False))
 lut_divider_tb.add_config(name="w32_radix16_gapped_no_registers", generics=dict(word_length=32, quotient_radix=16, use_gaps=True, use_ram_output_register=False, use_dsp_request_register=False))
 lut_divider_tb.add_config(name="w24_radix8_1_shifter_stage_no_registers_pre_add", generics=dict(word_length=24, quotient_radix=8, shifter_stages=1, use_ram_output_register=False, use_dsp_request_register=False, use_pre_add_register=True))
+lut_divider_tb.add_config(name="w32_radix16_512x18_r16", generics=dict(word_length=32, quotient_radix=16, index_width=9, table_word_length=18, table_radix=16, x_frac_width=18))
+lut_divider_tb.add_config(name="w32_radix16_512x18_r16_no_registers", generics=dict(word_length=32, quotient_radix=16, index_width=9, table_word_length=18, table_radix=16, x_frac_width=18, use_ram_output_register=False, use_dsp_request_register=False, use_gaps=True))
+lut_divider_tb.add_config(name="w32_radix20_1024x20_r18_x24", generics=dict(word_length=32, quotient_radix=20, index_width=10, table_word_length=20, table_radix=18, x_frac_width=24))
+lut_divider_tb.add_config(name="w32_radix0_512x18_r16_x30", generics=dict(word_length=32, quotient_radix=0, index_width=9, table_word_length=18, table_radix=16, x_frac_width=30))
+lut_divider_tb.add_config(name="w24_radix8_128x14_r12_x12", generics=dict(word_length=24, quotient_radix=8, index_width=7, table_word_length=14, table_radix=12, x_frac_width=12, shifter_stages=1))
 
 vhdl2008.add_source_files(ROOT / "full_range_sqrt/full_range_sqrt.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/full_range_sqrt/full_range_sqrt_tb.vhd")
