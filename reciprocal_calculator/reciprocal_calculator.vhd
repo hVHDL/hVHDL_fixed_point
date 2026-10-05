@@ -115,20 +115,15 @@ architecture rtl of reciprocal_calculator is
     signal ram_b_out : ram_a_out'subtype;
 
     ------------------------------------------------------------------------
-    -- a small fifo of in-flight x_frac requests : the ram read has a
-    -- fixed latency and neither stalls nor reorders, so an x_frac pushed
-    -- in at request time is popped, once, by the ram-ready stage (to
-    -- compute the interpolation fraction). unlike sine_calculator there
-    -- is nothing left to recover once the dsp result comes back (no
-    -- sign to flip), so a single read pointer is all this needs. the
-    -- depth only needs to exceed the ram's own latency, so this is
-    -- deliberately generous
-    constant fifo_depth : natural := 16;
-    type x_frac_fifo_t is array (0 to fifo_depth-1) of unsigned(recip_word_length-1 downto 0);
-    signal x_frac_fifo : x_frac_fifo_t;
-
-    signal write_ptr    : natural range 0 to fifo_depth-1 := 0;
-    signal ram_read_ptr : natural range 0 to fifo_depth-1 := 0;
+    -- a delay line of the requested x_frac values : the ram read has a
+    -- fixed latency and neither stalls nor reorders, so the x_frac of the
+    -- lookup that is ready now is always the one requested
+    -- ram_read_latency clocks ago (the request register in this process
+    -- plus dual_port_ram's two stage read). 1/x has no sign to recover, so
+    -- nothing has to travel past the dsp
+    constant ram_read_latency : natural := 3;
+    type x_frac_delay_t is array (1 to ram_read_latency) of unsigned(recip_word_length-1 downto 0);
+    signal x_frac_delay : x_frac_delay_t;
 
     signal dsp_interpolated : signed(recip_word_length-1 downto 0);
 
@@ -164,29 +159,28 @@ begin
     begin
         if rising_edge(clock) then
 
-            -- push : a new request enters the fifo and its ram lookup is
-            -- issued in the same cycle
+            -- the delay line shifts every clock, request or not, so it
+            -- stays aligned with the ram pipeline
+            x_frac_delay <= reciprocal_calculator_in.x_frac & x_frac_delay(1 to ram_read_latency-1);
+
+            -- a new request issues its ram lookup
             init_ram(ram_a_in);
             init_ram(ram_b_in);
             if reciprocal_calculator_in.request_with_1 = '1' then
-                x_frac_fifo(write_ptr) <= reciprocal_calculator_in.x_frac;
-                write_ptr <= (write_ptr + 1) mod fifo_depth;
-
                 index := get_reciprocal_index(reciprocal_calculator_in.x_frac);
                 request_data_from_ram(ram_a_in, index);
                 request_data_from_ram(ram_b_in, index + recip_number_of_entries);
             end if;
 
-            -- ram ready : issue the dsp add for the oldest fifo entry not
-            -- yet consumed by this stage ; result = slope*fraction + point<<radix.
+            -- ram ready : issue the dsp add for the x_frac that left the
+            -- delay line ; result = slope*fraction + point<<radix.
             -- a/b/c are resized up to fixed_dsp_in's actual width (which
             -- may be wider than recip_word_length) before use ; c also
             -- has to be pre-shifted up to the multiplier's output width
             -- here, since fixed_dsp no longer does that internally
             init_fixed_dsp(fixed_dsp_in);
             if ram_read_is_ready(ram_a_out) then
-                fraction_ram := x_frac_fifo(ram_read_ptr)(recip_fraction_width-1 downto 0);
-                ram_read_ptr <= (ram_read_ptr + 1) mod fifo_depth;
+                fraction_ram := x_frac_delay(ram_read_latency)(recip_fraction_width-1 downto 0);
 
                 add(fixed_dsp_in
                     ,a => resize(signed(ram_b_out.data), fixed_dsp_in.a'length)
