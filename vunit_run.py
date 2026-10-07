@@ -134,6 +134,15 @@ lut_divider_tb.add_config(name="w32_radix16_512x18_r16_no_registers", generics=d
 lut_divider_tb.add_config(name="w32_radix20_1024x20_r18_x24", generics=dict(word_length=32, quotient_radix=20, index_width=10, table_word_length=20, table_radix=18, x_frac_width=24))
 lut_divider_tb.add_config(name="w32_radix0_512x18_r16_x30", generics=dict(word_length=32, quotient_radix=0, index_width=9, table_word_length=18, table_radix=16, x_frac_width=30))
 lut_divider_tb.add_config(name="w24_radix8_128x14_r12_x12", generics=dict(word_length=24, quotient_radix=8, index_width=7, table_word_length=14, table_radix=12, x_frac_width=12, shifter_stages=1))
+# 36 bit, the microprogram processor's wider data
+lut_divider_tb.add_config(name="w36_radix16", generics=dict(word_length=36, quotient_radix=16))
+lut_divider_tb.add_config(name="w36_radix20", generics=dict(word_length=36, quotient_radix=20))
+lut_divider_tb.add_config(name="w36_radix24", generics=dict(word_length=36, quotient_radix=24))
+lut_divider_tb.add_config(name="w36_radix24_gapped", generics=dict(word_length=36, quotient_radix=24, use_gaps=True))
+lut_divider_tb.add_config(name="w36_radix0", generics=dict(word_length=36, quotient_radix=0))
+lut_divider_tb.add_config(name="w36_radix24_512x18_table", generics=dict(word_length=36, quotient_radix=24, index_width=9, table_word_length=18, table_radix=16, x_frac_width=18))
+lut_divider_tb.add_config(name="w36_radix24_512x18_table_pre_add_and_product_registers", generics=dict(word_length=36, quotient_radix=24, index_width=9, table_word_length=18, table_radix=16, x_frac_width=18, use_pre_add_register=True, use_product_register=True))
+lut_divider_tb.add_config(name="w36_radix24_512x18_table_no_registers", generics=dict(word_length=36, quotient_radix=24, index_width=9, table_word_length=18, table_radix=16, x_frac_width=18, use_ram_output_register=False, use_dsp_request_register=False))
 
 vhdl2008.add_source_files(ROOT / "full_range_sqrt/full_range_sqrt.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/full_range_sqrt/full_range_sqrt_tb.vhd")
@@ -164,6 +173,15 @@ full_range_sqrt_tb.add_config(name="w32_radix16_512x18_r17_no_registers", generi
 full_range_sqrt_tb.add_config(name="w32_radix31_1024x20_r19_x24", generics=dict(word_length=32, radix=31, index_width=10, table_word_length=20, table_radix=19, x_frac_width=24))
 full_range_sqrt_tb.add_config(name="w32_radix0_512x18_r17_x30", generics=dict(word_length=32, radix=0, index_width=9, table_word_length=18, table_radix=17, x_frac_width=30))
 full_range_sqrt_tb.add_config(name="w24_radix8_128x14_r13_x12", generics=dict(word_length=24, radix=8, index_width=7, table_word_length=14, table_radix=13, x_frac_width=12, shifter_stages=1))
+# 36 bit, the microprogram processor's wider data
+full_range_sqrt_tb.add_config(name="w36_radix16", generics=dict(word_length=36, radix=16))
+full_range_sqrt_tb.add_config(name="w36_radix20", generics=dict(word_length=36, radix=20))
+full_range_sqrt_tb.add_config(name="w36_radix24", generics=dict(word_length=36, radix=24))
+full_range_sqrt_tb.add_config(name="w36_radix24_gapped", generics=dict(word_length=36, radix=24, use_gaps=True))
+full_range_sqrt_tb.add_config(name="w36_radix35", generics=dict(word_length=36, radix=35))
+full_range_sqrt_tb.add_config(name="w36_radix24_512x18_table", generics=dict(word_length=36, radix=24, index_width=9, table_word_length=18, table_radix=17, x_frac_width=18))
+full_range_sqrt_tb.add_config(name="w36_radix24_512x18_table_pre_add_and_product_registers", generics=dict(word_length=36, radix=24, index_width=9, table_word_length=18, table_radix=17, x_frac_width=18, use_pre_add_register=True, use_product_register=True))
+full_range_sqrt_tb.add_config(name="w36_radix24_512x18_table_no_registers", generics=dict(word_length=36, radix=24, index_width=9, table_word_length=18, table_radix=17, x_frac_width=18, use_ram_output_register=False, use_dsp_request_register=False))
 
 # VU.set_sim_option("nvc.sim_flags", ["-w"])
 

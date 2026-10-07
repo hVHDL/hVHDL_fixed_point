@@ -153,6 +153,22 @@ begin
     end process stimulus;
 
     check_results : process(simulator_clock)
+        -- to_integer overflows for words over 32 bits
+        function to_real (x : signed) return real is
+            variable retval : real := 0.0;
+        begin
+            for i in x'range loop
+                if x(i) = '1' then
+                    if i = x'left then
+                        retval := retval - 2.0**(i - x'right);
+                    else
+                        retval := retval + 2.0**(i - x'right);
+                    end if;
+                end if;
+            end loop;
+            return retval;
+        end to_real;
+
         variable pair     : pair_record;
         variable expected : word;
         variable exact    : real;
@@ -172,10 +188,10 @@ begin
                     check(lut_divider_out.division_by_zero = '1', "division by zero not flagged");
                 else
                     check(lut_divider_out.division_by_zero = '0', "division by zero flagged");
-                    exact := real(to_integer(pair.numerator)) / real(to_integer(pair.denominator)) * 2.0**quotient_radix;
+                    exact := to_real(pair.numerator) / to_real(pair.denominator) * 2.0**quotient_radix;
                     -- only quotients that fit in the word, larger ones wrap
                     if abs(exact) < 2.0**(w-1) - 2.0 then
-                        error := abs(real(to_integer(lut_divider_out.quotient)) - exact);
+                        error := abs(to_real(lut_divider_out.quotient) - exact);
                         check(error <= abs(exact) * 2.0**(-(table_radix - 2)) + 2.0,
                             "quotient " & integer'image(result_count) & " error " & real'image(error)
                             & " for " & real'image(exact));
