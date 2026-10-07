@@ -346,7 +346,6 @@ begin
         variable value      : unsigned(product_w-1 downto 0);
         variable size       : natural;
         variable low        : natural;
-        variable leading    : natural;
         variable amount     : natural;
         variable shift      : unsigned(shift_bits-1 downto 0);
     begin
@@ -374,8 +373,9 @@ begin
                 size      := group_size(count_bits, s);
                 low       := group_low(count_bits, s);
                 if size > 0 then
-                    leading   := get_number_of_leading_zeros(signed(magnitude), minimum(2**(low+size) - 1, w-1));
-                    amount    := (leading / 2**low) mod 2**size;
+                    -- the whole 2**low groups of leading zeros, without counting
+                    -- them one by one : this is the first stage's critical path
+                    amount    := get_leading_zero_groups(magnitude, 2**low, minimum(2**(low+size), w)) mod 2**size;
                     magnitude := shift_left(magnitude, amount * 2**low);
                     carry.zeros(low+size-1 downto low) := to_unsigned(amount, size);
                 end if;

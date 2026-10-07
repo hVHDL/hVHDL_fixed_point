@@ -12,6 +12,15 @@ package fixed_point_scaling_pkg is
     function get_number_of_leading_zeros ( number : signed )
         return integer;
 ------------------------------------------------------------------------
+    -- the whole groups of group_bits leading zeros in the top window bits :
+    -- get_number_of_leading_zeros(number, window - 1) / group_bits, from
+    -- prefix zero tests instead of a count, a few wide ors deep
+    function get_leading_zero_groups (
+        number     : unsigned;
+        group_bits : positive;
+        window     : natural)
+        return natural;
+------------------------------------------------------------------------
     function get_number_of_leading_pairs_of_zeros ( number : signed)
         return natural;
 ------------------------------------------------------------------------
@@ -46,6 +55,27 @@ package body fixed_point_scaling_pkg is
 
         return number_of_leading_zeros;
     end get_number_of_leading_zeros;
+------------------------------------------------------------------------
+    function get_leading_zero_groups
+    (
+        number     : unsigned;
+        group_bits : positive;
+        window     : natural
+    )
+    return natural
+    is
+        -- descending from bit length - 1, whatever the caller's range
+        constant word : unsigned(number'length-1 downto 0) := number;
+        variable retval : natural := 0;
+    begin
+        -- the prefixes nest, the last one that is all zeros counts
+        for k in 1 to window / group_bits loop
+            if word(word'high downto word'length - k * group_bits) = 0 then
+                retval := k;
+            end if;
+        end loop;
+        return retval;
+    end get_leading_zero_groups;
 ------------------------------------------------------------------------
     function get_number_of_leading_zeros
     (
