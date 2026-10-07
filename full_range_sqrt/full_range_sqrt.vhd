@@ -203,6 +203,7 @@ entity full_range_sqrt is
         ;g_table_radix       : natural := 15
         ;g_x_frac_width      : natural := 16
         ;g_pre_add_register : boolean  := false
+        ;g_product_register : boolean  := false -- fixed_dsp's, one clock more per dsp
         ;g_shifter_stages   : positive := 2
         -- dual_port_ram's output register in the lookup table : without it
         -- the latency is one clock shorter
@@ -248,7 +249,7 @@ architecture rtl of full_range_sqrt is
     constant count_bits       : natural := bits_for(w-1);
     constant shift_bits       : natural := bits_for(max_shift);
     constant stages           : positive := g_shifter_stages;
-    constant dsp_latency      : natural := 2 + boolean'pos(g_pre_add_register);
+    constant dsp_latency      : natural := 2 + boolean'pos(g_pre_add_register) + boolean'pos(g_product_register);
     -- sqrt_calculator : its request register, the ram read (2 clocks, 1
     -- without the ram's output register), its dsp request register (when
     -- g_dsp_request_register) and its fixed_dsp
@@ -488,7 +489,7 @@ begin
     );
 
     u_sqrt_dsp : entity work.fixed_dsp(rtl)
-    generic map(g_pre_add_register => g_pre_add_register)
+    generic map(g_pre_add_register => g_pre_add_register, g_product_register => g_product_register)
     port map(
         clock          => clock
         ,fixed_dsp_in  => sqrt_dsp_in
@@ -496,7 +497,7 @@ begin
     );
 
     u_multiply_dsp : entity work.fixed_dsp(rtl)
-    generic map(g_pre_add_register => g_pre_add_register)
+    generic map(g_pre_add_register => g_pre_add_register, g_product_register => g_product_register)
     port map(
         clock          => clock
         ,fixed_dsp_in  => multiply_dsp_in

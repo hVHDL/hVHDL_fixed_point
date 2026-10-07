@@ -221,6 +221,11 @@ entity fixed_dsp is
         -- a +- d carry chain and the multiplier are not in the same
         -- register stage. adds one clock of latency, 2 -> 3
         g_pre_add_register : boolean := false
+        -- rtl architecture only : register the product, c and the control
+        -- bits once more before the result adder, so the multiplier and
+        -- the double width add / accumulate are not in the same register
+        -- stage. adds one clock of latency
+        ;g_product_register : boolean := false
     );
     port(
         clock : in std_logic := '0'

@@ -21,6 +21,7 @@ entity lut_divider_tb is
       ;word_length          : natural := 32
       ;quotient_radix       : natural := 16
       ;use_pre_add_register : boolean := false
+      ;use_product_register : boolean := false
       ;use_gaps             : boolean := false
       ;shifter_stages       : positive := 2
       ;use_ram_output_register : boolean := true
@@ -200,6 +201,7 @@ begin
         ,g_table_radix       => table_radix
         ,g_x_frac_width      => x_frac_width
         ,g_pre_add_register => use_pre_add_register
+        ,g_product_register => use_product_register
         ,g_shifter_stages   => shifter_stages
         ,g_ram_output_register => use_ram_output_register
         ,g_dsp_request_register => use_dsp_request_register

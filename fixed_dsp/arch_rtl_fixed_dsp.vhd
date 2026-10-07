@@ -21,7 +21,16 @@ architecture rtl of fixed_dsp is
 
     signal buf_reset_accumulator_with_1 : std_logic;
 
-    signal ready_pipeline : std_logic_vector(1 downto 0) := (others => '0');
+    -- the product and the request as the result adder sees them,
+    -- registered once more when g_product_register is set
+    signal product                 : signed(fixed_dsp_in.a'length + fixed_dsp_in.b'length-1 downto 0);
+    signal product_c               : fixed_dsp_in.c'subtype;
+    signal product_accumulate      : std_logic;
+    signal product_post_subtract   : std_logic;
+    signal product_invert_result   : std_logic;
+    signal product_reset_accumulator : std_logic;
+
+    signal ready_pipeline : std_logic_vector(1 + boolean'pos(g_product_register) downto 0) := (others => '0');
 
 begin
 
@@ -66,35 +75,58 @@ begin
             buf_reset_accumulator_with_1 <= stage_in.reset_accumulator_with_1;
 
             --p2
-            if buf_invert_result = '1' then
-                if buf_post_subtract = '0' then
-                    P <= -(mult + c_buf);
+            if product_invert_result = '1' then
+                if product_post_subtract = '0' then
+                    P <= -(product + product_c);
                 else
-                    P <= -(mult - c_buf);
+                    P <= -(product - product_c);
                 end if;
             else
-                if buf_post_subtract = '0' then
-                    P <= mult + c_buf;
+                if product_post_subtract = '0' then
+                    P <= product + product_c;
                 else
-                    P <= mult - c_buf;
+                    P <= product - product_c;
                 end if;
             end if;
             --
 
-            if buf_accumulate = '1' then
-                if buf_post_subtract = '1' then
-                    P <= P - mult;
+            if product_accumulate = '1' then
+                if product_post_subtract = '1' then
+                    P <= P - product;
                 else
-                    P <= P + mult;
+                    P <= P + product;
                 end if;
             end if;
 
-            if buf_reset_accumulator_with_1 = '1' then
+            if product_reset_accumulator = '1' then
                 P <= (others => '0');
             end if;
 
         end if;
     end process;
+
+    no_product_register : if not g_product_register generate
+        product                   <= mult;
+        product_c                 <= c_buf;
+        product_accumulate        <= buf_accumulate;
+        product_post_subtract     <= buf_post_subtract;
+        product_invert_result     <= buf_invert_result;
+        product_reset_accumulator <= buf_reset_accumulator_with_1;
+    end generate;
+
+    product_register : if g_product_register generate
+        process(clock)
+        begin
+            if rising_edge(clock) then
+                product                   <= mult;
+                product_c                 <= c_buf;
+                product_accumulate        <= buf_accumulate;
+                product_post_subtract     <= buf_post_subtract;
+                product_invert_result     <= buf_invert_result;
+                product_reset_accumulator <= buf_reset_accumulator_with_1;
+            end if;
+        end process;
+    end generate;
 
 end rtl;
 

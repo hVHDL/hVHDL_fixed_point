@@ -17,6 +17,7 @@ entity fixed_dsp_tb is
       -- and only works at its native 32x32 bits
       ;use_ecp5 : boolean := false
       ;use_pre_add_register : boolean := false
+      ;use_product_register : boolean := false
   );
 end;
 
@@ -99,7 +100,7 @@ begin
 ------------------------------------------------------------------------
     gen_rtl : if not use_ecp5 generate
         u_fixed_dsp : entity work.fixed_dsp(rtl)
-        generic map(g_pre_add_register => use_pre_add_register)
+        generic map(g_pre_add_register => use_pre_add_register, g_product_register => use_product_register)
         port map(
             clock => simulator_clock
             ,fixed_dsp_in  => fixed_dsp_in
