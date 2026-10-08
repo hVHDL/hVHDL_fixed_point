@@ -19,28 +19,13 @@ args = cli.parse_args()
 
 VU = VUnit.from_args(args)
 
+# the fixed_dsp based math functions, the older vhdl2008 and vhdl1993 sources
+# are in legacy/ with their own run scripts
 vhdl2008 = VU.add_library("vhdl2008")
-vhdl2008.add_source_files(ROOT / "multiplier/multiplier_generic_pkg.vhd")
 vhdl2008.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
-
-vhdl2008.add_source_files(ROOT / "division/division_generic_pkg.vhd")
-vhdl2008.add_source_files(ROOT / "division/division_generic_pkg_body.vhd")
-
-vhdl2008.add_source_files(ROOT / "pi_controller/pi_controller_generic_pkg.vhd")
-
-vhdl2008.add_source_files(ROOT / "testbenches/multiplier_simulation/multiplier_generic_tb.vhd")
-vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/division_generic_tb.vhd")
-vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division_generic.vhd")
-
-vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/reciproc_pkg.vhd")
-vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/zero_shifter_tb.vhd")
-vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/sequential_zero_shift_tb.vhd")
 
 vhdl2008.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/dp_ram_w_configurable_recrods.vhd")
 vhdl2008.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/arch_sim_dp_ram_w_configurable_records.vhd")
-
-vhdl2008.add_source_files(ROOT / "adc_scaler/adc_scaler.vhd")
-vhdl2008.add_source_files(ROOT / "testbenches/adc_scaler/adc_scaler_tb.vhd")
 
 vhdl2008.add_source_files(ROOT / "lut_interpolation/lut_sine_pkg.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/lut_interpolation/lut_interpolation_tb.vhd")
