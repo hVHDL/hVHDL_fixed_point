@@ -186,7 +186,7 @@ library ieee;
     use work.lut_reciprocal_pkg.all;
     use work.reciprocal_calculator_pkg.all;
     use work.lut_divider_pkg.all;
-    use work.fixed_point_scaling_pkg.all;
+    use work.leading_zeros_pkg.all;
 
 entity lut_divider is
     generic (

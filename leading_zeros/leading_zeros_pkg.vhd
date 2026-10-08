@@ -2,7 +2,7 @@ library ieee;
     use ieee.std_logic_1164.all;
     use ieee.numeric_std.all;
 
-package fixed_point_scaling_pkg is
+package leading_zeros_pkg is
 ------------------------------------------------------------------------
     function get_number_of_leading_zeros (
         number    : signed;
@@ -32,9 +32,9 @@ package fixed_point_scaling_pkg is
     function scale_input ( to_be_shifted : signed )
         return signed ;
 ------------------------------------------------------------------------
-end package fixed_point_scaling_pkg;
+end package leading_zeros_pkg;
 
-package body fixed_point_scaling_pkg is
+package body leading_zeros_pkg is
 ------------------------------------------------------------------------
     function get_number_of_leading_zeros
     (
@@ -133,4 +133,4 @@ package body fixed_point_scaling_pkg is
     end scale_input;
 
 ------------------------------------------------------------------------
-end package body fixed_point_scaling_pkg;
+end package body leading_zeros_pkg;

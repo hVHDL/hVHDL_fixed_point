@@ -76,7 +76,7 @@ mathlib.add_source_files(ROOT / "testbenches/abc_to_ab_transform_simulation/tb_a
 mathlib.add_source_files(ROOT / "testbenches/ab_to_dq_simulation/tb_ab_to_dq_transforms.vhd")
 mathlib.add_source_files(ROOT / "testbenches/division_simulation/tb_integer_division.vhd")
 
-mathlib.add_source_files(ROOT / "../fixed_point_scaling/fixed_point_scaling_pkg.vhd")
+mathlib.add_source_files(ROOT / "../leading_zeros/leading_zeros_pkg.vhd")
 mathlib.add_source_files(ROOT / "square_root/fixed_isqrt_pkg.vhd")
 mathlib.add_source_files(ROOT / "square_root/fixed_sqrt_pkg.vhd")
 mathlib.add_source_files(ROOT / "testbenches/square_root/test_square_root_radix_tb.vhd")

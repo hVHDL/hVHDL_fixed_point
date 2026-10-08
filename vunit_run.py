@@ -89,8 +89,8 @@ sqrt_lut_dsp_tb.add_config(name="gapped_no_registers", generics=dict(use_gaps=Tr
 sqrt_lut_dsp_tb.add_config(name="continuous_no_registers", generics=dict(use_gaps=False, use_ram_output_register=False, use_dsp_request_register=False))
 
 # leading zero count for the divider's and the square root's shifters
-vhdl2008.add_source_files(ROOT / "fixed_point_scaling/fixed_point_scaling_pkg.vhd")
-vhdl2008.add_source_files(ROOT / "testbenches/fixed_point_scaling/fixed_point_scaling_tb.vhd")
+vhdl2008.add_source_files(ROOT / "leading_zeros/leading_zeros_pkg.vhd")
+vhdl2008.add_source_files(ROOT / "testbenches/leading_zeros/leading_zeros_tb.vhd")
 vhdl2008.add_source_files(ROOT / "lut_divider/lut_divider.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/lut_divider/lut_divider_tb.vhd")
 lut_divider_tb = vhdl2008.test_bench("lut_divider_tb")

@@ -4,7 +4,7 @@ library ieee;
     use ieee.numeric_std.all;
     use ieee.math_real.all;
 
-    use work.fixed_point_scaling_pkg.all;
+    use work.leading_zeros_pkg.all;
     use work.multiplier_pkg.all;
     use work.fixed_isqrt_pkg.all;
     use work.real_to_fixed_pkg.all;

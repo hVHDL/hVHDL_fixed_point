@@ -6,13 +6,13 @@ LIBRARY ieee  ;
 library vunit_lib;
 context vunit_lib.vunit_context;
 
-    use work.fixed_point_scaling_pkg.all;
+    use work.leading_zeros_pkg.all;
 
-entity fixed_point_scaling_tb is
+entity leading_zeros_tb is
   generic (runner_cfg : string);
 end;
 
-architecture vunit_simulation of fixed_point_scaling_tb is
+architecture vunit_simulation of leading_zeros_tb is
 
     constant clock_period      : time    := 1 ns;
     constant simtime_in_clocks : integer := 500;

@@ -190,7 +190,7 @@ library ieee;
     use work.lut_sqrt_pkg.all;
     use work.sqrt_calculator_pkg.all;
     use work.full_range_sqrt_pkg.all;
-    use work.fixed_point_scaling_pkg.all;
+    use work.leading_zeros_pkg.all;
 
 entity full_range_sqrt is
     generic (

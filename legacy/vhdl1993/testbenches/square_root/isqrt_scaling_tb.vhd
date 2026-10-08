@@ -7,7 +7,7 @@ library vunit_lib;
 context vunit_lib.vunit_context;
 
     use work.real_to_fixed_pkg.all;
-    use work.fixed_point_scaling_pkg.all;
+    use work.leading_zeros_pkg.all;
 
 entity isqrt_scaling_tb is
   generic (runner_cfg : string);
