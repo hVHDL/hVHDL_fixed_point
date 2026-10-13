@@ -42,7 +42,8 @@ package lut_sine_pkg is
         address : integer);
 ------------------------------------------------------------------------
 
-    constant sine_table_entries : integer_array(0 to lookup_table_size-1) := calculate_sine_lut(lookup_table_size,16); 
+    -- deferred : calculate_sine_lut's body has to be elaborated first
+    constant sine_table_entries : integer_array(0 to lookup_table_size-1);
 
 ------------------------------------------------------------------------
 end package lut_sine_pkg;
@@ -75,6 +76,8 @@ package body lut_sine_pkg is
         return sine_lut;
 
     end calculate_sine_lut;
+------------------------------------------------------------------------
+    constant sine_table_entries : integer_array(0 to lookup_table_size-1) := calculate_sine_lut(lookup_table_size,16);
 ------------------------------------------------------------------------
     procedure create_lut_sine
     (
