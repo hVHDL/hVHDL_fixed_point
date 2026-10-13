@@ -4,12 +4,23 @@ library ieee;
     use ieee.math_real.all;
 
     use work.lookup_table_generator_pkg.all;
-    use work.ram_read_port_pkg.all;
-    use work.ram_configuration_pkg.all;
 
+-- a sine table of 1024 entries read through a register, one clock a read
 package lut_sine_pkg is
 
-    subtype ram_record is ram_read_port_record;
+    constant lookup_table_size : integer := 2**10;
+    subtype address_integer is integer range 0 to lookup_table_size-1;
+    subtype lut_integer     is integer range -2**16 to 2**16-1;
+    type integer_array      is array (integer range <>) of lut_integer;
+
+    type ram_record is record
+        read_address             : address_integer;
+        read_requested_with_1    : std_logic;
+        data_is_ready_to_be_read : boolean;
+        data                     : lut_integer;
+    end record;
+
+    constant init_ram_read_port : ram_record := (0, '0', false, 0);
 
 ------------------------------------------------------------------------
     procedure create_lut_sine (
@@ -71,9 +82,12 @@ package body lut_sine_pkg is
     ) is
         constant sines : integer_array := sine_table_entries;
     begin
-
-        create_ram_read_port(ram_object, sines);
-        
+        ram_object.read_requested_with_1    <= '0';
+        ram_object.data_is_ready_to_be_read <= false;
+        if ram_object.read_requested_with_1 = '1' then
+            ram_object.data                     <= sines(ram_object.read_address);
+            ram_object.data_is_ready_to_be_read <= true;
+        end if;
     end create_lut_sine;
 ------------------------------------------------------------------------
     procedure request_sine_from_lut
@@ -82,7 +96,8 @@ package body lut_sine_pkg is
         address : integer
     ) is
     begin
-        request_data_from_ram(ram_object, address);
+        ram_object.read_address          <= address;
+        ram_object.read_requested_with_1 <= '1';
     end request_sine_from_lut;
 ------------------------------------------------------------------------
     function sine_lut_is_ready
@@ -92,7 +107,7 @@ package body lut_sine_pkg is
     return boolean
     is
     begin
-        return ram_read_is_ready(ram_object);
+        return ram_object.data_is_ready_to_be_read;
     end sine_lut_is_ready;
 ------------------------------------------------------------------------
     function get_sine_from_lut

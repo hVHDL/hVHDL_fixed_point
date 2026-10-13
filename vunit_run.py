@@ -24,7 +24,7 @@ VU = VUnit.from_args(args)
 vhdl2008 = VU.add_library("vhdl2008")
 vhdl2008.add_source_files(ROOT / "real_to_fixed/real_to_fixed_pkg.vhd")
 
-vhdl2008.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/dp_ram_w_configurable_recrods.vhd")
+vhdl2008.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/dp_ram_w_configurable_records.vhd")
 vhdl2008.add_source_files(ROOT / "submodules/hVHDL_memory_library/vhdl2008/arch_sim_dp_ram_w_configurable_records.vhd")
 
 vhdl2008.add_source_files(ROOT / "lut_interpolation/lut_sine_pkg.vhd")

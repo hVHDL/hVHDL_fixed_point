@@ -38,7 +38,7 @@ vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/reciproc_pkg.v
 vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/zero_shifter_tb.vhd")
 vhdl2008.add_source_files(ROOT / "testbenches/division_simulation/sequential_zero_shift_tb.vhd")
 
-vhdl2008.add_source_files(REPO / "submodules/hVHDL_memory_library/vhdl2008/dp_ram_w_configurable_recrods.vhd")
+vhdl2008.add_source_files(REPO / "submodules/hVHDL_memory_library/vhdl2008/dp_ram_w_configurable_records.vhd")
 vhdl2008.add_source_files(REPO / "submodules/hVHDL_memory_library/vhdl2008/arch_sim_dp_ram_w_configurable_records.vhd")
 
 vhdl2008.add_source_files(ROOT / "adc_scaler/adc_scaler.vhd")
